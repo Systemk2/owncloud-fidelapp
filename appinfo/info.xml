@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<info>
+    <id>fidelapp</id>
+    <name>FidelApp</name>
+    <description>The file delivery app</description>
+    <version>0.1</version>
+    <licence>AGPL</licence>
+    <author>Sebastian Kanzow</author>
+    <require>5</require>
+    <types>
+    	<type>filesystem</type>
+    </types>
+    <public>
+    	<file id="fideldownload">download.php</file>
+    </public>
+</info>
