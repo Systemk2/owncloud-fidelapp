@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<database>
+	<name>*dbname*</name>
+	<create>true</create>
+	<overwrite>false</overwrite>
+	<charset>utf8</charset>
+	<table>
+		<name>*dbprefix*fidelapp_shares</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
+				<name>user_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<commets>Owncloud user who shares the file</commets>
+			</field>
+			<field>
+				<name>email</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>512</length>
+				<comments>e-Mail address of the receiver</comments>
+			</field>
+			<field>
+				<name>contact_id</name>
+				<type>integer</type>
+				<length>4</length>
+				<comments>Optional reference to a receiver contact. Used to detect
+					e-Mail modification or contact deletion
+				</comments>
+			</field>
+			<field>
+				<name>file_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Id of the file that is shared</comments>
+			</field>
+			<field>
+				<name>share_time</name>
+				<type>timestamp</type>
+				<default>CURRENT_TIMESTAMP</default>
+				<notnull>true</notnull>
+				<comments>When has the file been shared</comments>
+			</field>
+			<field>
+				<name>download_time</name>
+				<type>timestamp</type>
+				<comments>When has the file been downloaded</comments>
+			</field>
+			<field>
+				<name>share_notification</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<default>0</default>
+				<length>1</length>
+				<comments>Boolean indicating if the receiver has been notified that
+					files are there to be downloaded
+				</comments>
+			</field>
+			<field>
+				<name>salt</name>
+				<type>text</type>
+				<length>14</length>
+				<comments>The second part of the password, which is transmitted to
+					the downloader only after checksum verfication.
+				</comments>
+			</field>
+			<field>
+				<name>checksum</name>
+				<type>text</type>
+				<length>32</length>
+				<comments>The MD5 hash of the shared file</comments>
+			</field>
+			<field>
+				<name>notification_email</name>
+				<type>text</type>
+				<length>512</length>
+				<comments>The notification e-mail for successful download</comments>
+			</field>
+			<index>
+				<name>constraint_unique_fidelapp_shares</name>
+				<unique>true</unique>
+				<field>
+					<name>user_id</name>
+				</field>
+				<field>
+					<name>email</name>
+				</field>
+				<field>
+					<name>file_id</name>
+				</field>
+			</index>
+		</declaration>
+	</table>
+</database>

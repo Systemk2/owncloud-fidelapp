@@ -1,5 +1,5 @@
 <?php
-namespace OCA\FidelApp;
+OC::$CLASSPATH['OCA\FidelApp\API'] = 'fidelapp/lib/api.php';
 
 // dont break owncloud when the appframework is not enabled
 if(\OCP\App::isEnabled('appframework')){
@@ -13,7 +13,8 @@ if(\OCP\App::isEnabled('appframework')){
 	\OCP\Util::addScript('fidelapp', 'fidelshare' );
 	\OCP\Util::addStyle('fidelapp', 'style' );
 	
-    $api = new \OCA\AppFramework\Core\API('fidelapp');
+	// Load extension of OCA\AppFramework\Core\API
+    $api = new OCA\FidelApp\API();
 
     $api->addNavigationEntry(array(
 

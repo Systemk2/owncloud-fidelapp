@@ -48,6 +48,7 @@
 				success : function(html) {
 					var appendTo = $(tr).find('td.filename');
 					$(html).appendTo(appendTo);
+					file_delivery.attachAutocomplete();
 					file_delivery.droppedDown = true;
 				},
 				error : function(error) {
@@ -66,7 +67,81 @@
 					callback.call();
 				}
 			});
+		},
+		attachAutocomplete : function() {
+			$('#fidelapp_shareWith').autocomplete(
+					{
+						minLength : 1,
+						source : function(search, response) {
+							$.get(OC.filePath('fidelapp', 'ajax',
+									'autocomplete.php'), {
+								search : search.term
+							},
+									function(result) {
+										if (result.status == 'success'
+												&& result.data.length > 0) {
+											response(result.data);
+										} else {
+											response([ t('fidelapp',
+													'No e-Mails found') ]);
+										}
+									});
+						}
+					});
+		},
+		submitShare : function(event) {
+			event.preventDefault();
+			var itemType = $('#dropdown').data('item-type');
+			var itemSource = $('#dropdown').data('item-source');
+			var file = $('tr').filterAttr('data-id', String(itemSource)).data(
+					'file');
+			var email = $('#fidelapp_shareWith').val();
+			if (email != '') {
+				$('#fidelapp_shareWith').attr('disabled', 'disabled');
+				$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
+				$('#fidelapp_shareButton').attr('disabled', 'disabled');
+				$.post(OC.filePath('fidelapp', 'ajax', 'share.php'), {
+					action : 'share',
+					toaddress : email,
+					itemType : itemType,
+					itemSource : itemSource,
+					file : file
+				}, function(result) {
+					$('#fidelapp_shareWith').attr('disabled', 'false');
+					$('#fidelapp_shareButton').attr('disabled', 'false');
+					if (result && result.status == 'success') {
+						$('#fidelapp_shareWith').css('font-weight', 'bold');
+						$('#fidelapp_shareWith').animate({
+							fontWeight : 'normal'
+						}, 2000, function() {
+							$(this).val('');
+						}).val(t('fidelapp', 'Item shared'));
+					} else {
+						OC.dialogs.alert(result.data.message, t('fidelapp',
+								'Error while sharing'));
+					}
+				});
+			}
 		}
 	};
-	$(document).ready(file_delivery.init);
+
+	$(document).ready(
+			function() {
+				file_delivery.init();
+
+				$(this).click(
+						function(event) {
+							if (file_delivery.droppedDown
+									&& $('#fidelapp_dropdown')
+											.has(event.target).length === 0) {
+								// Avoid closing dropdown on autocomplete events
+								if($(event.target).parents(".ui-autocomplete").length === 0)
+									file_delivery.hideDropDown();
+							}
+						});
+				$(document).on('submit', '#fidelapp_dropdown #fidelapp_share',
+						file_delivery.submitShare);
+
+			});
+
 })(jQuery);

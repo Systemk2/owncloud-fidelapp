@@ -1,25 +1,30 @@
 @CHARSET "UTF-8";
 
 #fidelapp_dropdown {
-    background: none repeat scroll 0 0 #EEEEEE;
-    border-bottom-left-radius: 1em;
-    border-bottom-right-radius: 1em;
-    box-shadow: 0 1px 1px #777777;
-    display: block;
-    margin-right: 30em;
-    padding: 1em;
-    position: absolute;
-    right: 0;
-    width: 19em;
-    z-index: 500;
+	background: none repeat scroll 0 0 #EEEEEE;
+	border-bottom-left-radius: 1em;
+	border-bottom-right-radius: 1em;
+	box-shadow: 0 1px 1px #777777;
+	display: block;
+	margin-right: 30em;
+	padding: 1em;
+	position: absolute;
+	right: 0;
+	width: 19em;
+	z-index: 500;
+}
+
+#fidelapp_dropdown form {
+    font-size: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 #fidelapp_dropdown label {
-    padding-left: 0.5em;
-    font-weight: 400;
+	padding-left: 0.5em;
+	font-weight: 400;
 }
 
-
 #fidelapp_dropdown input[type="checkbox"] {
-    margin: 0 0.2em 0 0.5em;
+	margin: 0 0.2em 0 0.5em;
 }
