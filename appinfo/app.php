@@ -34,7 +34,7 @@ if(\OCP\App::isEnabled('appframework')){
 
       // the title of your application. This will be used in the
       // navigation or on the settings page of your app
-      'name' => $api->getTrans()->t('File Delivery')
+      'name' => $api->getTrans()->t('FidelApp')
 
     ));
 } else {

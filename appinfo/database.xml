@@ -21,7 +21,7 @@
 				<type>integer</type>
 				<notnull>true</notnull>
 				<length>4</length>
-				<commets>Owncloud user who shares the file</commets>
+				<comments>Owncloud user who shares the file</comments>
 			</field>
 			<field>
 				<name>email</name>

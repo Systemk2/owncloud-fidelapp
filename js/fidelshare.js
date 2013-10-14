@@ -7,11 +7,11 @@
 				FileActions.register('all', t('fidelapp',
 						'Secure file delivery'), OC.PERMISSION_READ, OC
 						.imagePath('fidelapp', 'logo_small.png'),
-						file_delivery.share);
+						file_delivery.handleDropDown);
 			}
 			;
 		},
-		share : function(file) {
+		handleDropDown : function(file) {
 			var tr = $('tr').filterAttr('data-file', file);
 			// Check if drop down is already visible for a different file
 			if (file_delivery.droppedDown) {
@@ -122,26 +122,44 @@
 					}
 				});
 			}
+		},
+		changeEvent : function(event) {
+			var pattern = new RegExp(
+					/^[+a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i);
+			var email = $('#fidelapp_shareWith').val();
+			if (pattern.test(email)) {
+				$('#fidelapp_submitLink').removeClass('disabled');
+			} else {
+				$('#fidelapp_submitLink').addClass('disabled');
+			}
 		}
 	};
 
-	$(document).ready(
-			function() {
-				file_delivery.init();
+	$(document)
+			.ready(
+					function() {
+						file_delivery.init();
 
-				$(this).click(
-						function(event) {
-							if (file_delivery.droppedDown
-									&& $('#fidelapp_dropdown')
-											.has(event.target).length === 0) {
-								// Avoid closing dropdown on autocomplete events
-								if($(event.target).parents(".ui-autocomplete").length === 0)
-									file_delivery.hideDropDown();
-							}
-						});
-				$(document).on('submit', '#fidelapp_dropdown #fidelapp_share',
-						file_delivery.submitShare);
-
-			});
+						// Hide dropdown if click is detected outside the
+						// dropdown
+						$(this)
+								.click(
+										function(event) {
+											if (file_delivery.droppedDown
+													&& $('#fidelapp_dropdown')
+															.has(event.target).length === 0) {
+												// Avoid closing dropdown on
+												// autocomplete events
+												if ($(event.target).parents(
+														".ui-autocomplete").length === 0)
+													file_delivery
+															.hideDropDown();
+											}
+										});
+						$('#fileList').on('keypress', '#fidelapp_shareWith',
+								file_delivery.changeEvent);
+						$('#fileList').on('mouseenter', '#fidelapp_dropdown',
+								file_delivery.changeEvent);
+					});
 
 })(jQuery);

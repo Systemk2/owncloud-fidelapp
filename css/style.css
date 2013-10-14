@@ -15,9 +15,9 @@
 }
 
 #fidelapp_dropdown form {
-    font-size: 100%;
-    margin-left: 0;
-    margin-right: 0;
+	font-size: 100%;
+	margin-left: 0;
+	margin-right: 0;
 }
 
 #fidelapp_dropdown label {
@@ -27,4 +27,24 @@
 
 #fidelapp_dropdown input[type="checkbox"] {
 	margin: 0 0.2em 0 0.5em;
+}
+
+#fidelapp_dropdown .checked.disabled {
+	background-image: url("/owncloud/apps/fidelapp/img/checkmark-gray.png");
+	color: #000000;
+	cursor: default;
+}
+
+#fidelapp_dropdown .checked {
+	background-image: url("/owncloud/apps/fidelapp/img/checkmark-green.png");
+	margin: 3px 0 3px -25px;
+}
+
+#fidelapp_dropdown .action {
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	height: 16px !important;
+	padding: 0;
+	width: 16px;
 }
