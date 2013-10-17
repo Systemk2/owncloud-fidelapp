@@ -1,5 +1,5 @@
 <?php
-namespace \OCA\FidelApp\Db;
+namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Entity;
 

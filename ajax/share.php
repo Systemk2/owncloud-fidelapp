@@ -1,13 +1,14 @@
 <?php
-namespace \OCA\FidelApp;
-
-$userId = $api->getUserId();
-$email = htmlspecialchars_decode($_POST['fidelapp_shareWith']);
-$fileId = $_POST['itemSource'];
+namespace OCA\FidelApp;
 
 $api = new API();
-$mapper = new Db\ShareItemMapper($api);
 
+$userId = $api->getUserId();
+$email = htmlspecialchars_decode($_POST['shareWith']);
+$fileId = $_POST['itemSource'];
+$file = $_POST['file'];
+
+$mapper = new Db\ShareItemMapper($api);
 
 $sharedItems = $mapper->findByUserFileEmail($userId, $fileId, $email);
 
@@ -20,8 +21,8 @@ if(count($sharedItems) === 0) {
 }
 
 $shareItem->setUserId($userId);
-$shareItem->email($email);
-$shareItem->fileId($fileId);
+$shareItem->setEmail($email);
+$shareItem->setFileId($fileId);
 
 $mapper->save($shareItem);
 

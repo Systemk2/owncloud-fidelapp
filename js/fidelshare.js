@@ -76,52 +76,47 @@
 							$.get(OC.filePath('fidelapp', 'ajax',
 									'autocomplete.php'), {
 								search : search.term
-							},
-									function(result) {
-										if (result.status == 'success'
-												&& result.data.length > 0) {
-											response(result.data);
-										} else {
-											response([ t('fidelapp',
-													'No e-Mails found') ]);
-										}
-									});
+							}, function(result) {
+								if (result.status == 'success'
+										&& result.data.length > 0) {
+									response(result.data);
+								} else {
+									response([ t('fidelapp',
+											'No matching contacts') ]);
+								}
+							});
 						}
 					});
 		},
 		submitShare : function(event) {
 			event.preventDefault();
-			var itemType = $('#dropdown').data('item-type');
-			var itemSource = $('#dropdown').data('item-source');
+			if($('#fidelapp_submitLink').hasClass('disabled')) {
+				return;
+			}
+			var itemType = $('#fidelapp_dropdown').data('item-type');
+			var itemSource = $('#fidelapp_dropdown').data('item-source');
 			var file = $('tr').filterAttr('data-id', String(itemSource)).data(
 					'file');
-			var email = $('#fidelapp_shareWith').val();
-			if (email != '') {
-				$('#fidelapp_shareWith').attr('disabled', 'disabled');
-				$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
-				$('#fidelapp_shareButton').attr('disabled', 'disabled');
-				$.post(OC.filePath('fidelapp', 'ajax', 'share.php'), {
-					action : 'share',
-					toaddress : email,
-					itemType : itemType,
-					itemSource : itemSource,
-					file : file
-				}, function(result) {
-					$('#fidelapp_shareWith').attr('disabled', 'false');
-					$('#fidelapp_shareButton').attr('disabled', 'false');
-					if (result && result.status == 'success') {
-						$('#fidelapp_shareWith').css('font-weight', 'bold');
-						$('#fidelapp_shareWith').animate({
-							fontWeight : 'normal'
-						}, 2000, function() {
-							$(this).val('');
-						}).val(t('fidelapp', 'Item shared'));
-					} else {
-						OC.dialogs.alert(result.data.message, t('fidelapp',
-								'Error while sharing'));
-					}
-				});
-			}
+			var shareWith = $('#fidelapp_shareWith').val();
+			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
+			$('#fidelapp_submitLink').addClass('disabled');
+			$.post(OC.filePath('fidelapp', 'ajax', 'share.php'), {
+				action : 'share',
+				shareWith : shareWith,
+				itemType : itemType,
+				itemSource : itemSource,
+				file : file
+			}, function(result) {
+				$('#fidelapp_shareWith').val('');
+				if (result && result.status == 'success') {
+					alert("Shared");
+					var tr = $('tr').filterAttr('data-file', file);
+					file_delivery.showDropDown(tr);
+				} else {
+					OC.dialogs.alert(result.data.message, t('fidelapp',
+							'Error while sharing'));
+				}
+			});
 		},
 		changeEvent : function(event) {
 			var pattern = new RegExp(
@@ -156,10 +151,12 @@
 															.hideDropDown();
 											}
 										});
-						$('#fileList').on('keypress', '#fidelapp_shareWith',
+						$('#fileList').on('keyup', '#fidelapp_shareWith',
 								file_delivery.changeEvent);
 						$('#fileList').on('mouseenter', '#fidelapp_dropdown',
 								file_delivery.changeEvent);
+						$('#fileList').on('click', '#fidelapp_submitLink',
+								file_delivery.submitShare);
 					});
 
 })(jQuery);
