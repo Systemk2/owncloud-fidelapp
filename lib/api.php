@@ -13,7 +13,7 @@ class API extends \OCA\AppFramework\Core\API {
 		/**
 		 * This function is used to search and find contacts within the users address books.
 		 * In case $pattern is empty all contacts will be returned.
-		 * 
+		 *
 		 * @param string $pattern which should match within the $searchProperties
 		 * @param array $searchProperties defines the properties within the query pattern should match
 		 * @param array $options - for future use. One should always have options!
@@ -22,5 +22,4 @@ class API extends \OCA\AppFramework\Core\API {
 	public function search($pattern, $searchProperties = array(), $options = array()) {
 		return \OCP\Contacts::search($pattern, $searchProperties, $options);
 	}
-
 }

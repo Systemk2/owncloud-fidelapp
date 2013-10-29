@@ -1,4 +1,5 @@
 <?php
+
 namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Mapper;
@@ -10,30 +11,31 @@ class ShareItemMapper extends Mapper {
 		parent::__construct($api, 'fidelapp_shares'); // tablename is fidelapp_shares
 	}
 
-	public function findByUserFileEmail($userId, $fileId, $email){
-		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' .
-				'WHERE `user_id` = ? AND `file_id` = ? AND `email` = ?';
+	/**
+	 * Get a share item with the given file for the given contact
+	 *
+	 * @param int $contactId
+	 * @param int $fileId
+	 * @return \OCA\FidelApp\Db\ShareItem
+	 * @throws DoesNotExistException if the item does not exist
+	 * @throws MultipleObjectsReturnedException if more than one item exists
+	 */
+	public function findByContactFile($contactId, $fileId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `contact_id` = ? AND `file_id` = ?';
 
-		$shareItems = $this->findEntities($sql, array($userId, $fileId, $email));
-
-		return $shareItems;
+		return $this->findEntity($sql, array (
+				$contactId,
+				$fileId
+		));
 	}
 
-	public function findByUserFile($userId, $fileId) {
-		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' .
-				'WHERE `user_id` = ? AND `file_id` = ?' ;
-		
-		$shareItems = $this->findEntities($sql, array($userId, $fileId));
-		
-		return $shareItems;
-	}
-
-	public function save($shareItem) {
+	public function save(ShareItem $shareItem) {
 		$id = $shareItem->getId();
-		if($id === null){
-			$this->insert($shareItem);
+		if ($id === null) {
+			$shareItem = $this->insert($shareItem);
 		} else {
 			$this->update($shareItem);
 		}
+		return $shareItem;
 	}
 }

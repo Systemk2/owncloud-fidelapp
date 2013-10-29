@@ -3,18 +3,14 @@
 namespace OCA\FidelApp\Controller;
 
 use \OCA\AppFramework\Controller\Controller;
-
 use \OCA\FidelApp\API;
-use \OCA\FidelApp\Db\ShareItemMapper;
-
+use \OCA\FidelApp\Db\ContactShareItemMapper;
 
 class PageController extends Controller {
-
 
 	public function __construct($api, $request) {
 		parent::__construct($api, $request);
 	}
-
 
 	/**
 	 * ATTENTION!!!
@@ -26,7 +22,7 @@ class PageController extends Controller {
 	 * @IsSubAdminExemption
 	 */
 	public function index() {
-		return $this->render('main', array(
+		return $this->render('main', array (
 				'msg' => 'Hello World'
 		));
 	}
@@ -38,13 +34,16 @@ class PageController extends Controller {
 	 */
 	public function createDropdown() {
 		$api = new API();
-		$mapper = new ShareItemMapper($api);
-		
+		$mapper = new ContactShareItemMapper($api);
+
 		$itemSource = $this->params('data_item_source');
 		$itemType = $this->params('data_item_type');
-		$shareItems = $mapper->findByUserFile($api->getUserId(), $itemSource); 
-		$response =  $this->render('sharedropdown', array( 'itemSource' => $itemSource, 'itemType' => $itemType, 'shareItems' => $shareItems), '');
+		$shareItems = $mapper->findByUserFile($api->getUserId(), $itemSource);
+		$response = $this->render('sharedropdown', array (
+				'itemSource' => $itemSource,
+				'itemType' => $itemType,
+				'shareItems' => $shareItems
+		), '');
 		return $response;
-		
 	}
 }

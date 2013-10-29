@@ -5,9 +5,7 @@ use \OCA\AppFramework\Db\Entity;
 
 class ShareItem extends Entity {
 	// field id is set automatically by the parent class
-	public $userId;
-	public $email;
-	public $contactId;
+	public $contactId; 
 	public $fileId;
 	public $shareTime; // Set automatically to CURRENT_TIMESTAMP
 	public $downloadTime;
@@ -16,4 +14,3 @@ class ShareItem extends Entity {
 	public $checksum;
 	public $notificationEmail;
 }
-

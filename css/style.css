@@ -48,3 +48,53 @@
 	padding: 0;
 	width: 16px;
 }
+
+#shareWithFidelAppList span {
+	float: left;
+}
+
+#shareWithFidelAppList li {
+	clear: left;
+}
+
+#shareWithFidelAppList .fidelapp_mailto {
+	background-image: url("/owncloud/core/img/actions/mail.svg");
+	cursor: pointer;
+	float: right;
+}
+
+#shareWithFidelAppList .fidelapp_mailto:hover,#shareWithFidelAppList .fidelapp_triangle:hover {
+	opacity: 0.8;
+}
+
+#shareWithFidelAppList .fidelapp_icon {
+	display: block;
+	height: 16px;
+	width: 16px;
+	margin: 2px;
+	padding: 0;
+}
+
+#shareWithFidelAppList .fidelapp_delete {
+	background-image: url("/owncloud/core/img/actions/delete.svg");
+	float: right;
+	cursor: pointer;
+}
+
+#shareWithFidelAppList .fidelapp_delete:hover {
+	background-image: url("/owncloud/core/img/actions/delete-hover.svg");
+}
+
+#shareWithFidelAppList .fidelapp_triangle {
+	background-image: url("/owncloud/core/img/actions/triangle-s.svg");
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.fidelapp_key-green {
+	background-image: url("/owncloud/apps/fidelapp/img/key-green.png");
+}
+
+.fidelapp_key-red {
+	background-image: url("/owncloud/apps/fidelapp/img/key-red.png");
+}

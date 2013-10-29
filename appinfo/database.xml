@@ -5,7 +5,7 @@
 	<overwrite>false</overwrite>
 	<charset>utf8</charset>
 	<table>
-		<name>*dbprefix*fidelapp_shares</name>
+		<name>*dbprefix*fidelapp_contacts</name>
 		<declaration>
 			<field>
 				<name>id</name>
@@ -21,7 +21,7 @@
 				<type>integer</type>
 				<notnull>true</notnull>
 				<length>4</length>
-				<comments>Owncloud user who shares the file</comments>
+				<comments>Owncloud user</comments>
 			</field>
 			<field>
 				<name>email</name>
@@ -31,11 +31,43 @@
 				<comments>e-Mail address of the receiver</comments>
 			</field>
 			<field>
+				<name>contactsapp_id</name>
+				<type>integer</type>
+				<length>4</length>
+				<comments>Optional reference to a receiver contact in the contacts
+					app
+				</comments>
+			</field>
+			<index>
+				<name>constraint_unique_fidelapp_contacts</name>
+				<unique>true</unique>
+				<field>
+					<name>user_id</name>
+				</field>
+				<field>
+					<name>email</name>
+				</field>
+			</index>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*fidelapp_shares</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
 				<name>contact_id</name>
 				<type>integer</type>
 				<length>4</length>
-				<comments>Optional reference to a receiver contact. Used to detect
-					e-Mail modification or contact deletion
+				<comments>Reference to a receiver contact in the fidelapp_contacts
+					table
 				</comments>
 			</field>
 			<field>
@@ -91,15 +123,22 @@
 				<name>constraint_unique_fidelapp_shares</name>
 				<unique>true</unique>
 				<field>
-					<name>user_id</name>
-				</field>
-				<field>
-					<name>email</name>
+					<name>contact_id</name>
 				</field>
 				<field>
 					<name>file_id</name>
 				</field>
 			</index>
+			<foreign>
+				<name>fk_contact</name>
+				<field>contact_id</field>
+				<references>
+					<table>*dbprefix*fidelapp_contacts</table>
+					<field>id</field>
+				</references>
+				<ondelete>cascade</ondelete>
+				<onupdate>cascade</onupdate>
+			</foreign>
 		</declaration>
 	</table>
 </database>

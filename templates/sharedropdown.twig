@@ -9,8 +9,15 @@
 		<div>
 			<ul id="shareWithFidelAppList">
 				{% for shareItem in shareItems %}
-					<li>{{ shareItem.email }}</li>
-				{% endfor %}
+				<li>
+					<div id="fidelapp_shareItem_{{ shareItem.id }}">
+						<span class="fidelapp_icon fidelapp_key-red">&nbsp;</span>
+						<span>{{ shareItem.contactItem.email }}</span>
+						<span class="fidelapp_icon fidelapp_triangle">&nbsp;</span>
+						<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
+						<span class="fidelapp_icon fidelapp_mailto"> &nbsp; </span>
+					</div>
+				</li> {% endfor %}
 			</ul>
 		</div>
 	</form>

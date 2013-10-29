@@ -14,7 +14,7 @@ $this->create('fidelapp_index', '/')->action(
 
 $this->create('fidelapp_create_dropdown', '/dropdown')->action(
 		function($params){
-	// call the index method on the class PageController
+	// call the createDropdown method on the class PageController
 	App::main('PageController', 'createDropdown', $params, new DIContainer());
 }
 );
