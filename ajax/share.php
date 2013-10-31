@@ -27,7 +27,7 @@ if(count($sharedItems) === 0) {
 } else if(count($sharedItems) === 1) {
 	$contactShareItem = $sharedItems[0];
 } else {
-	throw new OCA\AppFramework\Db\MultipleObjectsReturnedException("More than one share for user $userId, file $fileId, email $email");
+	throw new \OCA\AppFramework\Db\MultipleObjectsReturnedException("More than one share for user $userId, file $fileId, email $email");
 }
 
 $mapper->save($contactShareItem);

@@ -98,3 +98,7 @@
 .fidelapp_key-red {
 	background-image: url("/owncloud/apps/fidelapp/img/key-red.png");
 }
+
+#fidelapp_password_div {
+	clear: left
+}

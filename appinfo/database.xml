@@ -31,6 +31,12 @@
 				<comments>e-Mail address of the receiver</comments>
 			</field>
 			<field>
+				<name>password</name>
+				<type>text</type>
+				<length>512</length>
+				<comments>The download password</comments>
+			</field>
+			<field>
 				<name>contactsapp_id</name>
 				<type>integer</type>
 				<length>4</length>

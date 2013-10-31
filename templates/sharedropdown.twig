@@ -11,11 +11,21 @@
 				{% for shareItem in shareItems %}
 				<li>
 					<div id="fidelapp_shareItem_{{ shareItem.id }}">
-						<span class="fidelapp_icon fidelapp_key-red">&nbsp;</span>
-						<span>{{ shareItem.contactItem.email }}</span>
-						<span class="fidelapp_icon fidelapp_triangle">&nbsp;</span>
-						<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
-						<span class="fidelapp_icon fidelapp_mailto"> &nbsp; </span>
+						<div>
+							<span
+								class="fidelapp_icon fidelapp_key-{{ shareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span>
+							<span>{{ shareItem.contactItem.email }}</span> <span
+								class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span
+								class="fidelapp_icon fidelapp_delete">&nbsp;</span> <span
+								class="fidelapp_icon fidelapp_mailto"> &nbsp; </span>
+						</div>
+						<div id="fidelapp_password_div"
+							
+							 {{ shareItem.contactItem.password ? 'style="display: none"' : '' }}>
+							<input id="fidelapp_password" type="text"
+								placeholder="{{ trans('Enter password') }}" />
+						</div>
+
 					</div>
 				</li> {% endfor %}
 			</ul>
