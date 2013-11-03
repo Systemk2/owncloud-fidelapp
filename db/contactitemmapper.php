@@ -7,7 +7,7 @@ use \OCA\FidelApp\API;
 
 class ContactItemMapper extends Mapper {
 
-	public function __construct(API $api) {
+	public function __construct(API $api){
 		parent::__construct($api, 'fidelapp_contacts'); // tablename is fidelapp_contacts
 	}
 
@@ -20,7 +20,7 @@ class ContactItemMapper extends Mapper {
 	 * @throws DoesNotExistException if the item does not exist
 	 * @throws MultipleObjectsReturnedException if more than one item exists
 	 */
-	public function findByUserEmail($userId, $email) {
+	public function findByUserEmail($userId, $email){
 		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `user_id` = ? AND `email` = ?';
 
 		return $this->findEntity($sql, array (
@@ -29,7 +29,15 @@ class ContactItemMapper extends Mapper {
 		));
 	}
 
-	public function save(ContactItem $contactItem) {
+	public function findById($id){
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `id` = ?';
+
+		return $this->findEntity($sql, array (
+				$id
+		));
+	}
+
+	public function save(ContactItem $contactItem){
 		$id = $contactItem->getId();
 		if ($id === null) {
 			$contactItem = $this->insert($contactItem);

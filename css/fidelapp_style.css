@@ -1,0 +1,52 @@
+@CHARSET "UTF-8";
+
+#fidelapp_menuheader {
+	-moz-box-sizing: border-box;
+	background: none repeat scroll 0 0 #F8F8F8;
+	border-bottom: 1px solid #DDDDDD;
+	border-right: 1px solid #DDDDDD;
+	height: 4em;
+	margin: 0;
+	padding: 0;
+	top: 3.5em;
+	width: 20em;
+}
+
+#fidelapp>#leftcontent h3:hover,#leftcontent h3:active,#leftcontent h3.active
+	{
+	background-color: #DBDBDB;
+	border-bottom: 1px solid #CCCCCC;
+	border-top: 1px solid #D4D4D4;
+	color: #333333;
+	font-weight: bold;
+}
+
+#fidelapp>#leftcontent h3 {
+	background: none no-repeat scroll 1em center #EEEEEE;
+	border-bottom: 1px solid #DDDDDD;
+	border-top: 1px solid #FFFFFF;
+	color: #666666;
+	cursor: pointer;
+	display: block;
+	font-size: 1.2em;
+	height: 2em;
+	max-width: 100%;
+	padding: 0.5em 0.8em;
+	text-shadow: 0 1px 0 #F8F8F8;
+	transition: background 300ms ease 0s;
+}
+
+#fidelapp>#rightcontent {
+	width: 100%;
+	padding-left: 8em;
+}
+
+#fidelapp>#rightcontent h3 {
+	font-weight: bold;
+	padding: 1em 0 1em;
+}
+
+#fidelapp>#rightcontent label {
+	font-weight: normal;
+	padding: 0.3em;
+}

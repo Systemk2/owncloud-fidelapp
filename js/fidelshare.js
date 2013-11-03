@@ -1,32 +1,32 @@
 (function($) {
-	var file_delivery = null;
-	file_delivery = {
+	var fidelapp = null;
+	fidelapp = {
 		droppedDown : false,
 		init : function() {
 			if (typeof FileActions !== 'undefined') {
 				FileActions.register('all', t('fidelapp',
 						'Secure file delivery'), OC.PERMISSION_READ, OC
 						.imagePath('fidelapp', 'logo_small.png'),
-						file_delivery.handleDropDown);
+						fidelapp.handleDropDown);
 			}
 			;
 		},
 		handleDropDown : function(file) {
 			var tr = $('tr').filterAttr('data-file', file);
 			// Check if drop down is already visible for a different file
-			if (file_delivery.droppedDown) {
+			if (fidelapp.droppedDown) {
 				if ($(tr).data('id') != $('#fidelapp_dropdown').attr(
 						'data-item-source')) {
-					file_delivery.hideDropDown(function() {
+					fidelapp.hideDropDown(function() {
 						$(tr).addClass('mouseOver');
-						file_delivery.showDropDown(tr);
+						fidelapp.showDropDown(tr);
 					});
 				} else {
-					file_delivery.hideDropDown();
+					fidelapp.hideDropDown();
 				}
 			} else {
 				$(tr).addClass('mouseOver');
-				file_delivery.showDropDown(tr);
+				fidelapp.showDropDown(tr);
 			}
 		},
 		showDropDown : function(tr) {
@@ -46,10 +46,15 @@
 				url : url,
 				async : false,
 				success : function(html) {
+					if (html.indexOf("<!-- fidelapp dropdown -->") != 0)
+						return;
+					fidelapp.hideDropDown();
 					var appendTo = $(tr).find('td.filename');
 					$(html).appendTo(appendTo);
-					file_delivery.attachAutocomplete();
-					file_delivery.droppedDown = true;
+					fidelapp.attachAutocomplete();
+					fidelapp.droppedDown = true;
+					$('#fidelapp_dropdown').closest('td').find('[data-action]')
+							.addClass('fidelapp_permanent');
 				},
 				error : function(error) {
 					alert('Error in ajax: ' + error);
@@ -57,16 +62,21 @@
 			});
 		},
 		hideDropDown : function(callback) {
-			$('#fidelapp_dropdown').hide('blind', function() {
-				file_delivery.droppedDown = false;
-				$('#fidelapp_dropdown').remove();
-				if (typeof FileActions !== 'undefined') {
-					$('tr').removeClass('mouseOver');
-				}
-				if (callback) {
-					callback.call();
-				}
-			});
+			$('#fidelapp_dropdown').hide(
+					'blind',
+					function() {
+						fidelapp.droppedDown = false;
+						if (typeof FileActions !== 'undefined') {
+							$('tr').removeClass('mouseOver');
+						}
+						$('#fidelapp_dropdown').closest('td').find(
+								'[data-action]').removeClass(
+								'fidelapp_permanent');
+						$('#fidelapp_dropdown').remove();
+						if (callback) {
+							callback.call();
+						}
+					});
 		},
 		attachAutocomplete : function() {
 			$('#fidelapp_shareWith').autocomplete(
@@ -90,7 +100,7 @@
 		},
 		submitShare : function(event) {
 			event.preventDefault();
-			if($('#fidelapp_submitLink').hasClass('disabled')) {
+			if ($('#fidelapp_submitLink').hasClass('disabled')) {
 				return;
 			}
 			var itemType = $('#fidelapp_dropdown').data('item-type');
@@ -101,7 +111,6 @@
 			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
 			$('#fidelapp_submitLink').addClass('disabled');
 			$.post(OC.filePath('fidelapp', 'ajax', 'share.php'), {
-				action : 'share',
 				shareWith : shareWith,
 				itemType : itemType,
 				itemSource : itemSource,
@@ -109,16 +118,58 @@
 			}, function(result) {
 				$('#fidelapp_shareWith').val('');
 				if (result && result.status == 'success') {
-					alert("Shared");
 					var tr = $('tr').filterAttr('data-file', file);
-					file_delivery.showDropDown(tr);
+					fidelapp.showDropDown(tr);
 				} else {
-					OC.dialogs.alert(result.data.message, t('fidelapp',
+					var message;
+					if (result && result.data && result.data.message) {
+						message = result.data.message;
+					} else {
+						message = result;
+					}
+					OC.dialogs.alert(message, t('fidelapp',
 							'Error while sharing'));
 				}
 			});
 		},
-		changeEvent : function(event) {
+		submitPassword : function(event) {
+			event.preventDefault();
+			// Find parent element that has a contact id
+			var contactId = $(event.target).closest('[data-contact-id]').attr(
+					'data-contact-id');
+			if (!contactId) {
+				return;
+			}
+			if ($('#fidelapp_passwordSubmitLink_' + contactId).hasClass(
+					'disabled')) {
+				return;
+			}
+			$('#fidelapp_passwordSubmitLink_' + contactId).addClass('disabled');
+			var itemSource = $('#fidelapp_dropdown').data('item-source');
+			var file = $('tr').filterAttr('data-id', String(itemSource)).data(
+					'file');
+			var password = $('#fidelapp_password_' + contactId).val();
+			$('#fidelapp_password_' + contactId).val(t('core', 'Sending ...'));
+			$.post(OC.filePath('fidelapp', 'ajax', 'setpassword.php'), {
+				contactId : contactId,
+				password : password
+			}, function(result) {
+				if (result && result.status == 'success') {
+					var tr = $('tr').filterAttr('data-file', file);
+					fidelapp.showDropDown(tr);
+				} else {
+					var message;
+					if (result && result.data && result.data.message) {
+						message = result.data.message;
+					} else {
+						message = result;
+					}
+					OC.dialogs.alert(message, t('fidelapp',
+							'Error while setting password'));
+				}
+			});
+		},
+		shareInputChangeEvent : function(event) {
 			var pattern = new RegExp(
 					/^[+a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i);
 			var email = $('#fidelapp_shareWith').val();
@@ -127,36 +178,84 @@
 			} else {
 				$('#fidelapp_submitLink').addClass('disabled');
 			}
+		},
+		passwordInputChangeEvent : function(event) {
+			var submitLink = $(event.target).siblings(
+					'a[id^="fidelapp_passwordSubmitLink_"]');
+			if (submitLink.length != 1) {
+				return;
+			}
+			var password = $(event.target).val();
+			if (password.trim().length >= 6) {
+				submitLink.removeClass('disabled');
+			} else {
+				submitLink.addClass('disabled');
+			}
+		},
+		handleShareDetails : function(event) {
+			var contactId = $(event.target).closest('[data-contact-id]').attr(
+					'data-contact-id');
+			if (!contactId) {
+				return;
+			}
+			var contactDetailsElement = $('.fidelapp_contact_details[data-contact-id='
+					+ contactId + ']');
+			if (contactDetailsElement.hasClass('hidden')) {
+				contactDetailsElement.removeClass('hidden');
+			} else {
+				contactDetailsElement.addClass('hidden');
+			}
+		},
+		toggleShareLink : function(event) {
+			var contactId = $(event.target).closest('[data-contact-id]').attr(
+					'data-contact-id');
+			if (!contactId) {
+				return;
+			}
+			var inputElement = $('#fidelapp_shareLink_' + contactId);
+			if (event.target.checked) {
+				inputElement.removeClass('hidden');
+			} else {
+				inputElement.addClass('hidden');
+			}
+
 		}
 	};
 
 	$(document)
 			.ready(
 					function() {
-						file_delivery.init();
+						fidelapp.init();
 
 						// Hide dropdown if click is detected outside the
 						// dropdown
 						$(this)
 								.click(
 										function(event) {
-											if (file_delivery.droppedDown
+											if (fidelapp.droppedDown
 													&& $('#fidelapp_dropdown')
 															.has(event.target).length === 0) {
 												// Avoid closing dropdown on
 												// autocomplete events
 												if ($(event.target).parents(
 														".ui-autocomplete").length === 0)
-													file_delivery
-															.hideDropDown();
+													fidelapp.hideDropDown();
 											}
 										});
 						$('#fileList').on('keyup', '#fidelapp_shareWith',
-								file_delivery.changeEvent);
+								fidelapp.shareInputChangeEvent);
 						$('#fileList').on('mouseenter', '#fidelapp_dropdown',
-								file_delivery.changeEvent);
+								fidelapp.shareInputChangeEvent);
 						$('#fileList').on('click', '#fidelapp_submitLink',
-								file_delivery.submitShare);
+								fidelapp.submitShare);
+						$('#fileList').on('click',
+								'a[id^=fidelapp_passwordSubmitLink_]',
+								fidelapp.submitPassword);
+						$('#fileList').on('keyup',
+								'input[id^=fidelapp_password_]',
+								fidelapp.passwordInputChangeEvent);
+						$('#fileList').on('change', '[id^=fidelapp_showlink_]',
+								fidelapp.toggleShareLink);
 					});
 
 })(jQuery);

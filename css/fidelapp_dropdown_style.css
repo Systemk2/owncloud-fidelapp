@@ -14,10 +14,13 @@
 	z-index: 500;
 }
 
-#fidelapp_dropdown form {
-	font-size: 100%;
-	margin-left: 0;
-	margin-right: 0;
+#fileList span>a.action.fidelapp_permanent {
+	display: inline;
+	opacity: 0.5;
+}
+
+#fidelapp_dropdown .hidden {
+	display: none !important;
 }
 
 #fidelapp_dropdown label {
@@ -29,32 +32,51 @@
 	margin: 0 0.2em 0 0.5em;
 }
 
-#fidelapp_dropdown .checked.disabled {
+#fidelapp_dropdown a.checked.disabled {
 	background-image: url("/owncloud/apps/fidelapp/img/checkmark-gray.png");
 	color: #000000;
 	cursor: default;
 }
 
-#fidelapp_dropdown .checked {
+#fidelapp_dropdown a.checked {
 	background-image: url("/owncloud/apps/fidelapp/img/checkmark-green.png");
-	margin: 3px 0 3px -25px;
+	/* margin: 3px 0 3px -25px; */
 }
 
-#fidelapp_dropdown .action {
+#fidelapp_dropdown a.checked.action {
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: contain;
-	height: 16px !important;
+	height: 16px;
 	padding: 0;
 	width: 16px;
+	display: inline;
+	opacity: 0.5;
+}
+
+#fidelapp_dropdown a.checked.disabled.action:hover {
+	opacity: 0.5;
+	display: inline;
+}
+
+#fidelapp_dropdown a.checked.action:hover {
+	opacity: 0.8;
+	display: inline;
 }
 
 #shareWithFidelAppList span {
 	float: left;
 }
 
-#shareWithFidelAppList li {
+#shareWithFidelAppList li div {
 	clear: left;
+}
+
+#shareWithFidelAppList li {
+	border-top: 1px solid #DDDDDD;
+	padding-top: 0.5em;
+	float: left;
+	width: 100%;
 }
 
 #shareWithFidelAppList .fidelapp_mailto {
@@ -63,7 +85,8 @@
 	float: right;
 }
 
-#shareWithFidelAppList .fidelapp_mailto:hover,#shareWithFidelAppList .fidelapp_triangle:hover {
+#shareWithFidelAppList .fidelapp_mailto:hover,#shareWithFidelAppList .fidelapp_triangle:hover
+	{
 	opacity: 0.8;
 }
 
@@ -88,7 +111,7 @@
 #shareWithFidelAppList .fidelapp_triangle {
 	background-image: url("/owncloud/core/img/actions/triangle-s.svg");
 	cursor: pointer;
-	opacity: 0.6;
+	opacity: 0.5;
 }
 
 .fidelapp_key-green {
@@ -101,4 +124,9 @@
 
 #fidelapp_password_div {
 	clear: left
+}
+
+input.fidelapp_url {
+	width: 100%;
+	padding: 0.6em 0 0.4em;
 }

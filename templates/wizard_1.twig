@@ -1,0 +1,12 @@
+<fieldset class="personalblock">
+	<h3>{{ trans('How should your OwnCloud server be accessed from Internet?') }}</h3>
+	<p>
+		<input id="accessTypeDirect" type="radio" name="accessType" value="direct" /> <label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. www.mycompany.com)') }}</label>
+	</p>
+	<p>
+		<input id="accessTypeFidelbox" type="radio" name="accessType" value="fidelbox" /> <label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
+	</p>
+</fieldset>
+{% if(wizard_step2) %}
+<div id="fidelapp_wizard_step2">{% include "#{wizard_step2}.twig" %}</div>
+{% endif %}

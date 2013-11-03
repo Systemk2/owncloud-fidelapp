@@ -8,7 +8,7 @@ use \OCA\FidelApp\Db\ContactShareItemMapper;
 
 class PageController extends Controller {
 
-	public function __construct($api, $request) {
+	public function __construct($api, $request){
 		parent::__construct($api, $request);
 	}
 
@@ -21,10 +21,8 @@ class PageController extends Controller {
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 */
-	public function index() {
-		return $this->render('main', array (
-				'msg' => 'Hello World'
-		));
+	public function fidelApp(){
+		return $this->render('fidelapp');
 	}
 
 	/**
@@ -32,7 +30,16 @@ class PageController extends Controller {
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 */
-	public function createDropdown() {
+	public function wizard(){
+		return $this->render('fidelapp', array('menu' => 'wizard', 'actionTemplate' => 'wizard_1'));
+	}
+
+	/**
+	 * @CSRFExemption
+	 * @IsAdminExemption
+	 * @IsSubAdminExemption
+	 */
+	public function createDropdown(){
 		$api = new API();
 		$mapper = new ContactShareItemMapper($api);
 

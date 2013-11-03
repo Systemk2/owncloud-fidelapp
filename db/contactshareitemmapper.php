@@ -11,15 +11,14 @@ class ContactShareItemMapper extends Mapper {
 	protected $contactItemMapper;
 	protected $shareItemMapper;
 
-	public function __construct(API $api) {
+	public function __construct(API $api){
 		$this->api = $api;
 		$this->contactItemMapper = new ContactItemMapper($api);
 		$this->shareItemMapper = new ShareItemMapper($api);
 	}
 
-	public function findByUserFile($userId, $fileId) {
-		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
-				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ?';
+	public function findByUserFile($userId, $fileId){
+		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
@@ -29,9 +28,8 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
-	public function findByUserFileEmail($userId, $fileId, $email) {
-		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
-				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ? AND C.`email` = ? ';
+	public function findByUserFileEmail($userId, $fileId, $email){
+		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ? AND C.`email` = ? ';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
@@ -42,7 +40,7 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
-	public function save(ContactShareItem $item) {
+	public function save(ContactShareItem $item){
 		$contactItem = $item->getContactItem();
 		$shareItem = $item->getShareItem();
 
@@ -73,7 +71,7 @@ class ContactShareItemMapper extends Mapper {
 		$this->shareItemMapper->save($shareItem);
 	}
 
-	protected function mapRowToEntity($row) {
+	protected function mapRowToEntity($row){
 		$contactItemProperties = array ();
 		$shareItemProperties = array ();
 
