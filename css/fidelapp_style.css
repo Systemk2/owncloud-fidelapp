@@ -12,6 +12,10 @@
 	width: 20em;
 }
 
+#fidelapp {
+	height: 100%;
+}
+
 #fidelapp>#leftcontent h3:hover,#leftcontent h3:active,#leftcontent h3.active
 	{
 	background-color: #DBDBDB;
@@ -38,15 +42,18 @@
 
 #fidelapp>#rightcontent {
 	width: 100%;
-	padding-left: 8em;
-}
-
-#fidelapp>#rightcontent h3 {
-	font-weight: bold;
-	padding: 1em 0 1em;
 }
 
 #fidelapp>#rightcontent label {
 	font-weight: normal;
 	padding: 0.3em;
+}
+
+#fidelapp_wizard_step2 label {
+	display: inline-block;
+	width: 10em;
+}
+
+#fidelapp_wizard_step2 input[type="text"] {
+	width: 15em;
 }

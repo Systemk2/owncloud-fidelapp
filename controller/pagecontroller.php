@@ -31,7 +31,17 @@ class PageController extends Controller {
 	 * @IsSubAdminExemption
 	 */
 	public function wizard(){
-		return $this->render('fidelapp', array('menu' => 'wizard', 'actionTemplate' => 'wizard_1'));
+		$params = array('menu' => 'wizard', 'actionTemplate' => 'wizard_1');
+		if($this->params('selection')) {
+			if($this->params('selection') == 'accessTypeDirect') {
+				$params['wizard_step2'] = 'wizard_2a';
+			} else if($this->params('selection') == 'accessTypeFidelbox') {
+				$params['wizard_step2'] = 'wizard_2b';
+			}
+			$params['selection'] = $this->params('selection');
+			return $this->render('fidelapp', $params, '');
+		}
+		return $this->render('fidelapp', $params);
 	}
 
 	/**

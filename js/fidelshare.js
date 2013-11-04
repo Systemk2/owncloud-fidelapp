@@ -57,7 +57,8 @@
 							.addClass('fidelapp_permanent');
 				},
 				error : function(error) {
-					alert('Error in ajax: ' + error);
+					OC.dialogs.alert(error, t('fidelapp',
+					'Ajax error'));
 				}
 			});
 		},

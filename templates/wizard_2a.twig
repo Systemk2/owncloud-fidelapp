@@ -1,0 +1,11 @@
+<div>
+	<fieldset class="personalblock">
+		<p>
+			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_fixedIp" value="fixedIp" readonly="true" /><label for="fidelapp_fixedIp">{{ trans('Fixed IP-Address') }}:</label><input id="fidelapp_fixedIp" type="text" placeholder="x.x.x.x" maxlength="15" readonly="true" />
+		</p>
+		<p>
+			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_domainName" value="domainName" readonly="true" /><label for="fidelapp_domainName">{{ trans('Own Domain') }}:</label><input id="fidelapp_domainName" type="text" placeholder="www.mycompany.com" maxlength="512" readonly="true" />
+		</p>
+	<button>{{ trans('Save') }}</button>
+	</fieldset>
+</div>
