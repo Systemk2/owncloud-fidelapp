@@ -1,14 +1,34 @@
 (function($) {
 	var fidelwizard = null;
 	fidelwizard = {
-			selectedAccessType: function(event) {
-				var selection = event.target.id;
-				var url = OC.Router.generate('fidelapp_wizard', {
-					selection : selection
-				});
+			doSelection: function(event) {
+				var eventId = event.target.id;
+				var url = OC.Router.generate('fidelapp_wizard');
+				var selection = null;
+				var selection2 = null;
+				var domainOrIp = null;
+				if(eventId == 'fidelapp_save') {
+					selection =  $('input[name=fidelapp_accessType]:checked').val();
+					selection2 = $('input[name=fidelapp_fixedIpOrDomain]:checked').val();
+					if(!selection || !selection2) {
+						// One of the radio buttons is not selected
+						return;
+					}
+					if(selection2 == 'fixedIp') {						
+						domainOrIp = $('#fidelapp_fixedIp').val();
+					} else 	if(selection2 == 'domainName') {						
+						domainOrIp = $('#fidelapp_domainName').val();
+					} else {
+						// Unknown radio button value
+						return;
+					}
+				} else if(eventId == 'accessTypeDirect' || eventId == 'accessTypeFidelbox') {
+					selection = eventId;
+				}
 				$.ajax({
 					type : 'GET',
 					url : url,
+					data: { selection: selection, selection2 : selection2 , domainOrIp : domainOrIp },
 					async : false,
 					success : function(html) {
 						$('#content').html(html);
@@ -35,7 +55,8 @@
 			}
 	};
 	$(document).ready(function() {
-		$('#content').on('change', 'input[name=fidelapp_accessType]', fidelwizard.selectedAccessType);
+		$('#content').on('change', 'input[name=fidelapp_accessType]', fidelwizard.doSelection);
 		$('#content').on('click', 'input[name=fidelapp_fixedIpOrDomain], #fidelapp_fixedIp, #fidelapp_domainName', fidelwizard.togglefixedIpOrDomain);
+		$('#content').on('click', '#fidelapp_save', fidelwizard.doSelection); 
 	});
 })(jQuery);

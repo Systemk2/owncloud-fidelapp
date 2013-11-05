@@ -3,10 +3,12 @@
 	<fieldset class="personalblock">
 		<legend>{{ trans('How should your OwnCloud server be accessed from Internet?') }}</legend>
 		<p>
-			<input id="accessTypeDirect"   {{ selection == 'accessTypeDirect' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="direct" /> <label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. www.mycompany.com)') }}</label>
+			<input id="accessTypeDirect"    {{ selection == 'accessTypeDirect' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeDirect" />
+			<label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. www.mycompany.com)') }}</label>
 		</p>
 		<p>
-			<input id="accessTypeFidelbox"   {{ selection == 'accessTypeFidelbox' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="fidelbox" /> <label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
+			<input id="accessTypeFidelbox"    {{ selection == 'accessTypeFidelbox' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
+			<label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
 		</p>
 	</fieldset>
 	{% if(wizard_step2) %}

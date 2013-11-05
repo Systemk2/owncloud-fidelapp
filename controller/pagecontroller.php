@@ -39,6 +39,8 @@ class PageController extends Controller {
 				$params['wizard_step2'] = 'wizard_2b';
 			}
 			$params['selection'] = $this->params('selection');
+			$params['selection2'] = $this->params('selection2');
+			$params['domainOrIp'] = $this->params('domainOrIp');
 			return $this->render('fidelapp', $params, '');
 		}
 		return $this->render('fidelapp', $params);
