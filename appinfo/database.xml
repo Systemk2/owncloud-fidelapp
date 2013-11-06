@@ -45,6 +45,13 @@
 				</comments>
 			</field>
 			<index>
+				<name>primary_key_fidelapp_contacts</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+			<index>
 				<name>constraint_unique_fidelapp_contacts</name>
 				<unique>true</unique>
 				<field>
@@ -126,6 +133,13 @@
 				<comments>The notification e-mail for successful download</comments>
 			</field>
 			<index>
+				<name>primary_key_fidelapp_shares</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+			<index>
 				<name>constraint_unique_fidelapp_shares</name>
 				<unique>true</unique>
 				<field>
@@ -136,7 +150,7 @@
 				</field>
 			</index>
 			<foreign>
-				<name>fk_contact</name>
+				<name>foreign_key_fidelapp_contacts</name>
 				<field>contact_id</field>
 				<references>
 					<table>*dbprefix*fidelapp_contacts</table>
@@ -145,6 +159,73 @@
 				<ondelete>cascade</ondelete>
 				<onupdate>cascade</onupdate>
 			</foreign>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*fidelapp_config</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
+				<name>user_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Owncloud user</comments>
+			</field>
+			<field>
+				<name>fixed_ip</name>
+				<type>text</type>
+				<length>15</length>
+				<comments>Optional field: fixed ip</comments>
+			</field>
+			<field>
+				<name>domain_name</name>
+				<type>text</type>
+				<length>512</length>
+				<comments>Optional field: domain name</comments>
+			</field>
+			<field>
+				<name>fidelbox_user</name>
+				<type>text</type>
+				<length>64</length>
+				<comments>Optional field: fidelbox.de user id</comments>
+			</field>
+			<field>
+				<name>fidelbox_password</name>
+				<type>text</type>
+				<length>64</length>
+				<comments>Optional field: fidelbox.de password</comments>
+			</field>
+			<field>
+				<name>use_ssl</name>
+				<type>boolean</type>
+				<length>1</length>
+				<default>0</default>
+				<notnull>true</notnull>
+				<comments>Should SSL be used to contact fidelapp from Internet</comments>
+			</field>
+			<index>
+				<name>primary_key_fidelapp_config</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+			<index>
+				<name>constraint_unique_fidelapp_config</name>
+				<unique>true</unique>
+				<field>
+					<name>user_id</name>
+				</field>
+			</index>
 		</declaration>
 	</table>
 </database>

@@ -41,6 +41,7 @@ class PageController extends Controller {
 			$params['selection'] = $this->params('selection');
 			$params['selection2'] = $this->params('selection2');
 			$params['domainOrIp'] = $this->params('domainOrIp');
+			$params['useSSL'] = $this->params('useSSL');
 			return $this->render('fidelapp', $params, '');
 		}
 		return $this->render('fidelapp', $params);
