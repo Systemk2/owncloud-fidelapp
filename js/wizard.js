@@ -4,17 +4,20 @@
 		doSelection : function(event) {
 			event.preventDefault();
 			var eventId = event.target.id;
+			var selection = $('input[name=fidelapp_accessType]:checked').val();
+			if (!selection) {
+				// None of the radio buttons selected
+				return;
+			}
 			var url = OC.Router.generate('fidelapp_wizard');
-			var selection = null;
 			var selection2 = null;
 			var domainOrIp = null;
 			var useSSL = null;
-			if (eventId == 'fidelapp_save') {
-				selection = $('input[name=fidelapp_accessType]:checked').val();
+			if (eventId == 'fidelapp_save2a') {
 				selection2 = $('input[name=fidelapp_fixedIpOrDomain]:checked')
 						.val();
-				if (!selection || !selection2) {
-					// One of the radio buttons is not selected
+				if (!selection2) {
+					// None of the radio buttons selected
 					return;
 				}
 				useSSL = $('#fidelapp_https').prop('checked');
@@ -22,16 +25,19 @@
 					domainOrIp = $('#fidelapp_fixedIp').val();
 				} else if (selection2 == 'domainName') {
 					domainOrIp = $('#fidelapp_domainName').val();
-				} else {
-					// Unknown radio button value
-					return;
 				}
-			} else if (eventId == 'accessTypeDirect'
+			} /*else if (eventId == 'accessTypeDirect'
 					|| eventId == 'accessTypeFidelbox') {
 				selection = eventId;
 			} else {
 				// Unknown event trigger
 				return;
+			}*/
+			var captcha = null;
+			var password = null;
+			if (eventId == 'fidelapp_save2b') {
+				captcha = $('#fidelapp_captcha').val();
+				password = $('#fidelapp_password').val();
 			}
 			$.ajax({
 				type : 'GET',
@@ -40,12 +46,14 @@
 					selection : selection,
 					selection2 : selection2,
 					domainOrIp : domainOrIp,
-					useSSL : useSSL
+					useSSL : useSSL,
+					captcha : captcha,
+					password : password
 				},
 				async : false,
 				success : function(html) {
 					$('#content').html(html);
-					if (eventId == 'fidelapp_save') {
+					if (eventId == 'fidelapp_save2a' || eventId == 'fidelapp_save2b') {
 						OC.dialogs.info(t('fidelapp',
 								'The settings have been saved'), t('fidelapp',
 								'Saved'));
@@ -86,7 +94,7 @@
 										'click',
 										'input[name=fidelapp_fixedIpOrDomain], #fidelapp_fixedIp, #fidelapp_domainName',
 										fidelwizard.togglefixedIpOrDomain);
-						$('#content').on('click', '#fidelapp_save',
+						$('#content').on('click', '#fidelapp_save2a, #fidelapp_save2b',
 								fidelwizard.doSelection);
 					});
 })(jQuery);

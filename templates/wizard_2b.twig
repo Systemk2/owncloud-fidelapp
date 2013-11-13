@@ -2,7 +2,7 @@
 	<fieldset class="personalblock">
 		<p>
 			<label for="fidelapp_password">{{ trans('Choose a password') }}:</label>
-			<input id="fidelapp_password" type="text" placeholder="{{ trans('Enter password') }}" maxlength="15" />
+			<input id="fidelapp_password" type="text" value="{{ password }}" placeholder="{{ trans('Enter password') }}" maxlength="15" />
 		</p>
 		<p>
 			<img alt="fidelbox captcha" src="{{ urlFidelboxCaptcha }}">
@@ -15,6 +15,6 @@
 			<input type="checkbox" name="fidelapp_https" value="https" id="fidelapp_https"   {{ useSSL == 'true' ? 'checked="true"' : '' }} />
 			<label for="fidelapp_https">{{ trans('Connection should be made via secure https') }}</label>
 		</p>
-		<button id="fidelapp_save">{{ trans('Save') }}</button>
+		<button id="fidelapp_save2b">{{ trans('Save') }}</button>
 	</fieldset>
 </div>
