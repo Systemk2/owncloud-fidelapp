@@ -1,0 +1,8 @@
+{% if(errors) %}
+<div id="fidelapp_errors">
+<ul>
+	{% for error in errors %}
+	<li>{{ error }}</li> {% endfor %}
+</ul>
+</div>
+{% endif %}

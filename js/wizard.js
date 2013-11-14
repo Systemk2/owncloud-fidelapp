@@ -26,19 +26,15 @@
 				} else if (selection2 == 'domainName') {
 					domainOrIp = $('#fidelapp_domainName').val();
 				}
-			} /*else if (eventId == 'accessTypeDirect'
-					|| eventId == 'accessTypeFidelbox') {
-				selection = eventId;
-			} else {
-				// Unknown event trigger
-				return;
-			}*/
+			}
 			var captcha = null;
 			var password = null;
 			if (eventId == 'fidelapp_save2b') {
 				captcha = $('#fidelapp_captcha').val();
 				password = $('#fidelapp_password').val();
 			}
+			$('#fidelapp_errors').hide();
+			$('#rightcontent').prepend('<div id="fidelapp_spinner"><img src="' + OC.imagePath('core', 'loader.gif') + '" /></div>');
 			$.ajax({
 				type : 'GET',
 				url : url,
@@ -54,9 +50,9 @@
 				success : function(html) {
 					$('#content').html(html);
 					if (eventId == 'fidelapp_save2a' || eventId == 'fidelapp_save2b') {
-						OC.dialogs.info(t('fidelapp',
+						/*OC.dialogs.info(t('fidelapp',
 								'The settings have been saved'), t('fidelapp',
-								'Saved'));
+								'Saved'));*/
 					}
 				},
 				error : function(error) {

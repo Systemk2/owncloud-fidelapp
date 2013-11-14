@@ -41,7 +41,7 @@ class PageController extends Controller {
 						'menu' => 'wizard',
 						'actionTemplate' => 'wizard_1'
 				));
-		if ($this->params('selection')) {
+		if ($this->hasParam('selection')) {
 			$templateParams->add('selection');
 			$templateParams->add('selection2');
 			$templateParams->add('useSSL');
@@ -52,22 +52,26 @@ class PageController extends Controller {
 				));
 			} elseif ($this->params('selection') == 'accessTypeFidelbox') {
 				$savedPassword = false;
-				if ($this->params('captcha') && $this->params('password')) {
+				if ($this->hasParam('password')) {
 					$templateParams->add('password');
 					try {
 						$savedPassword = $this->savePassword($this->params('captcha'), $this->params('password'));
 					} catch ( \Exception $e ) {
 						$templateParams->add(array (
-								'errorMessage' => $e->getMessage()
+								'errors' => array (
+										$e->getMessage()
+								)
 						));
 					}
 				}
+				$templateParams->add(array (
+						'wizard_step2' => 'wizard_2b'
+				));
+
 				if (! $savedPassword) {
-					$templateParams->add(
-							array (
-									'urlFidelboxCaptcha' => $this->createCaptchaURL(),
-									'wizard_step2' => 'wizard_2b'
-							));
+					$templateParams->add(array (
+							'urlFidelboxCaptcha' => $this->createCaptchaURL()
+					));
 				}
 			}
 			// Render page without header and footer
@@ -88,18 +92,25 @@ class PageController extends Controller {
 			$entity->setFidelboxUser(uniqid('', true));
 			$mapper->save($entity);
 		}
-		return FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($entity->getUserId());
+		return FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($entity->getFidelboxUser()) . '&token=' . uniqid();
 	}
 
 	public function savePassword($captcha, $password) {
-		$l = \OC_L10N::get($this->api->getAppName());
+		$l = $this->api->getTrans();
 		if (strlen($password) < 6) {
-			throw new \OCA\FidelApp\PasswordNotGoodException($l->t('Password needs to be at least 6 characters long'));
+			throw new \OCA\FidelApp\PasswordNotGoodException(
+					$l->t('Password needs to be at least $1 characters long', array (
+							'$1' => 6
+					)));
 		}
 		$captchaNotMatchException = new \OCA\FidelApp\CaptchaNotMatchException($l->t('Wrong captcha'));
 		if (strlen($captcha) != 6) {
 			throw $captchaNotMatchException;
 		}
+
+		$mapper = new ConfigItemMapper($this->api);
+		$entity = $mapper->findByUser($this->api->getUserId());
+
 		// set a sensible timeout of 10 sec to stay responsive even if the fidelbox server is down.
 		$ctx = stream_context_create(array (
 				'http' => array (
@@ -107,13 +118,13 @@ class PageController extends Controller {
 				)
 		));
 		$json = @file_get_contents(
-				FIDELBOX_URL . '/fidelapp/savepassword.php?captcha=' . urlencode($captcha) . '&password=' . urlencode($password),
+				FIDELBOX_URL . '/fidelapp/setpassword.php?userId=' . $entity->getFidelboxUser() .  '&captcha=' . urlencode($captcha) . '&password=' . urlencode($password),
 				false, $ctx);
 		if (! $json) {
 			throw new \RuntimeException(FIDELBOX_URL . $l->t(' did not return any result'));
 		}
 		$return = json_decode($json, true);
-		if($return == null) {
+		if ($return == null) {
 			throw new \RuntimeException(FIDELBOX_URL . $l->t(' did return an unparsable  result: ') . $json);
 		}
 		if ($return ['status'] != 'success') {
@@ -130,6 +141,14 @@ class PageController extends Controller {
 			}
 		}
 		return true;
+	}
+
+	private function hasParam($param) {
+		if (gettype($param) != 'string')
+			throw new \BadMethodCallException('hasParam expected parameter to be string, but ' . gettype($param) . ' given');
+
+		$paramValue = $this->params($param);
+		return ($paramValue && $paramValue != 'null');
 	}
 
 	/**

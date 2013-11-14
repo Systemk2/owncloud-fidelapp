@@ -66,3 +66,18 @@
 #fidelapp_wizard_step2 input[type="text"] {
 	width: 15em;
 }
+
+#fidelapp_errors {
+	margin-left: 3em;
+	color: #FF2000;
+	width: 50em;
+}
+
+#fidelapp_errors ul {
+	list-style: square;
+}
+
+#fidelapp_spinner {
+	position: absolute;
+	padding-left: 3em;
+}
