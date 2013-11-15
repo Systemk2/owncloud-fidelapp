@@ -12,15 +12,14 @@
 			var url = OC.Router.generate('fidelapp_wizard');
 			var selection2 = null;
 			var domainOrIp = null;
-			var useSSL = null;
-			if (eventId == 'fidelapp_save2a') {
+			var useSSL = $('#fidelapp_https').prop('checked');
+			if (eventId == 'fidelapp_fixedipordomain') {
 				selection2 = $('input[name=fidelapp_fixedIpOrDomain]:checked')
 						.val();
 				if (!selection2) {
 					// None of the radio buttons selected
 					return;
 				}
-				useSSL = $('#fidelapp_https').prop('checked');
 				if (selection2 == 'fixedIp') {
 					domainOrIp = $('#fidelapp_fixedIp').val();
 				} else if (selection2 == 'domainName') {
@@ -28,10 +27,10 @@
 				}
 			}
 			var captcha = null;
-			var password = null;
-			if (eventId == 'fidelapp_save2b') {
+			var fidelboxUser = null;
+			if (eventId == 'fidelapp_fidelbox') {
 				captcha = $('#fidelapp_captcha').val();
-				password = $('#fidelapp_password').val();
+				fidelboxUser = $('#fidelboxUser').val();
 			}
 			$('#fidelapp_errors').hide();
 			$('#rightcontent').prepend('<div id="fidelapp_spinner"><img src="' + OC.imagePath('core', 'loader.gif') + '" /></div>');
@@ -44,12 +43,12 @@
 					domainOrIp : domainOrIp,
 					useSSL : useSSL,
 					captcha : captcha,
-					password : password
+					fidelboxUser : fidelboxUser
 				},
 				async : false,
 				success : function(html) {
 					$('#content').html(html);
-					if (eventId == 'fidelapp_save2a' || eventId == 'fidelapp_save2b') {
+					if (eventId == 'fidelapp_fixedipordomain' || eventId == 'fidelapp_fidelbox') {
 						/*OC.dialogs.info(t('fidelapp',
 								'The settings have been saved'), t('fidelapp',
 								'Saved'));*/
@@ -90,7 +89,7 @@
 										'click',
 										'input[name=fidelapp_fixedIpOrDomain], #fidelapp_fixedIp, #fidelapp_domainName',
 										fidelwizard.togglefixedIpOrDomain);
-						$('#content').on('click', '#fidelapp_save2a, #fidelapp_save2b',
+						$('#content').on('click', '#fidelapp_fixedipordomain, #fidelapp_fidelbox',
 								fidelwizard.doSelection);
 					});
 })(jQuery);

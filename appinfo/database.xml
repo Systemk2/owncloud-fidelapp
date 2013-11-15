@@ -199,12 +199,6 @@
 				<comments>Optional field: fidelbox.de user id</comments>
 			</field>
 			<field>
-				<name>fidelbox_password</name>
-				<type>text</type>
-				<length>64</length>
-				<comments>Optional field: fidelbox.de password</comments>
-			</field>
-			<field>
 				<name>use_ssl</name>
 				<type>boolean</type>
 				<length>1</length>

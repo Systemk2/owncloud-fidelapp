@@ -7,7 +7,7 @@ use \OCA\FidelApp\API;
 
 class ShareItemMapper extends Mapper {
 
-	public function __construct(API $api){
+	public function __construct(API $api) {
 		parent::__construct($api, 'fidelapp_shares'); // tablename is fidelapp_shares
 	}
 
@@ -20,7 +20,7 @@ class ShareItemMapper extends Mapper {
 	 * @throws DoesNotExistException if the item does not exist
 	 * @throws MultipleObjectsReturnedException if more than one item exists
 	 */
-	public function findByContactFile($contactId, $fileId){
+	public function findByContactFile($contactId, $fileId) {
 		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `contact_id` = ? AND `file_id` = ?';
 		
 		return $this->findEntity($sql, array (
@@ -29,7 +29,7 @@ class ShareItemMapper extends Mapper {
 		));
 	}
 
-	public function save(ShareItem $shareItem){
+	public function save(ShareItem $shareItem) {
 		$id = $shareItem->getId();
 		if ($id === null) {
 			$shareItem = $this->insert($shareItem);

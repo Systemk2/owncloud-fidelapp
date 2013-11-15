@@ -2,14 +2,14 @@
 
 namespace OCA\FidelApp\Controller;
 
-\OC::$CLASSPATH ['OCA\FidelApp\CaptchaNotMatchException'] = 'fidelapp/lib/exception.php';
-\OC::$CLASSPATH ['OCA\FidelApp\PasswordNotGoodException'] = 'fidelapp/lib/exception.php';
-
 use \OCA\AppFramework\Controller\Controller;
 use \OCA\FidelApp\API;
+use \OCA\FidelApp\FidelboxConfig;
 use \OCA\FidelApp\TemplateParams;
+use \OCA\FidelApp\Db\ConfigItem;
 use \OCA\FidelApp\Db\ConfigItemMapper;
 use \OCA\FidelApp\Db\ContactShareItemMapper;
+use OCA\AppFramework\Db\Entity;
 
 class PageController extends Controller {
 
@@ -39,106 +39,112 @@ class PageController extends Controller {
 		$templateParams = new TemplateParams($this->getParams(),
 				array (
 						'menu' => 'wizard',
-						'actionTemplate' => 'wizard_1'
-				));
-		if ($this->hasParam('selection')) {
-			$templateParams->add('selection');
-			$templateParams->add('selection2');
-			$templateParams->add('useSSL');
-			if ($this->params('selection') == 'accessTypeDirect') {
-				$templateParams->add('domainOrIp');
-				$templateParams->add(array (
-						'wizard_step2' => 'wizard_2a'
-				));
-			} elseif ($this->params('selection') == 'accessTypeFidelbox') {
-				$savedPassword = false;
-				if ($this->hasParam('password')) {
-					$templateParams->add('password');
-					try {
-						$savedPassword = $this->savePassword($this->params('captcha'), $this->params('password'));
-					} catch ( \Exception $e ) {
-						$templateParams->add(array (
-								'errors' => array (
-										$e->getMessage()
-								)
-						));
-					}
-				}
-				$templateParams->add(array (
-						'wizard_step2' => 'wizard_2b'
+						'actionTemplate' => 'wizard'
 				));
 
-				if (! $savedPassword) {
-					$templateParams->add(array (
-							'urlFidelboxCaptcha' => $this->createCaptchaURL()
-					));
-				}
-			}
-			// Render page without header and footer
-			return $this->render('fidelapp', $templateParams->getAll(), '');
-		}
-		// Render page with header and footer
-		return $this->render('fidelapp', $templateParams->getAll());
-	}
-
-	private function createCaptchaURL() {
 		$mapper = new ConfigItemMapper($this->api);
 		try {
 			$entity = $mapper->findByUser($this->api->getUserId());
-		} catch ( \OCA\AppFramework\Db\DoesNotExistException $e ) {
+		} catch(\OCA\AppFramework\Db\DoesNotExistException $e) {
 			$entity = new ConfigItem();
 			$entity->setUserId($this->api->getUserId());
-			// Create a new random user id
-			$entity->setFidelboxUser(uniqid('', true));
-			$mapper->save($entity);
 		}
-		return FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($entity->getFidelboxUser()) . '&token=' . uniqid();
+
+		if (! $this->hasParam('selection')) {
+			if ($entity->getDomainName() || $entity->getFixedIp()) {
+				$templateParams->add(
+						array (
+								'selection' => 'accessTypeDirect',
+								'useSSL' => $entity->getUseSsl()
+						));
+			} elseif ($entity->getFidelboxUser()) {
+				$templateParams->add(
+						array (
+								'selection' => 'accessTypeFidelbox',
+								'useSSL' => $entity->getUseSsl()
+						));
+			}
+			// Render page with header and footer
+			return $this->render('fidelapp', $templateParams->getAll());
+		}
+
+		$entity->setUseSsl($this->params('useSSL'));
+
+		$templateParams->add('selection');
+		$templateParams->add('useSSL');
+
+		if ($this->params('selection') == 'accessTypeDirect') {
+			if ($this->manageDirectAccess($entity, $templateParams)) {
+				$mapper->save($entity);
+			}
+		} elseif ($this->params('selection') == 'accessTypeFidelbox') {
+			if ($this->manageFidelboxConfig($entity, $templateParams)) {
+				$mapper->save($entity);
+			}
+		}
+
+		// Render page without header and footer
+		return $this->render('fidelapp', $templateParams->getAll(), '');
 	}
 
-	public function savePassword($captcha, $password) {
-		$l = $this->api->getTrans();
-		if (strlen($password) < 6) {
-			throw new \OCA\FidelApp\PasswordNotGoodException(
-					$l->t('Password needs to be at least $1 characters long', array (
-							'$1' => 6
-					)));
+	private function manageDirectAccess(ConfigItem & $entity, TemplateParams & $templateParams) {
+		$domainOrIp = $this->params('domainOrIp');
+		if ($this->params('selection2') == 'fixedIp') {
+			$entity->setFixedIp($domainOrIp);
+			$entity->setDomainName(null);
+			$templateParams->add(array (
+					'fixedIp' => $domainOrIp
+			));
+		} elseif ($this->params('selection2') == 'domainName') {
+			$entity->setDomainName($this->params('domainOrIp'));
+			$entity->setFixedIp(null);
+			$templateParams->add(array (
+					'domainName' => $domainOrIp
+			));
+		} else {
+			$templateParams->add(
+					array (
+							'domainName' => $entity->getDomainName(),
+							'fixedIp' => $entity->getFixedIp()
+					));
 		}
-		$captchaNotMatchException = new \OCA\FidelApp\CaptchaNotMatchException($l->t('Wrong captcha'));
-		if (strlen($captcha) != 6) {
-			throw $captchaNotMatchException;
-		}
+		$entity->setFidelboxUser(null);
 
-		$mapper = new ConfigItemMapper($this->api);
-		$entity = $mapper->findByUser($this->api->getUserId());
-
-		// set a sensible timeout of 10 sec to stay responsive even if the fidelbox server is down.
-		$ctx = stream_context_create(array (
-				'http' => array (
-						'timeout' => 10
-				)
+		$templateParams->add(array (
+				'wizard_step2' => 'wizard_fixedipordomain'
 		));
-		$json = @file_get_contents(
-				FIDELBOX_URL . '/fidelapp/setpassword.php?userId=' . $entity->getFidelboxUser() .  '&captcha=' . urlencode($captcha) . '&password=' . urlencode($password),
-				false, $ctx);
-		if (! $json) {
-			throw new \RuntimeException(FIDELBOX_URL . $l->t(' did not return any result'));
+		return true;
+	}
+
+	private function manageFidelboxConfig(ConfigItem & $entity, TemplateParams & $templateParams) {
+		$fidelboxConfig = new FidelboxConfig($this->api);
+		// Temporary fidelbox captcha id
+		$tempUserId = null;
+		if ($this->hasParam('fidelboxUser')) {
+			$tempUserId = $this->params('fidelboxUser');
+		} else {
+			// Create a new random user id
+			$tempUserId = uniqid('', true);
 		}
-		$return = json_decode($json, true);
-		if ($return == null) {
-			throw new \RuntimeException(FIDELBOX_URL . $l->t(' did return an unparsable  result: ') . $json);
-		}
-		if ($return ['status'] != 'success') {
-			if (! isset($return ['message'])) {
-				throw new \RuntimeException($l->t('Unexpected error while trying to save password on ' . FIDELBOX_URL));
-			}
-			if ($return ['message'] == 'Captcha did not match') {
-				throw $captchaNotMatchException;
-			} else {
-				throw new \RuntimeException(
-						$l->t(
-								'The following error occurred while trying to save password on ' . FIDELBOX_URL . ': ' .
-										 $return ['message']));
-			}
+		$templateParams->add(
+				array (
+						'wizard_step2' => 'wizard_fidelbox',
+						'urlFidelboxCaptcha' => $fidelboxConfig->createCaptchaURL($tempUserId),
+						'fidelboxUser' => $tempUserId
+				));
+
+		try {
+			$userId = $fidelboxConfig->createAccount($tempUserId, $this->params('captcha'));
+			$entity->setDomainName(null);
+			$entity->setFixedIp(null);
+			$entity->setFidelboxUser($userId);
+		} catch(\Exception $e) {
+			$templateParams->add(array (
+					'errors' => array (
+							$e->getMessage()
+					)
+			));
+			return false;
 		}
 		return true;
 	}

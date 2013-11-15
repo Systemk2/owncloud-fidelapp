@@ -6,16 +6,16 @@ use \OCA\AppFramework\App;
 use \OCA\FidelApp\DependencyInjection\DIContainer;
 
 $this->create('fidelapp_create_dropdown', '/dropdown')->action(
-		function ($params){
+		function ($params) {
 			App::main('PageController', 'createDropdown', $params, new DIContainer());
 		});
 
 $this->create('fidelapp_index', '/')->action(
-		function ($params){
+		function ($params) {
 			App::main('PageController', 'fidelApp', $params, new DIContainer());
 		});
 
 $this->create('fidelapp_wizard', '/wizard')->action(
-		function ($params){
+		function ($params) {
 			App::main('PageController', 'wizard', $params, new DIContainer());
 		});

@@ -1,46 +1,26 @@
 <!-- fidelapp dropdown -->
-<div id="fidelapp_dropdown" class="drop" data-item-type="{{ itemType }}"
-	data-item-source="{{ itemSource }}">
-	<input id="fidelapp_shareWith" type="text"
-		placeholder="{{ trans('Share with') }}" /> <a id="fidelapp_submitLink"
-		class="action checked disabled">&nbsp;&nbsp;</a>
+<div id="fidelapp_dropdown" class="drop" data-item-type="{{ itemType }}" data-item-source="{{ itemSource }}">
+	<input id="fidelapp_shareWith" type="text" placeholder="{{ trans('Share with') }}" />
+	<a id="fidelapp_submitLink" class="action checked disabled">&nbsp;&nbsp;</a>
 	<div>
 		<ul id="shareWithFidelAppList">
 			{% for contactShareItem in shareItems %}
 			<li>
-				<div data-contact-id="{{ contactShareItem.contactItem.id }}"
-					data-share-id="{{ contactShareItem.shareItem.id }}">
+				<div data-contact-id="{{ contactShareItem.contactItem.id }}" data-share-id="{{ contactShareItem.shareItem.id }}">
 					<div>
-						<span
-							class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span>
-						<span>{{ contactShareItem.contactItem.email }}</span> <span
-							class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span
-							class="fidelapp_icon fidelapp_delete">&nbsp;</span> <span
-							class="fidelapp_icon fidelapp_mailto"> &nbsp; </span>
+						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span> <span>{{ contactShareItem.contactItem.email }}</span> <span class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span class="fidelapp_icon fidelapp_delete">&nbsp;</span> <span class="fidelapp_icon fidelapp_mailto"> &nbsp; </span>
 					</div>
-					<div data-contact-id="{{ contactShareItem.contactItem.id }}"
-						class="fidelapp_contact_details {{ contactShareItem.contactItem.password ? 'hidden' : '' }}">
+					<div data-contact-id="{{ contactShareItem.contactItem.id }}" class="fidelapp_contact_details {{ contactShareItem.contactItem.password ? 'hidden' : '' }}">
 						<div>
-							<input
-								id="fidelapp_password_{{ contactShareItem.contactItem.id }}"
-								type="text" placeholder="{{ trans('Enter password') }}"
-								value="{{ contactShareItem.contactItem.password }}" /> <a
-								id="fidelapp_passwordSubmitLink_{{ contactShareItem.contactItem.id }}"
-								class="action checked disabled">&nbsp;&nbsp;</a>
+							<input id="fidelapp_password_{{ contactShareItem.contactItem.id }}" type="text" placeholder="{{ trans('Enter password') }}" value="{{ contactShareItem.contactItem.password }}" />
+							<a id="fidelapp_passwordSubmitLink_{{ contactShareItem.contactItem.id }}" class="action checked disabled">&nbsp;&nbsp;</a>
 						</div>
 						<div>
-							<input
-								id="fidelapp_showlink_{{ contactShareItem.contactItem.id }}"
-								type="checkbox" name="fidelapp_showlink"
-								value="{{ contactShareItem.contactItem.id }}" /><label
-								for="fidelapp_showlink_{{ contactShareItem.contactItem.id }}">{{
-								trans('Show link for share') }}</label>
+							<input id="fidelapp_showlink_{{ contactShareItem.contactItem.id }}" type="checkbox" name="fidelapp_showlink" value="{{ contactShareItem.contactItem.id }}" />
+							<label for="fidelapp_showlink_{{ contactShareItem.contactItem.id }}">{{ trans('Show link for share') }}</label>
 						</div>
 						<div>
-							<input
-								id="fidelapp_shareLink_{{ contactShareItem.contactItem.id }}"
-								class="fidelapp_url hidden" type="text" readonly=true
-								value="http://testlink/blabla" />
+							<input id="fidelapp_shareLink_{{ contactShareItem.contactItem.id }}" class="fidelapp_url hidden" type="text" readonly=true value="http://testlink/blabla" />
 						</div>
 					</div>
 				</div>
