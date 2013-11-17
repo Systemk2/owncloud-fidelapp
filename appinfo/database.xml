@@ -181,6 +181,12 @@
 				<comments>Owncloud user</comments>
 			</field>
 			<field>
+				<name>access_type</name>
+				<type>text</type>
+				<length>32</length>
+				<comments>FIXED_IP, DOMAIN_NAME, FIDELBOX_ACCOUNT or null</comments>
+			</field>
+			<field>
 				<name>fixed_ip</name>
 				<type>text</type>
 				<length>15</length>
@@ -193,10 +199,10 @@
 				<comments>Optional field: domain name</comments>
 			</field>
 			<field>
-				<name>fidelbox_user</name>
+				<name>fidelbox_account</name>
 				<type>text</type>
 				<length>64</length>
-				<comments>Optional field: fidelbox.de user id</comments>
+				<comments>Optional field: fidelbox.de account id</comments>
 			</field>
 			<field>
 				<name>use_ssl</name>

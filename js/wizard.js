@@ -5,57 +5,65 @@
 			event.preventDefault();
 			var eventId = event.target.id;
 			var selection = $('input[name=fidelapp_accessType]:checked').val();
-			if (!selection) {
-				// None of the radio buttons selected
-				return;
-			}
 			var url = OC.Router.generate('fidelapp_wizard');
-			var selection2 = null;
-			var domainOrIp = null;
+			var accessType = null;
+			var action = null;
+			var domain = null;
+			var fixedIp = null;
+			var captcha = null;
+			var fidelboxTempUser = null;
 			var useSSL = $('#fidelapp_https').prop('checked');
+
 			if (eventId == 'fidelapp_fixedipordomain') {
-				selection2 = $('input[name=fidelapp_fixedIpOrDomain]:checked')
-						.val();
+				var selection2 = $(
+						'input[name=fidelapp_fixedIpOrDomain]:checked').val();
 				if (!selection2) {
 					// None of the radio buttons selected
 					return;
 				}
 				if (selection2 == 'fixedIp') {
-					domainOrIp = $('#fidelapp_fixedIp').val();
+					fixedIp = $('#fidelapp_fixedIp').val();
+					accessType = 'FIXED_IP';
 				} else if (selection2 == 'domainName') {
-					domainOrIp = $('#fidelapp_domainName').val();
+					domain = $('#fidelapp_domainName').val();
+					accessType = 'DOMAIN_NAME';
 				}
-			}
-			var captcha = null;
-			var fidelboxUser = null;
-			if (eventId == 'fidelapp_fidelbox') {
+				action = 'saveDirectAccess';
+			} else if (eventId == 'fidelapp_fidelbox') {
 				captcha = $('#fidelapp_captcha').val();
-				fidelboxUser = $('#fidelboxUser').val();
+				fidelboxTempUser = $('#fidelboxTempUser').val();
+				action = 'createFidelboxAccount';
+				accessType = 'FIDELBOX_ACCOUNT';
+			} else if (eventId == 'fidelapp_fidelbox_delete') {
+				action = 'deleteFidelboxAccount';
 			}
 			$('#fidelapp_errors').hide();
-			$('#rightcontent').prepend('<div id="fidelapp_spinner"><img src="' + OC.imagePath('core', 'loader.gif') + '" /></div>');
+			$('#rightcontent')
+					.prepend(
+							'<div id="fidelapp_spinner"><img src="'
+									+ OC.imagePath('core', 'loader.gif')
+									+ '" /></div>');
 			$.ajax({
 				type : 'GET',
 				url : url,
 				data : {
+					action : action,
+					accessType : accessType,
 					selection : selection,
-					selection2 : selection2,
-					domainOrIp : domainOrIp,
+					domain : domain,
+					fixedIp : fixedIp,
 					useSSL : useSSL,
 					captcha : captcha,
-					fidelboxUser : fidelboxUser
+					fidelboxTempUser : fidelboxTempUser,
+					reload : true
 				},
 				async : false,
 				success : function(html) {
 					$('#content').html(html);
-					if (eventId == 'fidelapp_fixedipordomain' || eventId == 'fidelapp_fidelbox') {
-						/*OC.dialogs.info(t('fidelapp',
-								'The settings have been saved'), t('fidelapp',
-								'Saved'));*/
-					}
 				},
 				error : function(error) {
-					OC.dialogs.alert(error, t('fidelapp', 'Ajax Error'));
+					OC.dialogs
+							.alert(error, t('fidelapp', 'Transmission Error'));
 				}
 			});
 		},
@@ -89,7 +97,10 @@
 										'click',
 										'input[name=fidelapp_fixedIpOrDomain], #fidelapp_fixedIp, #fidelapp_domainName',
 										fidelwizard.togglefixedIpOrDomain);
-						$('#content').on('click', '#fidelapp_fixedipordomain, #fidelapp_fidelbox',
-								fidelwizard.doSelection);
+						$('#content')
+								.on(
+										'click',
+										'#fidelapp_fixedipordomain, #fidelapp_fidelbox, #fidelapp_https, #fidelapp_fidelbox_delete',
+										fidelwizard.doSelection);
 					});
 })(jQuery);

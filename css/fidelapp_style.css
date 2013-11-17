@@ -81,3 +81,23 @@
 	position: absolute;
 	padding-left: 3em;
 }
+
+.fidelapp_icon:hover {
+	opacity: 0.8;
+}
+
+.fidelapp_icon {
+	display: inline-block;
+	height: 16px;
+	width: 16px;
+	margin: 2px;
+	padding: 0;
+	cursor: pointer;
+	opacity: 0.5;
+	vertical-align: middle;
+}
+
+.fidelapp_triangle_down {
+	background: url("/owncloud/core/img/actions/triangle-s.svg") no-repeat 0 2px;
+	padding-left: 20px;
+}

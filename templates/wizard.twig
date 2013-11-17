@@ -5,21 +5,23 @@
 
 	<div id="body-settings">
 		<fieldset class="personalblock">
-			<legend>{{ trans('How should your OwnCloud server be accessed from Internet?') }}</legend>
-			<p>
-				<input id="accessTypeDirect"         {{ selection == 'accessTypeDirect' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeDirect" />
-				<label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. myserver.mydomain.com)') }}</label>
-			</p>
-			<p>
-				<input id="accessTypeFidelbox"         {{ selection == 'accessTypeFidelbox' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
-				<label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
-			</p>
-			<p>
-				<input type="checkbox" name="fidelapp_https" value="https" id="fidelapp_https"     {{ useSSL == 'true' ? 'checked="true"' : '' }} />
-				<label for="fidelapp_https">{{ trans('Connection to my Owncloud server should be made via secure https') }}</label>
-			</p>
+			<div id="fidelapp_access_type">
+				<legend>{{ trans('How should your OwnCloud server be accessed from Internet?') }}</legend>
+				<p>
+					<input id="accessTypeDirect" {{ selection == 'accessTypeDirect' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeDirect" />
+					<label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. myserver.mydomain.com)') }}</label>
+				</p>
+				<p>
+					<input id="accessTypeFidelbox"  {{ selection == 'accessTypeFidelbox' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
+					<label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
+				</p>
+				<p>
+					<input type="checkbox" name="fidelapp_https" value="https" id="fidelapp_https" {{ useSSL == 'true' ? 'checked="true"' : '' }} />
+					<label for="fidelapp_https">{{ trans('Connection to my Owncloud server should be made via secure https') }}</label>
+				</p>
+			</div>
 		</fieldset>
-		{% if(wizard_step2) %}
+		{% if wizard_step2 %}
 		<div id="fidelapp_wizard_step2">{% include "#{wizard_step2}.twig" %}</div>
 		{% endif %}
 	</div>
