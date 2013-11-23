@@ -19,3 +19,9 @@ $this->create('fidelapp_wizard', '/wizard')->action(
 		function ($params) {
 			App::main('PageController', 'wizard', $params, new DIContainer());
 		});
+
+$this->create('fidelapp_get_file_list', '/getfilelist')->action(
+		function ($params) {
+			App::main('PublicController', 'getFileList', $params, new DIContainer());
+		});
+

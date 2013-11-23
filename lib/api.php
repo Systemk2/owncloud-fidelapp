@@ -29,4 +29,16 @@ class API extends \OCA\AppFramework\Core\API {
 	public function search($pattern, $searchProperties = array(), $options = array()) {
 		return \OCP\Contacts::search($pattern, $searchProperties, $options);
 	}
+
+	/**
+	 * Get the path of a file by id
+	 *
+	 * Note that the resulting path is not guarantied to be unique for the id, multiple paths can point to the same file
+	 *
+	 * @param int $id
+	 * @return string
+	 */
+	public function getPath($id) {
+		return \OC\Files\Filesystem::getPath($id);
+	}
 }

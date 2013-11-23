@@ -130,3 +130,11 @@ input.fidelapp_url {
 	width: 100%;
 	padding: 0.6em 0 0.4em;
 }
+
+#fidelapp_download_type_div {
+	background-color: #DDDDDD;
+	border-radius: 1em;
+	box-shadow: 0 1px 1px #777777;
+	margin: 0.5em 0;
+	padding: 0.5em;
+}

@@ -57,8 +57,7 @@
 							.addClass('fidelapp_permanent');
 				},
 				error : function(error) {
-					OC.dialogs.alert(error, t('fidelapp',
-					'Ajax error'));
+					OC.dialogs.alert(error, t('fidelapp', 'Ajax error'));
 				}
 			});
 		},
@@ -220,6 +219,25 @@
 				inputElement.addClass('hidden');
 			}
 
+		},
+		toggleDetails : function(event) {
+			var contactId = $(event.target).closest('[data-contact-id]').attr(
+					'data-contact-id');
+			if (!contactId) {
+				return;
+			}
+			var details = $('#fidelapp_details_' + contactId);
+			if (details.hasClass('hidden')) {
+				details.removeClass('hidden');
+			} else {
+				details.addClass('hidden');
+			}
+		},
+		addTooltip : function(event) {
+			$(event.target).tipsy({
+				gravity : 'n',
+				fade : true
+			});
 		}
 	};
 
@@ -252,11 +270,14 @@
 						$('#fileList').on('click',
 								'a[id^=fidelapp_passwordSubmitLink_]',
 								fidelapp.submitPassword);
+						$('#fileList').on('click', '.fidelapp_triangle',
+								fidelapp.toggleDetails);
 						$('#fileList').on('keyup',
 								'input[id^=fidelapp_password_]',
 								fidelapp.passwordInputChangeEvent);
 						$('#fileList').on('change', '[id^=fidelapp_showlink_]',
 								fidelapp.toggleShareLink);
+						$('#fileList').on('mouseenter', '.fidelapp_tooltip', fidelapp.addTooltip);
 					});
 
 })(jQuery);

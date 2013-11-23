@@ -105,7 +105,7 @@ class PageController extends Controller {
 				if ($entity->getAccessType() && $this->hasParam('selection')) {
 					if (($entity->getAccessType() == 'FIXED_IP' || $entity->getAccessType() == 'DOMAIN_NAME') &&
 							 $this->params('selection') == 'accessTypeFidelbox') {
-						if($entity->getFidelboxAccount()) {
+						if ($entity->getFidelboxAccount()) {
 							$entity->setAccessType('FIDELBOX_ACCOUNT');
 						} else {
 							$entity->setAccessType(null);
@@ -115,7 +115,7 @@ class PageController extends Controller {
 					if ($entity->getAccessType() == 'FIDELBOX_ACCOUNT' && $this->params('selection') != 'accessTypeFidelbox') {
 						if ($entity->getFixedIp()) {
 							$entity->setAccessType('FIXED_IP');
-						} else if( $entity->getDomainName()) {
+						} else if ($entity->getDomainName()) {
 							$entity->setAccessType('DOMAIN_NAME');
 						} else {
 							$entity->setAccessType(null);
@@ -166,16 +166,16 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
+	 * @Ajax
 	 */
 	public function createDropdown() {
 		$mapper = new ContactShareItemMapper($this->api);
 
 		$itemSource = $this->params('data_item_source');
 		$itemType = $this->params('data_item_type');
-		$shareItems = $mapper->findByUserFile($api->getUserId(), $itemSource);
+		$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
 		$response = $this->render('sharedropdown',
 				array (
 						'itemSource' => $itemSource,

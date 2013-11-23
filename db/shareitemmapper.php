@@ -14,18 +14,26 @@ class ShareItemMapper extends Mapper {
 	/**
 	 * Get a share item with the given file for the given contact
 	 *
-	 * @param int $contactId        	
-	 * @param int $fileId        	
+	 * @param int $contactId
+	 * @param int $fileId
 	 * @return \OCA\FidelApp\Db\ShareItem
 	 * @throws DoesNotExistException if the item does not exist
 	 * @throws MultipleObjectsReturnedException if more than one item exists
 	 */
 	public function findByContactFile($contactId, $fileId) {
 		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `contact_id` = ? AND `file_id` = ?';
-		
+
 		return $this->findEntity($sql, array (
 				$contactId,
-				$fileId 
+				$fileId
+		));
+	}
+
+	public function findByContact($contactId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `contact_id` = ?';
+
+		return $this->findEntities($sql, array (
+				$contactId
 		));
 	}
 

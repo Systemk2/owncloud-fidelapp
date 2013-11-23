@@ -20,32 +20,44 @@ class ContactShareItemMapper extends Mapper {
 	public function findByUserFile($userId, $fileId) {
 		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
 				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ?';
-		
+
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
-				$fileId 
+				$fileId
 		));
-		
+
 		return $contactShareItems;
 	}
 
 	public function findByUserFileEmail($userId, $fileId, $email) {
 		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
 				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ? AND C.`email` = ? ';
-		
+
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
 				$fileId,
-				$email 
+				$email
 		));
-		
+
+		return $contactShareItems;
+	}
+
+	public function findByUserContact($userId, $contactId) {
+		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+		'` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`contact_id` = ?';
+
+		$contactShareItems = $this->findEntities($sql, array (
+				$userId,
+				$userId
+		));
+
 		return $contactShareItems;
 	}
 
 	public function save(ContactShareItem $item) {
 		$contactItem = $item->getContactItem();
 		$shareItem = $item->getShareItem();
-		
+
 		$contactId = $contactItem->getId();
 		if ($contactId === null) {
 			// Check if the same contact / email exists in share items
@@ -57,7 +69,7 @@ class ContactShareItemMapper extends Mapper {
 			}
 		}
 		$contactItem = $this->contactItemMapper->save($contactItem);
-		
+
 		$shareId = $shareItem->getId();
 		if ($shareId === null) {
 			// Check if the file is already shared for the contact
@@ -68,7 +80,7 @@ class ContactShareItemMapper extends Mapper {
 				// Ignore
 			}
 		}
-		
+
 		$shareItem->setContactId($contactItem->getId());
 		$this->shareItemMapper->save($shareItem);
 	}
@@ -76,10 +88,10 @@ class ContactShareItemMapper extends Mapper {
 	protected function mapRowToEntity($row) {
 		$contactItemProperties = array ();
 		$shareItemProperties = array ();
-		
+
 		$contactItem = new ContactItem();
 		$shareItem = new ShareItem();
-		
+
 		foreach ( $row as $key => $value ) {
 			$property = $contactItem->columnToProperty($key);
 			if ($property !== null) {
@@ -90,10 +102,10 @@ class ContactShareItemMapper extends Mapper {
 				$shareItemProperties [$key] = $value;
 			}
 		}
-		
+
 		$contactItem->fromRow($contactItemProperties);
 		$shareItem->fromRow($shareItemProperties);
-		
+
 		return new ContactShareItem($contactItem, $shareItem);
 	}
 }
