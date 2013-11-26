@@ -14,4 +14,5 @@ class ShareItem extends Entity {
 	public $salt;
 	public $checksum;
 	public $notificationEmail;
+	public $downloadType; // BASIC or SECURE
 }

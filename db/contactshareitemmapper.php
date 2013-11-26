@@ -17,9 +17,21 @@ class ContactShareItemMapper extends Mapper {
 		$this->shareItemMapper = new ShareItemMapper($api);
 	}
 
+	/**
+	 * Find all ContactShareItems for the given Owncloud user and file
+	 *
+	 * @param string $userId
+	 * @param int $fileId
+	 *
+	 * @return array OCA\FidelApp\Db\ContactShareItem\ContactShareItem
+	 */
 	public function findByUserFile($userId, $fileId) {
-		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
+				 '` S, `' . $this->contactItemMapper->getTableName() .
 				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ?';
+
+		// $sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+		// '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
@@ -29,8 +41,18 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
+	/**
+	 * Find all ContactShareItems for the given Owncloud user, file and email
+	 *
+	 * @param string $userId
+	 * @param int $fileId
+	 * @param string $email
+	 *
+	 * @return array of OCA\FidelApp\Db\ContactShareItem\ContactShareItem
+	 */
 	public function findByUserFileEmail($userId, $fileId, $email) {
-		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
+				 '` S, `' . $this->contactItemMapper->getTableName() .
 				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`file_id` = ? AND C.`email` = ? ';
 
 		$contactShareItems = $this->findEntities($sql, array (
@@ -43,8 +65,9 @@ class ContactShareItemMapper extends Mapper {
 	}
 
 	public function findByUserContact($userId, $contactId) {
-		$sql = 'SELECT * FROM `' . $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
-		'` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`contact_id` = ?';
+		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
+				 '` S, `' . $this->contactItemMapper->getTableName() .
+				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`contact_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId,
@@ -93,13 +116,19 @@ class ContactShareItemMapper extends Mapper {
 		$shareItem = new ShareItem();
 
 		foreach ( $row as $key => $value ) {
-			$property = $contactItem->columnToProperty($key);
-			if ($property !== null) {
-				$contactItemProperties [$key] = $value;
+			if ($key == 'id') {
+				$shareItemProperties ['id'] = $value;
+			} else {
+				$property = $contactItem->columnToProperty($key);
+				if (property_exists($contactItem, $property)) {
+					$contactItemProperties [$key] = $value;
+				}
+				if (property_exists($shareItem, $property) !== null) {
+					$shareItemProperties [$key] = $value;
+				}
 			}
-			$property = $shareItem->columnToProperty($key);
-			if ($property !== null) {
-				$shareItemProperties [$key] = $value;
+			if ($key == 'contact_id') {
+				$contactItemProperties ['id'] = $value;
 			}
 		}
 

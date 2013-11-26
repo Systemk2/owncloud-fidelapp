@@ -2,6 +2,8 @@
 
 namespace OCA\FidelApp\Controller;
 
+\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = 'fidelapp/lib/exception.php';
+
 use \OCA\AppFramework\Controller\Controller;
 use \OCA\FidelApp\API;
 use \OCA\FidelApp\FidelboxConfig;
@@ -9,7 +11,10 @@ use \OCA\FidelApp\TemplateParams;
 use \OCA\FidelApp\Db\ConfigItem;
 use \OCA\FidelApp\Db\ConfigItemMapper;
 use \OCA\FidelApp\Db\ContactShareItemMapper;
+use \OCA\AppFramework\Db\DoesNotExistException;
+use OCA\FidelApp\InvalidConfigException;
 use OCA\AppFramework\Db\Entity;
+use OCA\FidelApp\Db\ContactItem;
 
 class PageController extends Controller {
 
@@ -27,7 +32,7 @@ class PageController extends Controller {
 	 * @IsSubAdminExemption
 	 */
 	public function fidelApp() {
-		return $this->render('fidelapp');
+		return $this->render($this->api->getAppName());
 	}
 
 	/**
@@ -50,7 +55,7 @@ class PageController extends Controller {
 			$mapper = new ConfigItemMapper($this->api);
 			try {
 				$entity = $mapper->findByUser($this->api->getUserId());
-			} catch(\OCA\AppFramework\Db\DoesNotExistException $e) {
+			} catch(DoesNotExistException $e) {
 				$entity = new ConfigItem();
 				$entity->setUserId($this->api->getUserId());
 			}
@@ -150,10 +155,10 @@ class PageController extends Controller {
 
 		if ($this->hasParam('reload')) {
 			// Render page without header and footer
-			return $this->render('fidelapp', $templateParams->getAll(), '');
+			return $this->render($this->api->getAppName(), $templateParams->getAll(), '');
 		} else {
 			// Render page with header and footer
-			return $this->render('fidelapp', $templateParams->getAll());
+			return $this->render($this->api->getAppName(), $templateParams->getAll());
 		}
 	}
 
@@ -171,11 +176,27 @@ class PageController extends Controller {
 	 * @Ajax
 	 */
 	public function createDropdown() {
+		// TODO: Add try/catch for correct error display
+		$configMapper = new ConfigItemMapper($this->api);
+		try {
+			$configItem = $configMapper->findByUser($this->api->getUserId());
+		} catch(DoesNotExistException $e) {
+			throw new InvalidConfigException();
+		}
+
 		$mapper = new ContactShareItemMapper($this->api);
 
 		$itemSource = $this->params('data_item_source');
 		$itemType = $this->params('data_item_type');
 		$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
+		$params = array (
+				'API' => $this->api,
+				'CONFIG' => $configItem
+		);
+		array_walk($shareItems,
+				function (&$contactShareItem, $key, $params) {
+					$contactShareItem->downloadUrl = PageController::generateUrl($contactShareItem->getContactItem(), $params);
+				}, $params);
 		$response = $this->render('sharedropdown',
 				array (
 						'itemSource' => $itemSource,
@@ -183,5 +204,28 @@ class PageController extends Controller {
 						'shareItems' => $shareItems
 				), '');
 		return $response;
+	}
+
+	static function generateUrl(ContactItem $contact, array $params) {
+		$api = $params['API'];
+		$configItem = $params['CONFIG'];
+		$url = $configItem->getUseSsl() == 'true' ? 'https://' : 'http://';
+		$localPath = $api->linkToRoute('fidelapp_get_file_list');
+		switch ($configItem->getAccessType()) {
+			case 'FIXED_IP' :
+				$url .= $configItem->getFixedIp() . "$localPath?";
+				break;
+			case 'DOMAIN_NAME' :
+				$url .= $configItem->getDomainName() . "$localPath?";
+				break;
+			case 'FIDELBOX_ACCOUNT' :
+				$url .= FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->fidelboxAccount() .
+						 '&';
+				break;
+			default:
+				throw new InvalidConfigException();
+		}
+		$url .= 'id=' . $contact->getId();
+		return $url;
 	}
 }

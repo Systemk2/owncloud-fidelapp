@@ -22,25 +22,17 @@ class PublicController extends Controller {
 	public function getFileList() {
 		$l = $this->api->getTrans();
 
-		$email = $this->params('email');
-		if (! $email) {
+		$id = $this->params('id');
+		if (! $id) {
 			return $this->render('error', array (
 					'errors' => array (
-							$l->t('Invalid email')
-					)
-			), '');
-		}
-		$userId = $this->params('userId');
-		if (! $userId) {
-			return $this->render('error', array (
-					'errors' => array (
-							$l->t('Invalid userId')
+							$l->t('Invalid id')
 					)
 			), '');
 		}
 		$contactMapper = new ContactItemMapper($this->api);
 		try {
-			$contact = $contactMapper->findByUserEmail($userId, $email);
+			$contact = $contactMapper->findById($id);
 		} catch(\OCA\AppFramework\Db\DoesNotExistException $e) {
 			return $this->render('filelist', array (
 					'shareItems' => array ()
@@ -60,7 +52,7 @@ class PublicController extends Controller {
 					)
 			), '');
 		}
-		\OC_Util::setupFS($userId);
+		$this->api->setupFS($contact->getUserId());
 		$shareMapper = new ShareItemMapper($this->api);
 		$shareItems = $shareMapper->findByContact($contact->getId());
 		$fileList = array();

@@ -1,35 +1,37 @@
 (function($) {
 	var fidelapp = null;
 	fidelapp = {
+		icon : OC.imagePath('fidelapp', 'logo_small.png'),
 		droppedDown : false,
+		file : null,
 		init : function() {
 			if (typeof FileActions !== 'undefined') {
 				FileActions.register('all', t('fidelapp',
-						'Secure file delivery'), OC.PERMISSION_READ, OC
-						.imagePath('fidelapp', 'logo_small.png'),
-						fidelapp.handleDropDown);
+						'Secure file delivery'), OC.PERMISSION_READ,
+						fidelapp.icon, fidelapp.handleDropDown);
 			}
 			;
 		},
 		handleDropDown : function(file) {
-			var tr = $('tr').filterAttr('data-file', file);
 			// Check if drop down is already visible for a different file
 			if (fidelapp.droppedDown) {
-				if ($(tr).data('id') != $('#fidelapp_dropdown').attr(
-						'data-item-source')) {
+				if (fidelapp.file != null && fidelapp.file != file) {
 					fidelapp.hideDropDown(function() {
-						$(tr).addClass('mouseOver');
-						fidelapp.showDropDown(tr);
+						fidelapp.file = file;
+						fidelapp.showDropDown();
 					});
 				} else {
+					fidelapp.file = file;
 					fidelapp.hideDropDown();
 				}
 			} else {
-				$(tr).addClass('mouseOver');
-				fidelapp.showDropDown(tr);
+				fidelapp.file = file;
+				fidelapp.showDropDown();
 			}
 		},
-		showDropDown : function(tr) {
+		showDropDown : function() {
+			fidelapp.showSpinner();
+			var tr = $('tr').filterAttr('data-file', fidelapp.file);
 			var itemSource = $(tr).data('id');
 			var itemType = $(tr).data('type');
 			if (itemType == 'dir') {
@@ -46,9 +48,14 @@
 				url : url,
 				async : false,
 				success : function(html) {
-					if (html.indexOf("<!-- fidelapp dropdown -->") != 0)
+					fidelapp.hideSpinner();
+					if (html.indexOf("<!-- fidelapp dropdown -->") != 0) {
+						OC.dialogs.alert(html, t('fidelapp',
+								'Could not create Dropdown'));
 						return;
+					}
 					fidelapp.hideDropDown();
+					$(tr).addClass('mouseOver');
 					var appendTo = $(tr).find('td.filename');
 					$(html).appendTo(appendTo);
 					fidelapp.attachAutocomplete();
@@ -57,26 +64,21 @@
 							.addClass('fidelapp_permanent');
 				},
 				error : function(error) {
+					fidelapp.hideSpinner();
 					OC.dialogs.alert(error, t('fidelapp', 'Ajax error'));
 				}
 			});
 		},
 		hideDropDown : function(callback) {
-			$('#fidelapp_dropdown').hide(
-					'blind',
-					function() {
-						fidelapp.droppedDown = false;
-						if (typeof FileActions !== 'undefined') {
-							$('tr').removeClass('mouseOver');
-						}
-						$('#fidelapp_dropdown').closest('td').find(
-								'[data-action]').removeClass(
-								'fidelapp_permanent');
-						$('#fidelapp_dropdown').remove();
-						if (callback) {
-							callback.call();
-						}
-					});
+			fidelapp.hideSpinner();
+			$('#fidelapp_dropdown').closest('td').find('[data-action]')
+					.removeClass('fidelapp_permanent');
+			$('#fidelapp_dropdown').closest('tr').removeClass('mouseOver');
+			fidelapp.droppedDown = false;
+			$('#fidelapp_dropdown').remove();
+			if (callback) {
+				callback.call();
+			}
 		},
 		attachAutocomplete : function() {
 			$('#fidelapp_shareWith').autocomplete(
@@ -98,6 +100,16 @@
 						}
 					});
 		},
+		showSpinner : function() {
+			var tr = $('tr').filterAttr('data-file', fidelapp.file);
+			$(tr).find('img[src="' + fidelapp.icon + '"]').replaceWith(
+					'<img id="fidelapp_spinner" src="'
+							+ OC.imagePath('core', 'loader.gif') + '" />');
+		},
+		hideSpinner : function() {
+			$('#fidelapp_spinner').replaceWith(
+					'<img src="' + fidelapp.icon + '" />');
+		},
 		submitShare : function(event) {
 			event.preventDefault();
 			if ($('#fidelapp_submitLink').hasClass('disabled')) {
@@ -110,27 +122,13 @@
 			var shareWith = $('#fidelapp_shareWith').val();
 			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
 			$('#fidelapp_submitLink').addClass('disabled');
+			fidelapp.showSpinner();
 			$.post(OC.filePath('fidelapp', 'ajax', 'share.php'), {
 				shareWith : shareWith,
 				itemType : itemType,
 				itemSource : itemSource,
 				file : file
-			}, function(result) {
-				$('#fidelapp_shareWith').val('');
-				if (result && result.status == 'success') {
-					var tr = $('tr').filterAttr('data-file', file);
-					fidelapp.showDropDown(tr);
-				} else {
-					var message;
-					if (result && result.data && result.data.message) {
-						message = result.data.message;
-					} else {
-						message = result;
-					}
-					OC.dialogs.alert(message, t('fidelapp',
-							'Error while sharing'));
-				}
-			});
+			}, fidelapp.handleAjaxResult);
 		},
 		submitPassword : function(event) {
 			event.preventDefault();
@@ -145,29 +143,29 @@
 				return;
 			}
 			$('#fidelapp_passwordSubmitLink_' + contactId).addClass('disabled');
-			var itemSource = $('#fidelapp_dropdown').data('item-source');
-			var file = $('tr').filterAttr('data-id', String(itemSource)).data(
-					'file');
 			var password = $('#fidelapp_password_' + contactId).val();
-			$('#fidelapp_password_' + contactId).val(t('core', 'Sending ...'));
+			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
+			fidelapp.showSpinner();
 			$.post(OC.filePath('fidelapp', 'ajax', 'setpassword.php'), {
 				contactId : contactId,
 				password : password
-			}, function(result) {
-				if (result && result.status == 'success') {
-					var tr = $('tr').filterAttr('data-file', file);
-					fidelapp.showDropDown(tr);
+			}, fidelapp.handleAjaxResult);
+		},
+		handleAjaxResult : function(result) {
+			fidelapp.hideSpinner();
+			if (result && result.status == 'success') {
+				fidelapp.showDropDown();
+			} else {
+				$('#fidelapp_shareWith').val('');
+				var message;
+				if (result && result.data && result.data.message) {
+					message = result.data.message;
 				} else {
-					var message;
-					if (result && result.data && result.data.message) {
-						message = result.data.message;
-					} else {
-						message = result;
-					}
-					OC.dialogs.alert(message, t('fidelapp',
-							'Error while setting password'));
+					message = result;
 				}
-			});
+				OC.dialogs.alert(message, t('fidelapp',
+						'Error while submitting request'));
+			}
 		},
 		shareInputChangeEvent : function(event) {
 			var pattern = new RegExp(
@@ -228,16 +226,49 @@
 			}
 			var details = $('#fidelapp_details_' + contactId);
 			if (details.hasClass('hidden')) {
+				// Hide all other details
+				$('[id^=fidelapp_details_]').addClass('hidden');
 				details.removeClass('hidden');
 			} else {
 				details.addClass('hidden');
 			}
+		},
+		removeShare : function(event) {
+			event.preventDefault();
+			var shareId = $(event.target).closest('[data-share-id]').attr(
+					'data-share-id');
+			if (!shareId) {
+				return;
+			}
+			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
+			fidelapp.showSpinner();
+			$.post(OC.filePath('fidelapp', 'ajax', 'removeshare.php'), {
+				shareId : shareId
+			}, fidelapp.handleAjaxResult);
 		},
 		addTooltip : function(event) {
 			$(event.target).tipsy({
 				gravity : 'n',
 				fade : true
 			});
+		},
+		submitDownloadType : function(event) {
+			event.preventDefault();
+			var shareId = $(event.target).closest('[data-share-id]').attr(
+					'data-share-id');
+			if (!shareId) {
+				return;
+			}
+			var downloadType = $(event.target).val();
+			if(!downloadType) {
+				return;
+			}
+			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
+			fidelapp.showSpinner();
+			$.post(OC.filePath('fidelapp', 'ajax', 'changedownloadtype.php'), {
+				shareId : shareId,
+				downloadType : downloadType 
+			}, fidelapp.handleAjaxResult);
 		}
 	};
 
@@ -272,12 +303,18 @@
 								fidelapp.submitPassword);
 						$('#fileList').on('click', '.fidelapp_triangle',
 								fidelapp.toggleDetails);
+						$('#fileList').on('click', '.fidelapp_delete',
+								fidelapp.removeShare);
 						$('#fileList').on('keyup',
 								'input[id^=fidelapp_password_]',
 								fidelapp.passwordInputChangeEvent);
 						$('#fileList').on('change', '[id^=fidelapp_showlink_]',
 								fidelapp.toggleShareLink);
-						$('#fileList').on('mouseenter', '.fidelapp_tooltip', fidelapp.addTooltip);
+						$('#fileList').on('mouseenter', '.fidelapp_tooltip',
+								fidelapp.addTooltip);
+						$('#fileList').on('change',
+								'#fidelapp_download_type_div input',
+								fidelapp.submitDownloadType);
 					});
 
 })(jQuery);

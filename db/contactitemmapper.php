@@ -2,10 +2,9 @@
 
 namespace OCA\FidelApp\Db;
 
-use \OCA\AppFramework\Db\Mapper;
 use \OCA\FidelApp\API;
 
-class ContactItemMapper extends Mapper {
+class ContactItemMapper extends SingleEntityMapper {
 
 	public function __construct(API $api) {
 		parent::__construct($api, 'fidelapp_contacts'); // tablename is fidelapp_contacts
@@ -27,23 +26,5 @@ class ContactItemMapper extends Mapper {
 				$userId,
 				$email
 		));
-	}
-
-	public function findById($id) {
-		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `id` = ?';
-
-		return $this->findEntity($sql, array (
-				$id
-		));
-	}
-
-	public function save(ContactItem $contactItem) {
-		$id = $contactItem->getId();
-		if ($id === null) {
-			$contactItem = $this->insert($contactItem);
-		} else {
-			$this->update($contactItem);
-		}
-		return $contactItem;
 	}
 }

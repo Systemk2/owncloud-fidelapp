@@ -11,7 +11,7 @@ $api = new API();
 // The API is not active -> nothing to do
 if (! \OCP\Contacts::isEnabled()) {
 	$msg = 'Autocomplete impossible, because contact app is not enabled';
-	\OCP\Util::writeLog('fidelapp', $msg, \OCP\Util::WARN);
+	\OCP\Util::writeLog($api->getAppName(), $msg, \OCP\Util::WARN);
 	\OC_JSON::error(array (
 			'msg' => $msg
 	));

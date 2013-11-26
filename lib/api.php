@@ -8,14 +8,16 @@ namespace OCA\FidelApp;
 class API extends \OCA\AppFramework\Core\API {
 
 	/**
-	 * constructor
+	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct('fidelapp');
 	}
 
 	/**
-	 * This function is used to search and find contacts within the users address books.
+	 * This function is used to search and find
+	 * contacts within the users address books.
+	 *
 	 * In case $pattern is empty all contacts will be returned.
 	 *
 	 * @param string $pattern
@@ -33,12 +35,24 @@ class API extends \OCA\AppFramework\Core\API {
 	/**
 	 * Get the path of a file by id
 	 *
-	 * Note that the resulting path is not guarantied to be unique for the id, multiple paths can point to the same file
+	 * Note that the resulting path is not guarantied to be unique for the id,
+	 * multiple paths can point to the same file
 	 *
 	 * @param int $id
 	 * @return string
 	 */
 	public function getPath($id) {
 		return \OC\Files\Filesystem::getPath($id);
+	}
+
+	/**
+	 * Configure the initial filesystem
+	 *
+	 * @param string $user
+	 *        	[default = ''] the owncloud user. If no user is given,
+	 *        	the one who is currently logged in is used
+	 */
+	public function setupFS($user) {
+		\OC_Util::setupFS($user);
 	}
 }

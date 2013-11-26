@@ -132,6 +132,13 @@
 				<length>512</length>
 				<comments>The notification e-mail for successful download</comments>
 			</field>
+			<field>
+				<name>download_type</name>
+				<notnull>true</notnull>
+				<type>text</type>
+				<length>32</length>
+				<comments>BASIC or SECURE</comments>
+			</field>
 			<index>
 				<name>primary_key_fidelapp_shares</name>
 				<primary>true</primary>
