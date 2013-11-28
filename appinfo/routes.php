@@ -25,3 +25,9 @@ $this->create('fidelapp_get_file_list', '/getfilelist')->action(
 			App::main('PublicController', 'getFileList', $params, new DIContainer());
 		});
 
+$this->create('fidelapp_authenticate_contact', '/authenticate')->action(
+		function ($params) {
+			App::main('PublicController', 'authenticateContact', $params, new DIContainer());
+		});
+
+

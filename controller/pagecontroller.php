@@ -23,16 +23,13 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * ATTENTION!!!
-	 * The following comments turn off security checks
-	 * Please look up their meaning in the documentation!
 	 *
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 */
 	public function fidelApp() {
-		return $this->render($this->api->getAppName());
+		return $this->render('fidelapp');
 	}
 
 	/**
@@ -201,7 +198,8 @@ class PageController extends Controller {
 				array (
 						'itemSource' => $itemSource,
 						'itemType' => $itemType,
-						'shareItems' => $shareItems
+						'shareItems' => $shareItems,
+						'fidelboxDownload' => $configItem->getAccessType() == 'FIDELBOX_ACCOUNT'
 				), '');
 		return $response;
 	}
@@ -219,7 +217,7 @@ class PageController extends Controller {
 				$url .= $configItem->getDomainName() . "$localPath?";
 				break;
 			case 'FIDELBOX_ACCOUNT' :
-				$url .= FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->fidelboxAccount() .
+				$url .= FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->getFidelboxAccount() .
 						 '&';
 				break;
 			default:

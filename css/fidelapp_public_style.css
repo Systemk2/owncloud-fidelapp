@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+
+#fidelapp_authentication {
+	margin: auto;
+	width: 15em;
+}
+
+#fidelapp_send_password {
+	float: right;
+}
