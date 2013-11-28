@@ -208,7 +208,7 @@ class PageController extends Controller {
 		$api = $params['API'];
 		$configItem = $params['CONFIG'];
 		$url = $configItem->getUseSsl() == 'true' ? 'https://' : 'http://';
-		$localPath = $api->linkToRoute('fidelapp_get_file_list');
+		$localPath = $api->linkToRoute('fidelapp_authenticate_contact');
 		switch ($configItem->getAccessType()) {
 			case 'FIXED_IP' :
 				$url .= $configItem->getFixedIp() . "$localPath?";
@@ -217,7 +217,8 @@ class PageController extends Controller {
 				$url .= $configItem->getDomainName() . "$localPath?";
 				break;
 			case 'FIDELBOX_ACCOUNT' :
-				$url .= FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->getFidelboxAccount() .
+				// TODO: Create correct redirect URL for download applet
+				$url = FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->getFidelboxAccount() .
 						 '&';
 				break;
 			default:

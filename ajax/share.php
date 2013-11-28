@@ -28,7 +28,7 @@ try {
 
 		$contactItem->setUserId($userId);
 		$contactItem->setEmail($email);
-		$contactItem->setDownloadType('SECURE');
+		$shareItem->setDownloadType('SECURE');
 		$shareItem->setFileId($fileId);
 
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
