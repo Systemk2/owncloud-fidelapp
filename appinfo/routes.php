@@ -20,14 +20,15 @@ $this->create('fidelapp_wizard', '/wizard')->action(
 			App::main('PageController', 'wizard', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_get_file_list', '/getfilelist')->action(
+$this->create('fidelapp_get_file', '/download')->action(
 		function ($params) {
-			App::main('PublicController', 'getFileList', $params, new DIContainer());
+			App::main('PublicController', 'getFile', $params, new DIContainer());
 		});
 
 $this->create('fidelapp_authenticate_contact', '/authenticate')->action(
 		function ($params) {
 			App::main('PublicController', 'authenticateContact', $params, new DIContainer());
 		});
+
 
 
