@@ -2,18 +2,15 @@
 
 namespace OCA\FidelApp\Controller;
 
-\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = 'fidelapp/lib/exception.php';
+\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
 use \OCA\AppFramework\Controller\Controller;
 use \OCA\FidelApp\API;
 use \OCA\FidelApp\FidelboxConfig;
 use \OCA\FidelApp\TemplateParams;
-use \OCA\FidelApp\Db\ConfigItem;
-use \OCA\FidelApp\Db\ConfigItemMapper;
 use \OCA\FidelApp\Db\ContactShareItemMapper;
 use \OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\InvalidConfigException;
-use OCA\AppFramework\Db\Entity;
 use OCA\FidelApp\Db\ContactItem;
 
 class PageController extends Controller {
@@ -23,13 +20,12 @@ class PageController extends Controller {
 	}
 
 	/**
-	 *
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 */
 	public function fidelApp() {
-		return $this->render('fidelapp');
+		return $this->render(FIDELAPP_APPNAME);
 	}
 
 	/**
@@ -49,21 +45,13 @@ class PageController extends Controller {
 		try {
 			$fidelboxConfig = new FidelboxConfig($this->api);
 
-			$mapper = new ConfigItemMapper($this->api);
-			try {
-				$entity = $mapper->findByUser($this->api->getUserId());
-			} catch(DoesNotExistException $e) {
-				$entity = new ConfigItem();
-				$entity->setUserId($this->api->getUserId());
-			}
-
-			$templateParams->add('accessType', $entity->getAccessType());
+			$templateParams->add('accessType', $this->api->getAppValue('access_type'));
 			if ($this->hasParam('selection')) {
 				// One of the radio buttons is selected
 				$templateParams->add('selection');
 			} else {
 				// No radio selected: determine state from saved configuration
-				switch ($entity->getAccessType()) {
+				switch ($this->api->getAppValue('access_type')) {
 					case ('FIXED_IP') :
 					case ('DOMAIN_NAME') :
 						$templateParams->set('selection', 'accessTypeDirect');
@@ -73,56 +61,58 @@ class PageController extends Controller {
 				}
 			}
 
-			$templateParams->add('accessType', $entity->getAccessType());
-			$templateParams->add('domain', $entity->getDomainName());
-			$templateParams->add('fixedIp', $entity->getFixedIp());
-			$templateParams->add('useSSL', $entity->getUseSsl());
+			$templateParams->add('domain', $this->api->getAppValue('domain_name'));
+			$templateParams->add('fixedIp', $this->api->getAppValue('fixed_ip'));
+			$templateParams->add('useSSL', $this->api->getAppValue('use_ssl'));
 			$templateParams->add('fidelboxTempUser', uniqid('', true));
-			$templateParams->add('fidelboxAccount', $entity->getFidelboxAccount());
+			$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
 
 			if ($this->hasParam('action')) {
-				$entity->setUseSsl($templateParams->get('useSSL'));
-				$entity->setAccessType($templateParams->get('accessType'));
+				$this->api->setAppValue('use_ssl', $templateParams->get('useSSL'));
+				$this->api->setAppValue('access_type', $templateParams->get('accessType'));
 				if ($this->params('action') == 'saveDirectAccess') {
-					$entity->setDomainName($templateParams->get('domain'));
-					$entity->setFixedIp($templateParams->get('fixedIp'));
-					if (! $entity->getDomainName() && ! $entity->getFixedIp()) {
+					if (! $templateParams->get('domain') && ! $templateParams->get('fixedIp')) {
+						// TODO: Formal validation of IP and domain formats
 						throw new \Exception($l->t('No IP or Domain Name specified'));
 					}
+					$this->api->setAppValue('domain_name', $templateParams->get('domain'));
+					$this->api->setAppValue('fixed_ip', $templateParams->get('fixedIp'));
 				} elseif ($this->params('action') == 'createFidelboxAccount') {
-					$userId = $fidelboxConfig->createAccount($templateParams->get('fidelboxTempUser'), $this->params('captcha'));
-					$entity->setFidelboxAccount($userId);
+					$fidelboxAccount = $fidelboxConfig->createAccount($templateParams->get('fidelboxTempUser'),
+							$this->params('captcha'));
+					$this->api->setAppValue('fidelbox_account', $fidelboxAccount);
 					$templateParams->add('wizard_step2', 'wizard_fidelbox');
 				} elseif ($this->params('action') == 'deleteFidelboxAccount') {
-					$fidelboxConfig->deleteAccount($entity->getFidelboxAccount());
-					$entity->setFidelboxAccount(null);
-					if ($entity->getAccessType() == 'FIDELBOX_ACCOUNT') {
-						$entity->setAccessType(null);
+					$fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
+					$this->api->setAppValue('fidelbox_account', null);
+					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+						$this->api->setAppValue('access_type', null);
 					}
 					$templateParams->add('wizard_step2', 'wizard_fidelbox_createaccount');
 				}
-				$mapper->save($entity);
 			} else {
 				// No action... just check if selection does not match saved state any more and save it, if changed
-				if ($entity->getAccessType() && $this->hasParam('selection')) {
-					if (($entity->getAccessType() == 'FIXED_IP' || $entity->getAccessType() == 'DOMAIN_NAME') &&
+				if ($this->api->getAppValue('access_type') && $this->hasParam('selection')) {
+					if (($this->api->getAppValue('access_type') == 'FIXED_IP' ||
+							 $this->api->getAppValue('access_type') == 'DOMAIN_NAME') &&
 							 $this->params('selection') == 'accessTypeFidelbox') {
-						if ($entity->getFidelboxAccount()) {
-							$entity->setAccessType('FIDELBOX_ACCOUNT');
+						// Stored value is fixed ip or domain name, but selection id fidelbox
+						if ($this->api->getAppValue('fidelbox_account')) {
+							$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
 						} else {
-							$entity->setAccessType(null);
+							$this->api->setAppValue('access_type', null);
 						}
-						$mapper->save($entity);
 					}
-					if ($entity->getAccessType() == 'FIDELBOX_ACCOUNT' && $this->params('selection') != 'accessTypeFidelbox') {
-						if ($entity->getFixedIp()) {
-							$entity->setAccessType('FIXED_IP');
-						} else if ($entity->getDomainName()) {
-							$entity->setAccessType('DOMAIN_NAME');
+					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' &&
+							 $this->params('selection') != 'accessTypeFidelbox') {
+						// Stored value is fidelbox, but current selection is different
+						if ($this->api->getAppValue('fixed_ip')) {
+							$this->api->setAppValue('access_type', 'FIXED_IP');
+						} else if ($this->api->getAppValue('domain_name')) {
+							$this->api->setAppValue('access_type', 'DOMAIN_NAME');
 						} else {
-							$entity->setAccessType(null);
+							$this->api->setAppValue('access_type', null);
 						}
-						$mapper->save($entity);
 					}
 				}
 			}
@@ -130,9 +120,10 @@ class PageController extends Controller {
 			if ($templateParams->get('selection') == 'accessTypeDirect') {
 				$templateParams->add('wizard_step2', 'wizard_fixedipordomain');
 			} elseif ($templateParams->get('selection') == 'accessTypeFidelbox') {
-				if ($entity->getFidelboxAccount()) {
-					$templateParams->add('validFidelboxAccount', $fidelboxConfig->validateAccount($entity->getFidelboxAccount()));
-					$templateParams->add('fidelboxAccount', $entity->getFidelboxAccount());
+				if ($this->api->getAppValue('fidelbox_account')) {
+					$templateParams->add('validFidelboxAccount',
+							$fidelboxConfig->validateAccount($this->api->getAppValue('fidelbox_account')));
+					$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
 					$templateParams->add('wizard_step2', 'wizard_fidelbox');
 				} else {
 					$templateParams->add(
@@ -174,55 +165,49 @@ class PageController extends Controller {
 	 */
 	public function createDropdown() {
 		// TODO: Add try/catch for correct error display
-		$configMapper = new ConfigItemMapper($this->api);
 		try {
-			$configItem = $configMapper->findByUser($this->api->getUserId());
-		} catch(DoesNotExistException $e) {
-			throw new InvalidConfigException();
+			$mapper = new ContactShareItemMapper($this->api);
+
+			$itemSource = $this->params('data_item_source');
+			$itemType = $this->params('data_item_type');
+			$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
+
+			array_walk($shareItems,
+					function (&$contactShareItem, $key, $api) {
+						$contactShareItem->downloadUrl = PageController::generateUrl($contactShareItem->getContactItem(), $api);
+					}, $this->api);
+			$response = $this->render('sharedropdown',
+					array (
+							'itemSource' => $itemSource,
+							'itemType' => $itemType,
+							'shareItems' => $shareItems,
+							'fidelboxDownload' => $this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT'
+					), '');
+			return $response;
+		} catch(\Exception $e) {
+			\OC_JSON::error(array('message' => $e->getMessage()));
+			exit();
 		}
-
-		$mapper = new ContactShareItemMapper($this->api);
-
-		$itemSource = $this->params('data_item_source');
-		$itemType = $this->params('data_item_type');
-		$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
-		$params = array (
-				'API' => $this->api,
-				'CONFIG' => $configItem
-		);
-		array_walk($shareItems,
-				function (&$contactShareItem, $key, $params) {
-					$contactShareItem->downloadUrl = PageController::generateUrl($contactShareItem->getContactItem(), $params);
-				}, $params);
-		$response = $this->render('sharedropdown',
-				array (
-						'itemSource' => $itemSource,
-						'itemType' => $itemType,
-						'shareItems' => $shareItems,
-						'fidelboxDownload' => $configItem->getAccessType() == 'FIDELBOX_ACCOUNT'
-				), '');
-		return $response;
 	}
 
-	static function generateUrl(ContactItem $contact, array $params) {
-		$api = $params['API'];
-		$configItem = $params['CONFIG'];
-		$url = $configItem->getUseSsl() == 'true' ? 'https://' : 'http://';
+	static function generateUrl(ContactItem $contact, \OCA\FidelApp\API $api) {
+		$url = $api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
 		$localPath = $api->linkToRoute('fidelapp_authenticate_contact');
-		switch ($configItem->getAccessType()) {
+		switch ($api->getAppValue('access_type')) {
 			case 'FIXED_IP' :
-				$url .= $configItem->getFixedIp() . "$localPath?";
+				$url .= $api->getAppValue('fixed_ip') . "$localPath?";
 				break;
 			case 'DOMAIN_NAME' :
-				$url .= $configItem->getDomainName() . "$localPath?";
+				$url .= $api->getAppValue('domain_name') . "$localPath?";
 				break;
 			case 'FIDELBOX_ACCOUNT' :
 				// TODO: Create correct redirect URL for download applet
-				$url = FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' . $configItem->getFidelboxAccount() .
-						 '&';
+				$url = FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' .
+						 $api->getAppValue('fidelbox_account') . '&';
 				break;
-			default:
-				throw new InvalidConfigException();
+			default :
+				$l = $api->getTrans();
+				throw new InvalidConfigException($l->t('Please configure access type in fidelapp first'));
 		}
 		$url .= 'id=' . $contact->getId();
 		return $url;

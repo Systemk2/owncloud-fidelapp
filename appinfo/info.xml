@@ -3,7 +3,7 @@
 	<id>fidelapp</id>
 	<name>FidelApp</name>
 	<description>The file delivery app</description>
-	<version>0.31</version>
+	<version>0.33</version>
 	<licence>AGPL</licence>
 	<author>Sebastian Kanzow</author>
 	<require>5</require>

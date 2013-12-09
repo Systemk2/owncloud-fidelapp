@@ -88,7 +88,7 @@
 				<type>integer</type>
 				<notnull>true</notnull>
 				<length>4</length>
-				<comments>Id of the file that is shared</comments>
+				<comments>Reference to the id of the file that is shared</comments>
 			</field>
 			<field>
 				<name>share_time</name>
@@ -119,12 +119,6 @@
 				<comments>The second part of the password, which is transmitted to
 					the downloader only after checksum verfication.
 				</comments>
-			</field>
-			<field>
-				<name>checksum</name>
-				<type>text</type>
-				<length>32</length>
-				<comments>The MD5 hash of the shared file</comments>
 			</field>
 			<field>
 				<name>notification_email</name>
@@ -166,10 +160,13 @@
 				<ondelete>cascade</ondelete>
 				<onupdate>cascade</onupdate>
 			</foreign>
+			<!-- Foreign keys to tables outside our schema do not work <foreign> <name>foreign_key_filecache</name> 
+				<field>file_id</field> <references> <table>*dbprefix*filecache</table> <field>id</field> 
+				</references> <ondelete>cascade</ondelete> <onupdate>cascade</onupdate> </foreign> -->
 		</declaration>
 	</table>
 	<table>
-		<name>*dbprefix*fidelapp_config</name>
+		<name>*dbprefix*fidelapp_files</name>
 		<declaration>
 			<field>
 				<name>id</name>
@@ -181,58 +178,44 @@
 				<comments>Internal unique Id</comments>
 			</field>
 			<field>
-				<name>user_id</name>
+				<name>file_id</name>
 				<type>integer</type>
 				<notnull>true</notnull>
 				<length>4</length>
-				<comments>Owncloud user</comments>
+				<comments>Reference to the id of the file that is shared</comments>
 			</field>
 			<field>
-				<name>access_type</name>
+				<name>checksum</name>
 				<type>text</type>
 				<length>32</length>
-				<comments>FIXED_IP, DOMAIN_NAME, FIDELBOX_ACCOUNT or null</comments>
+				<comments>The MD5 hash of the shared file</comments>
 			</field>
 			<field>
-				<name>fixed_ip</name>
-				<type>text</type>
-				<length>15</length>
-				<comments>Optional field: fixed ip</comments>
-			</field>
-			<field>
-				<name>domain_name</name>
-				<type>text</type>
-				<length>512</length>
-				<comments>Optional field: domain name</comments>
-			</field>
-			<field>
-				<name>fidelbox_account</name>
-				<type>text</type>
-				<length>64</length>
-				<comments>Optional field: fidelbox.de account id</comments>
-			</field>
-			<field>
-				<name>use_ssl</name>
+				<name>calculation_in_progress</name>
 				<type>boolean</type>
 				<length>1</length>
 				<default>0</default>
 				<notnull>true</notnull>
-				<comments>Should SSL be used to contact fidelapp from Internet</comments>
+				<comments>Set to true, while calculation is in progress</comments>
 			</field>
+
 			<index>
-				<name>primary_key_fidelapp_config</name>
+				<name>primary_key_fidelapp_files</name>
 				<primary>true</primary>
 				<field>
 					<name>id</name>
 				</field>
 			</index>
-			<index>
-				<name>constraint_unique_fidelapp_config</name>
-				<unique>true</unique>
-				<field>
-					<name>user_id</name>
-				</field>
-			</index>
+			<foreign>
+				<name>foreign_key_shares</name>
+				<field>file_id</field>
+				<references>
+					<table>*dbprefix*fidelapp_shares</table>
+					<field>file_id</field>
+				</references>
+				<ondelete>cascade</ondelete>
+				<onupdate>cascade</onupdate>
+			</foreign>
 		</declaration>
 	</table>
 </database>

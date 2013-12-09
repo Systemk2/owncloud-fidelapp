@@ -121,11 +121,10 @@ class PublicController extends Controller {
 					'Content-Disposition: attachment; filename*=UTF-8\'\'' . rawurlencode(basename($filename)) . '; filename="' .
 							 rawurlencode(basename($filename)) . '"');
 		}
-		OCP\Response::disableCaching();
+		\OCP\Response::disableCaching();
 		header('Content-Length: ' . \OC\Files\Filesystem::filesize($filename));
 
-		OC_Util::obEnd();
-		// FIXME: Need to return a template!
+		\OC_Util::obEnd();
 		\OC\Files\Filesystem::readfile($filename);
 	}
 }

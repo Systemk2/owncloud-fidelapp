@@ -18,8 +18,11 @@ try {
 	$shareItem = $mapper->findById($shareId);
 	$shareItem->setDownloadType($downloadType);
 	$mapper->save($shareItem);
-
+	if($downloadType == 'SECURE') {
+		$fidelConfig = new FidelboxConfig($api);
+		$fidelConfig->calculateHashAsync($shareItem);
+	}
 	\OC_JSON::success();
 } catch(Exception $e) {
-	\OC_JSON::error($e->getMessage());
+	\OC_JSON::error(array('message' => $e->getMessage()));
 }

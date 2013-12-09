@@ -9,10 +9,11 @@
 			{% set id = contactShareItem.contactItem.id %}
 				<div data-contact-id="{{ id }}" data-share-id="{{ contactShareItem.shareItem.id }}">
 					<div>
-						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span> <span>{{ contactShareItem.contactItem.email }}</span> <span class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span class="fidelapp_icon fidelapp_delete">&nbsp;</span> <a href="mailto:{{ contactShareItem.contactItem.email }}" class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>
+						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span> <span class="fidelapp_contact_email">{{ contactShareItem.contactItem.email }}</span> <span class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span class="fidelapp_icon fidelapp_delete">&nbsp;</span> <a href="mailto:{{ contactShareItem.contactItem.email }}" class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>
 					</div>
-					<div id="fidelapp_details_{{ id }}" class="fidelapp_contact_details {{ contactShareItem.contactItem.password ? 'hidden' : '' }}">
+					<div id="fidelapp_details_{{ id }}" class="fidelapp_contact_details{{ contactShareItem.contactItem.password ? ' hidden' : '' }}">
 						<div>
+							<label for="fidelapp_password_{{ id }}">{{ trans('Password') }}</label>
 							<input id="fidelapp_password_{{ id }}" type="text" placeholder="{{ trans('Enter password') }}" value="{{ contactShareItem.contactItem.password }}" />
 							<a id="fidelapp_passwordSubmitLink_{{ id }}" class="action checked disabled">&nbsp;&nbsp;</a>
 						</div>
@@ -30,7 +31,7 @@
 						{% endif %}
 						<div>
 							<input id="fidelapp_showlink_{{ id }}" type="checkbox" name="fidelapp_showlink" value="{{ id }}" />
-							<label for="fidelapp_showlink_{{ id }}">{{ trans('Show link for this contact\'s shares') }}</label>
+							<label for="fidelapp_showlink_{{ id }}">{{ trans('Show download link for this contact') }}</label>
 						</div>
 						<div id="fidelapp_shareLink_{{ id }}" class="hidden">
 							<input class="fidelapp_url" type="text" readonly=true value="{{ contactShareItem.downloadUrl }}" />

@@ -2,6 +2,7 @@
 
 namespace OCA\FidelApp;
 
+use OCP\BackgroundJob;
 /**
  * Enhanced API, based on the AppFramework's API wrapper
  */
@@ -11,7 +12,7 @@ class API extends \OCA\AppFramework\Core\API {
 	 * Constructor
 	 */
 	public function __construct() {
-		parent::__construct('fidelapp');
+		parent::__construct(FIDELAPP_APPNAME);
 	}
 
 	/**
@@ -54,5 +55,17 @@ class API extends \OCA\AppFramework\Core\API {
 	 */
 	public function setupFS($user) {
 		\OC_Util::setupFS($user);
+	}
+
+	/**
+	 * Queues a task
+	 *
+	 * @param $class string class name
+	 * @param $method string [default = 'run'] method name
+	 * @param $parameters string [default = ''] all useful data as text
+	 * @return id of task
+	 */
+	public function addQueuedTask($class, $method = 'run', $parameters = '') {
+		return BackgroundJob::addQueuedTask($this->getAppName(), $class, $method, $parameters);
 	}
 }

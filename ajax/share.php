@@ -28,6 +28,7 @@ try {
 
 		$contactItem->setUserId($userId);
 		$contactItem->setEmail($email);
+		// TODO: Need to calculate checksum
 		$shareItem->setDownloadType('SECURE');
 		$shareItem->setFileId($fileId);
 

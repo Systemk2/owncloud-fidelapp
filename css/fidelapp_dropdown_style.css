@@ -10,7 +10,7 @@
 	padding: 1em;
 	position: absolute;
 	right: 0;
-	width: 19em;
+	width: 21em;
 	z-index: 500;
 }
 
@@ -96,6 +96,8 @@
 	width: 16px;
 	margin: 2px;
 	padding: 0;
+	background-position: center center;
+	background-repeat: no-repeat;
 }
 
 #shareWithFidelAppList .fidelapp_delete {
@@ -112,6 +114,11 @@
 	background-image: url("/owncloud/core/img/actions/triangle-s.svg");
 	cursor: pointer;
 	opacity: 0.5;
+}
+
+.fidelapp_contact_email {
+	color: #505050;
+	font-weight: bold;
 }
 
 .fidelapp_key-green {
@@ -131,10 +138,10 @@ input.fidelapp_url {
 	padding: 0.6em 0 0.4em;
 }
 
+.fidelapp_contact_details {
+	margin-left: 16px;
+}
+
 #fidelapp_download_type_div {
-	background-color: #DDDDDD;
-	border-radius: 1em;
-	box-shadow: 0 1px 1px #777777;
-	margin: 0.5em 0;
-	padding: 0.5em;
+	margin: 0.8em 0;
 }

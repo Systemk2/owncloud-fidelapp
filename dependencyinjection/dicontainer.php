@@ -11,7 +11,7 @@ use \OCA\FidelApp\TwigMiddleware;
 class DIContainer extends BaseContainer {
 
 	public function __construct() {
-		parent::__construct('fidelapp');
+		parent::__construct(FIDELAPP_APPNAME);
 
 		// use this to specify the template directory
 		$this ['TwigTemplateDirectory'] = __DIR__ . '/../templates';

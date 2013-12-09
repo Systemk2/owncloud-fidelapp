@@ -2,7 +2,8 @@
 
 namespace OCA\FidelApp;
 
-\OC::$CLASSPATH ['OCA\FidelApp\CaptchaNotMatchException'] = 'fidelapp/lib/exception.php';
+\OC::$CLASSPATH ['OCA\FidelApp\CaptchaNotMatchException'] = FIDELAPP_APPNAME . '/lib/exception.php';
+\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
 /**
  * Error codes from fidelbox.de
@@ -22,8 +23,6 @@ define('NO_RESULT_FROM_REMOTE_HOST', 7000);
 define('UNPARSABLE_RESULT_FROM_REMOTE_HOST', 7001);
 
 use \OCA\FidelApp\API;
-use \OCA\FidelApp\Db\ConfigItemMapper;
-use OCA\FidelApp\Db\ConfigItem;
 
 class FidelboxConfig {
 	protected $api;
@@ -59,7 +58,6 @@ class FidelboxConfig {
 			throw $captchaNotMatchException;
 		}
 		$this->raiseError($return);
-
 	}
 
 	public function deleteAccount($accountId) {
@@ -67,8 +65,8 @@ class FidelboxConfig {
 			throw new \BadMethodCallException("deleteAccount: Wrong accountId parameter [$accountId]");
 		}
 		$return = $this->get('/fidelapp/manageaccount.php?accountId=' . urlencode($accountId) . '&action=delete');
-		if($return['status'] != 'success') {
-			if(isset($return['code']) && $return['code'] == ACCOUNT_DOES_NOT_EXIST) {
+		if ($return ['status'] != 'success') {
+			if (isset($return ['code']) && $return ['code'] == ACCOUNT_DOES_NOT_EXIST) {
 				// No need to delete this account, because it does not exist, so do not throw an exception,
 				// just tell the caller that no deletion has been executed
 				return false;
@@ -83,12 +81,41 @@ class FidelboxConfig {
 			throw new \BadMethodCallException("validateAccount: Wrong accountId parameter [$accountId]");
 		}
 		$return = $this->get('/fidelapp/manageaccount.php?accountId=' . urlencode($accountId) . '&action=validate');
-		if($return['status'] == 'success') {
+		if ($return ['status'] == 'success') {
 			return true;
-		} else if(isset($return['code']) && $return['code'] == ACCOUNT_DOES_NOT_EXIST) {
+		} else if (isset($return ['code']) && $return ['code'] == ACCOUNT_DOES_NOT_EXIST) {
 			return false;
 		}
 		$this->raiseError($return);
+	}
+
+	// TODO: Make sure this is called initially, not only when downloadtype is changed...
+	// TODO: Add documentation
+	public function calculateHashAsync(ShareItem $shareItem) {
+		$this->api->addQueuedTask('OCA\FidelApp\CalculateMD5BackgroundJob', 'run', $shareItem->getId());
+		// \OCA\FidelApp\CalculateMD5BackgroundJob::run($shareItem->getId());
+	}
+
+	// TODO: Add documentation
+	public function startRegularIpUpdate() {
+		$regularTasks = OC_BackgroundJob_RegularTask::all();
+		if (isset($regularTasks ['OCA\FidelApp\UpdateIpBackgroundJob-run'])) {
+			return;
+		}
+		$this->api->addRegularTask('OCA\FidelApp\UpdateIpBackgroundJob', 'run');
+	}
+
+	public function updateIp() {
+		$l = $this->api->getTrans();
+
+		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
+			throw new InvalidConfigException(
+					$l->t('Cannot update IP address, because access type is') . ' ' . $entity->getAccessType());
+		}
+		if (! $this->api->getAppValue('fidelbox_account')) {
+			throw new InvalidConfigException($l->t('Cannot update IP address, because no fidelbox account has been created'));
+		}
+		$this->get('/fidelapp/updateip.php?account=' . $this->api->getAppValue('fidelbox_account'));
 	}
 
 	private function get($pathOnServer) {
@@ -106,14 +133,15 @@ class FidelboxConfig {
 		}
 		$return = json_decode($json, true);
 		if ($return == null) {
-			throw new \RuntimeException($url . $l->t(' did return an unparsable  result: ') . $json, UNPARSABLE_RESULT_FROM_REMOTE_HOST);
+			throw new \RuntimeException($url . $l->t(' did return an unparsable  result: ') . $json,
+					UNPARSABLE_RESULT_FROM_REMOTE_HOST);
 		}
 		if ($return ['status'] != 'success') {
-			if(! isset($return ['message']) && ! isset($return ['code'])) {
-				throw new \RuntimeException($l->t('Unexpected error while calling ' . $url), -1);
+			if (! isset($return ['message']) && ! isset($return ['code'])) {
+				throw new \RuntimeException($l->t('Unexpected error while calling ' . $url), - 1);
 			}
 			// Add URL parameter in case of error, to simplify debugging
-			$return['called_url'] = $url;
+			$return ['called_url'] = $url;
 		}
 		return $return;
 	}
@@ -121,12 +149,11 @@ class FidelboxConfig {
 	private function raiseError($jsonReturn) {
 		$l = $this->api->getTrans();
 
-		$code = isset($jsonReturn['code']) ? $jsonReturn['code'] : (-1);
-		$message = isset($jsonReturn['message']) ? $jsonReturn['message'] : 'no message';
-		$calledUrl = isset($jsonReturn['called_url']) ? $jsonReturn['called_url'] : 'unknown url';
+		$code = isset($jsonReturn ['code']) ? $jsonReturn ['code'] : (- 1);
+		$message = isset($jsonReturn ['message']) ? $jsonReturn ['message'] : 'no message';
+		$calledUrl = isset($jsonReturn ['called_url']) ? $jsonReturn ['called_url'] : 'unknown url';
 
 		throw new \RuntimeException(
-				$l->t('The following error occurred while while calling ') . $calledUrl . ": [$code] " . $message,
-				$code);
+				$l->t('The following error occurred while while calling ') . $calledUrl . ": [$code] " . $message, $code);
 	}
 }

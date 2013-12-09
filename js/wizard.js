@@ -36,6 +36,8 @@
 				accessType = 'FIDELBOX_ACCOUNT';
 			} else if (eventId == 'fidelapp_fidelbox_delete') {
 				action = 'deleteFidelboxAccount';
+			} else if(eventId == 'fidelapp_https') {
+				action = 'changeSslState';
 			}
 			$('#fidelapp_errors').hide();
 			$('#rightcontent')

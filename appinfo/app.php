@@ -1,7 +1,8 @@
 <?php
-define('FIDELBOX_URL', 'http://192.168.0.123/fidelserver');
+define('FIDELBOX_URL', 'http://192.168.0.120/fidelserver');
+define('FIDELAPP_APPNAME', 'fidelapp');
 
-OC::$CLASSPATH ['OCA\FidelApp\API'] = 'fidelapp/lib/api.php';
+OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
 
 // dont break owncloud when the appframework is not enabled
 if (\OCP\App::isEnabled('appframework')) {
@@ -34,13 +35,14 @@ if (\OCP\App::isEnabled('appframework')) {
 
 					// the icon that will be shown in the navigation
 					// this file needs to exist in img/example.png
-					'icon' => $api->imagePath('logo_small.png'),
+					'icon' => $api->imagePath('logo.png'),
 
 					// the title of your application. This will be used in the
 					// navigation or on the settings page of your app
 					'name' => $api->getTrans()->t('FidelApp')
 			));
 } else {
-	$msg = 'Can not enable the fidelapp because the App Framework App is disabled';
-	\OCP\Util::writeLog($api->getAppName(), $msg, \OCP\Util::ERROR);
+	// TODO: Show error message in GUI at least once
+	$msg = 'Cannot enable the fidelapp because the App Framework App is disabled';
+	\OCP\Util::writeLog(FIDELAPP_APPNAME, $msg, \OCP\Util::ERROR);
 }

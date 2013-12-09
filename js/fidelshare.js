@@ -49,6 +49,11 @@
 				async : false,
 				success : function(html) {
 					fidelapp.hideSpinner();
+					if(typeof html.message != 'undefined') {
+						OC.dialogs.alert(html.message, t('fidelapp',
+						'Could not create Dropdown'));
+						return;
+					}
 					if (html.indexOf("<!-- fidelapp dropdown -->") != 0) {
 						OC.dialogs.alert(html, t('fidelapp',
 								'Could not create Dropdown'));
@@ -65,7 +70,18 @@
 				},
 				error : function(error) {
 					fidelapp.hideSpinner();
-					OC.dialogs.alert(error, t('fidelapp', 'Ajax error'));
+					var errorMessage = "Unknown error while creating Dropdown";
+					try {
+						if (typeof error.responseText != 'undefined') {
+							errorObject = $.parseJSON(error.responseText);
+							errorMessage = errorObject.message;
+						} else {
+							errorMessage = error.statusText;
+						}
+					} catch (e) {
+						// Ignore
+					}
+					OC.dialogs.alert(errorMessage, t('fidelapp', 'Error'));
 				}
 			});
 		},
@@ -260,14 +276,16 @@
 				return;
 			}
 			var downloadType = $(event.target).val();
-			if(!downloadType) {
+			if (!downloadType) {
 				return;
 			}
 			$('#fidelapp_shareWith').val(t('core', 'Sending ...'));
 			fidelapp.showSpinner();
+			// Sometimes tooltips are not removed
+			$('.tipsy').remove();
 			$.post(OC.filePath('fidelapp', 'ajax', 'changedownloadtype.php'), {
 				shareId : shareId,
-				downloadType : downloadType 
+				downloadType : downloadType
 			}, fidelapp.handleAjaxResult);
 		}
 	};
