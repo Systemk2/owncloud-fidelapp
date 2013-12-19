@@ -134,18 +134,22 @@ class PageController extends Controller {
 							));
 				}
 			}
+			if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+				$fidelboxConfig->startRegularIpUpdate();
+			} else {
+				$fidelboxConfig->stopRegularIpUpdate();
+			}
 		} catch(\Exception $e) {
 			$templateParams->add('errors', array (
 					$e->getMessage()
 			));
 			$templateParams->set('selection', null);
 		}
-
 		if ($this->hasParam('reload')) {
-			// Render page without header and footer
+			// Subsequent call: Render page without header and footer
 			return $this->render($this->api->getAppName(), $templateParams->getAll(), '');
 		} else {
-			// Render page with header and footer
+			// First call: Render page with header and footer
 			return $this->render($this->api->getAppName(), $templateParams->getAll());
 		}
 	}
@@ -164,7 +168,6 @@ class PageController extends Controller {
 	 * @Ajax
 	 */
 	public function createDropdown() {
-		// TODO: Add try/catch for correct error display
 		try {
 			$mapper = new ContactShareItemMapper($this->api);
 
@@ -185,12 +188,14 @@ class PageController extends Controller {
 					), '');
 			return $response;
 		} catch(\Exception $e) {
-			\OC_JSON::error(array('message' => $e->getMessage()));
+			\OC_JSON::error(array (
+					'message' => $e->getMessage()
+			));
 			exit();
 		}
 	}
 
-	static function generateUrl(ContactItem $contact, \OCA\FidelApp\API $api) {
+	private static function generateUrl(ContactItem $contact,\OCA\FidelApp\API $api) {
 		$url = $api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
 		$localPath = $api->linkToRoute('fidelapp_authenticate_contact');
 		switch ($api->getAppValue('access_type')) {
@@ -211,5 +216,45 @@ class PageController extends Controller {
 		}
 		$url .= 'id=' . $contact->getId();
 		return $url;
+	}
+
+	/**
+	 * Create a 32 characters client id containing the id at a random position and padded with
+	 * random digits.
+	 * The resulting client id will be
+	 * <code>&quot;&lt;position (2 digits)&gt;&lt;random stuffing&gt;&lt;id (4 digits)&gt;&lt;random stuffing&gt;&quot;</code>
+	 *
+	 * @param string $id
+	 *        	the client ID to be encrypted
+	 * @param string $password
+	 *        	the password to encrypt the client ID
+	 * @return string the encrypted and stuffed client ID
+	 */
+	public static function makeClientId($id, $password) {
+		$id = str_pad($id, 4, '0', STR_PAD_LEFT);
+		$position = mt_rand(2, 28);
+		// Add position
+		if ($position < 10) {
+			$clientId = "0$position";
+		} else {
+			$clientId = "$position";
+		}
+		// Add random stuffing
+		for($x = 2; $x < $position; $x ++) {
+			$clientId .= mt_rand(0, 9);
+		}
+		// Add id
+		$clientId .= "$id";
+		// Add random stuffing
+		for($x = $position + 4; $x < 32; $x ++) {
+			$clientId .= mt_rand(0, 9);
+		}
+		// Encrypt using password
+		$td = mcrypt_module_open('rijndael-128', '', 'ofb', '');
+		mcrypt_generic_init($td, $password, '0000000000000000');
+		$encrypted = mcrypt_generic($td, $clientId);
+		mcrypt_generic_deinit($td);
+		$clientId = bin2hex($encrypted);
+		return $clientId;
 	}
 }

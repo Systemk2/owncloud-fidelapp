@@ -75,7 +75,7 @@ class PublicController extends Controller {
 	 * @IsSubAdminExemption
 	 * @IsLoggedInExemption
 	 */
-	public function getFile() {
+	public function getFileList() {
 		$l = $this->api->getTrans();
 
 		if (! isset($_SESSION ['AUTHENTICATED_CONTACT'])) {
@@ -108,7 +108,7 @@ class PublicController extends Controller {
 		$filename = $this->api->getPath($fileId);
 		if (! \OC\Files\Filesystem::file_exists($filename)) {
 			unset($this->request->parameters ['shareId']);
-			$this->getFile();
+			return $this->getFile();
 		}
 
 		$ftype = \OC\Files\Filesystem::getMimeType($filename);

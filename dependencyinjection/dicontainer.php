@@ -7,6 +7,7 @@ use \OCA\FidelApp\Controller\PageController;
 use \OCA\FidelApp\Controller\PublicController;
 use \OCA\FidelApp\API;
 use \OCA\FidelApp\TwigMiddleware;
+use OCA\FidelApp\Controller\AppletAccessController;
 
 class DIContainer extends BaseContainer {
 
@@ -26,6 +27,10 @@ class DIContainer extends BaseContainer {
 
 		$this ['PublicController'] = function ($c) {
 			return new PublicController($c ['API'], $c ['Request']);
+		};
+
+		$this ['AppletAccessController'] = function ($c) {
+			return new AppletAccessController($c ['API'], $c ['Request']);
 		};
 
 		$this ['TwigMiddleware'] = $this->share(function ($c) {

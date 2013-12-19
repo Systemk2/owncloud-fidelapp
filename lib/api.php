@@ -68,4 +68,14 @@ class API extends \OCA\AppFramework\Core\API {
 	public function addQueuedTask($class, $method = 'run', $parameters = '') {
 		return BackgroundJob::addQueuedTask($this->getAppName(), $class, $method, $parameters);
 	}
+
+	/**
+	 * Deletes a queued task
+	 *
+	 * @param $id int
+	 * @return true
+	 */
+	public function deleteQueuedTask($id) {
+		return BackgroundJob::deleteQueuedTask($id);
+	}
 }

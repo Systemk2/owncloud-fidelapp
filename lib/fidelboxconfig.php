@@ -24,6 +24,20 @@ define('UNPARSABLE_RESULT_FROM_REMOTE_HOST', 7001);
 
 use \OCA\FidelApp\API;
 
+/**
+ * Manage interaction with fidelbox.de
+ * <ul>
+ * <li>Validate captchas</li>
+ * <li>Create accounts</li>
+ * <li>Delete accounts</li>
+ * <li>Validate accounts</li>
+ * <li>Handle checksum calculation</li>
+ * <li>Handle dynamic IP update</li>
+ * </ul>
+ *
+ * @author Sebastian Kanzow
+ *
+ */
 class FidelboxConfig {
 	protected $api;
 
@@ -31,6 +45,18 @@ class FidelboxConfig {
 		$this->api = $api;
 	}
 
+	/**
+	 *
+	 *
+	 *
+	 *
+	 * Create a fidelbox.de URL for captcha generation
+	 *
+	 * @param string $tempUserId
+	 *        	the temporary user ID needed for captcha generation and validation
+	 * @throws \BadMethodCallException when the given paramter was not a string
+	 * @return string the URL for captcha generation
+	 */
 	public function createCaptchaURL($tempUserId) {
 		if (! $tempUserId || ! (gettype($tempUserId) == 'string')) {
 			throw new \BadMethodCallException("createCaptchaURL: Wrong tempUserId parameter [$tempUserId]");
@@ -38,6 +64,18 @@ class FidelboxConfig {
 		return FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($tempUserId) . '&token=' . uniqid();
 	}
 
+	/**
+	 * Create a user account on fidelbox.de
+	 *
+	 * @param string $tempUserId
+	 *        	the temporary user ID (needed for captcha generation and validation)
+	 * @param string $captcha
+	 *        	the captcha, entered by the user
+	 * @throws \OCA\FidelApp\CaptchaNotMatchException when the $captcha paramter did not match the generated captcha on fidelbox.de
+	 * @throws \RuntimeException if the call to fidelbox.de failed
+	 *
+	 * @return string the newly generated account ID
+	 */
 	public function createAccount($tempUserId, $captcha) {
 		$l = $this->api->getTrans();
 
@@ -60,6 +98,15 @@ class FidelboxConfig {
 		$this->raiseError($return);
 	}
 
+	/**
+	 * Delete an existing account on fidelbox.de
+	 *
+	 * @param string $accountId
+	 *        	the account to be deleted
+	 * @throws \BadMethodCallException when the paramter is not a string
+	 * @throws \RuntimeException if the call to fidelbox.de failed
+	 * @return boolean <code>true</code> if the account existed and was deleted
+	 */
 	public function deleteAccount($accountId) {
 		if (! $accountId || ! (gettype($accountId) == 'string')) {
 			throw new \BadMethodCallException("deleteAccount: Wrong accountId parameter [$accountId]");
@@ -76,6 +123,13 @@ class FidelboxConfig {
 		return true;
 	}
 
+	/**
+	 * Validate that the given account ID is active on fidelbox.de
+	 *
+	 * @param string $accountId
+	 * @throws \BadMethodCallException if the parameter is not a string
+	 * @return boolean <code>true</code>, if the fidelbox account is active
+	 */
 	public function validateAccount($accountId) {
 		if (! $accountId || ! (gettype($accountId) == 'string')) {
 			throw new \BadMethodCallException("validateAccount: Wrong accountId parameter [$accountId]");
@@ -89,35 +143,84 @@ class FidelboxConfig {
 		$this->raiseError($return);
 	}
 
-	// TODO: Make sure this is called initially, not only when downloadtype is changed...
-	// TODO: Add documentation
+	/**
+	 * The download applet's notice of receipt is based on the calculated MD5 hash of a file.
+	 * Hashsum - calculation might take quite a while, depending on the file size, so we do it
+	 * asynchronously, through a queued task
+	 *
+	 * @param ShareItem $shareItem
+	 *        	the item that designates the file for MD5 calculation
+	 */
 	public function calculateHashAsync(ShareItem $shareItem) {
+		// TODO: Make sure this is called initially, not only when downloadtype is changed...
 		$this->api->addQueuedTask('OCA\FidelApp\CalculateMD5BackgroundJob', 'run', $shareItem->getId());
 		// \OCA\FidelApp\CalculateMD5BackgroundJob::run($shareItem->getId());
 	}
 
-	// TODO: Add documentation
+	/**
+	 * Launch a queued task to communicate our current IP address to fidelbox.de on a regular basis
+	 */
 	public function startRegularIpUpdate() {
-		$regularTasks = OC_BackgroundJob_RegularTask::all();
-		if (isset($regularTasks ['OCA\FidelApp\UpdateIpBackgroundJob-run'])) {
-			return;
-		}
-		$this->api->addRegularTask('OCA\FidelApp\UpdateIpBackgroundJob', 'run');
+		$taskId = $this->api->addQueuedTask('OCA\FidelApp\UpdateIpBackgroundJob');
+		// $taskId = UpdateIpBackgroundJob::run();
+		$this->api->setAppValue('update_ip_task_id', $taskId);
 	}
 
-	public function updateIp() {
+	/**
+	 * Remove the queued task communicating our current IP address to fidelbox.de on a regular basis
+	 */
+	public function stopRegularIpUpdate() {
+		$taskId = $this->api->getAppValue('update_ip_task_id');
+		if ($taskId) {
+			$this->api->deleteQueuedTask($taskId);
+			$this->api->setAppValue('update_ip_task_id', null);
+		}
+	}
+
+	/**
+	 * Get the configured fidelbox account ID or throw an Exception
+	 *
+	 * @throws InvalidConfigException if either the access type is not "FIDELBOX_ACCOUNT" or no account ID is configured
+	 *
+	 * @return string the fidelbox account ID
+	 */
+	public function getFidelboxAccountId() {
 		$l = $this->api->getTrans();
 
 		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
 			throw new InvalidConfigException(
 					$l->t('Cannot update IP address, because access type is') . ' ' . $entity->getAccessType());
 		}
-		if (! $this->api->getAppValue('fidelbox_account')) {
+		$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
+		if (! $fidelboxAccount) {
 			throw new InvalidConfigException($l->t('Cannot update IP address, because no fidelbox account has been created'));
 		}
-		$this->get('/fidelapp/updateip.php?account=' . $this->api->getAppValue('fidelbox_account'));
+		return $fidelboxAccount;
 	}
 
+	/**
+	 * Execute a HTTP/GET to tell fidelbox about our current IP address
+	 *
+	 * @return string the IP address that has been updated
+	 */
+	public function updateIp() {
+		$return = $this->get(
+				'/fidelapp/manageaccount.php?accountId=' . urlencode($fidelboxAccount) . '&action=updateip&useSSL=' .
+						 ($this->api->getAppValue('use_ssl') ? 'true' : 'false'));
+		if ($return ['status'] != 'success') {
+			$this->raiseError($return);
+		}
+		return ($return ['ip']);
+	}
+
+	/**
+	 * Execute an HTTP/GET request on the fidelbox
+	 *
+	 * @param string $pathOnServer
+	 * @return array JSON decoded response
+	 *
+	 * @throws \RuntimeException if the result was not JSON encoded or if the result does not contain the 'success' key
+	 */
 	private function get($pathOnServer) {
 		$l = $this->api->getTrans();
 
@@ -146,6 +249,13 @@ class FidelboxConfig {
 		return $return;
 	}
 
+	/**
+	 * Throw an exception
+	 *
+	 * @param string $jsonReturn
+	 *        	JSON - Encoded result
+	 * @throws \RuntimeException on every call
+	 */
 	private function raiseError($jsonReturn) {
 		$l = $this->api->getTrans();
 
