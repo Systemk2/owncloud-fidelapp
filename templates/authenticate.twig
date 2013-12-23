@@ -2,8 +2,7 @@
 <link rel="stylesheet" href="/owncloud/core/css/styles.css" type="text/css" media="screen" />
 <link rel="stylesheet" href="css/fidelapp_public_style.css" type="text/css" media="screen" />
 {% include "error.twig" %}
-<form action="{{ url('fidelapp_authenticate_contact') }}" method="post">
-	<input type="hidden" name="id" value="{{ id }}" />
+<form action="{{ url('fidelapp_authenticate_contact', {clientId: clientId}) }}" method="post">
 	<div id="fidelapp_authentication">
 		<p>
 			<label for="fidelapp_authentication_password">{{ trans('Enter your password to access shared files:') }}</label>

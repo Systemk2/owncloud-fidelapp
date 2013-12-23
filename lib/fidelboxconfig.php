@@ -50,6 +50,7 @@ class FidelboxConfig {
 	 *
 	 *
 	 *
+	 *
 	 * Create a fidelbox.de URL for captcha generation
 	 *
 	 * @param string $tempUserId
@@ -205,7 +206,7 @@ class FidelboxConfig {
 	 */
 	public function updateIp() {
 		$return = $this->get(
-				'/fidelapp/manageaccount.php?accountId=' . urlencode($fidelboxAccount) . '&action=updateip&useSSL=' .
+				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
 						 ($this->api->getAppValue('use_ssl') ? 'true' : 'false'));
 		if ($return ['status'] != 'success') {
 			$this->raiseError($return);

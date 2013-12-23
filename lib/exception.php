@@ -2,6 +2,10 @@
 
 namespace OCA\FidelApp;
 
+
+define('ERROR_WRONG_CLIENT_ID', 6000);
+define('ERROR_NO_SECRET_KEY', 6001);
+
 /**
  * The entered captcha did not match the image
  */
@@ -19,7 +23,7 @@ class InvalidConfigException extends \Exception {
  */
 class SecurityException extends \Exception {
 	public function __construct($code) {
-		parent::__construct('Security exception occured', $code);
+		parent::__construct("Security exception occured, code = $code", $code);
 	}
 }
 

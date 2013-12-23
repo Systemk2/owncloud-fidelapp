@@ -8,6 +8,8 @@ use \OCA\FidelApp\Controller\PublicController;
 use \OCA\FidelApp\API;
 use \OCA\FidelApp\TwigMiddleware;
 use OCA\FidelApp\Controller\AppletAccessController;
+use OCA\FidelApp\EncryptionHelper;
+use OCA\FidelApp\FidelboxConfig;
 
 class DIContainer extends BaseContainer {
 
@@ -21,17 +23,26 @@ class DIContainer extends BaseContainer {
 			return new API();
 		});
 
-		$this ['PageController'] = function ($c) {
-			return new PageController($c ['API'], $c ['Request']);
-		};
+		$this ['EncryptionHelper'] = $this->share(function ($c) {
+			return new EncryptionHelper();
+		});
 
-		$this ['PublicController'] = function ($c) {
+		$this ['FidelboxConfig'] = $this->share(function ($c) {
+			return new FidelboxConfig($c ['API']);
+		});
+
+		$this ['PageController'] = $this->share(function ($c) {
+			return new PageController($c ['API'], $c ['FidelboxConfig'], $c ['Request']);
+		});
+
+		$this ['PublicController'] = $this->share(function ($c) {
 			return new PublicController($c ['API'], $c ['Request']);
-		};
+		});
 
-		$this ['AppletAccessController'] = function ($c) {
-			return new AppletAccessController($c ['API'], $c ['Request']);
-		};
+		$this ['AppletAccessController'] = $this->share(
+				function ($c) {
+					return new AppletAccessController($c ['API'], $c ['Request']);
+				});
 
 		$this ['TwigMiddleware'] = $this->share(function ($c) {
 			return new TwigMiddleware($c ['API'], $c ['Twig']);

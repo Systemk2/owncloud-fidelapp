@@ -25,12 +25,12 @@ $this->create('fidelapp_get_file', '/download')->action(
 			App::main('PublicController', 'getFileList', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_authenticate_contact', '/authenticate')->action(
+$this->create('fidelapp_authenticate_contact', '/authenticate/{clientId}')->action(
 		function ($params) {
 			App::main('PublicController', 'authenticateContact', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_filelist_for_applet', '/getfilesforclient/{client_id}')->action(
+$this->create('fidelapp_filelist_for_applet', '/getfilesforclient/{clientId}')->action(
 		function ($params) {
 			App::main('AppletAccessController', 'getFilesForClient', $params, new DIContainer());
 		});

@@ -6,6 +6,7 @@ use \OCA\AppFramework\Controller\Controller;
 use \OCA\FidelApp\API;
 use \OCA\FidelApp\Db\ContactItemMapper;
 use \OCA\FidelApp\Db\ShareItemMapper;
+use OCA\FidelApp\EncryptionHelper;
 
 class PublicController extends Controller {
 
@@ -27,11 +28,18 @@ class PublicController extends Controller {
 
 		try {
 			$contact = null;
-			$id = $this->params('id');
+			$passwordBase64 = $this->api->getAppValue('secret');
+			if (! $passwordBase64) {
+				throw new SecurityException(ERROR_NO_SECRET_KEY);
+			}
+			$password = base64_decode($passwordBase64, true);
+			$id = $this->params('clientId');
 			if ($id) {
+				$decryptedContactId = EncryptionHelper::processContactId($id, $password);
+
 				$contactMapper = new ContactItemMapper($this->api);
 				try {
-					$contact = $contactMapper->findById($id);
+					$contact = $contactMapper->findById($decryptedContactId);
 				} catch(\OCA\AppFramework\Db\DoesNotExistException $e) {
 					// Do nothing here, the error will be emitted by "if (! $contact)" below
 				}
@@ -46,19 +54,19 @@ class PublicController extends Controller {
 			$password = $this->params('password');
 			if (! $password) {
 				return $this->render('authenticate', array (
-						'id' => $contact->getId()
+						'clientId' => $id
 				), '');
 			} elseif ($contact->getPassword() != $password) {
 				return $this->render('authenticate',
 						array (
-								'id' => $contact->getId(),
+								'clientId' => $id,
 								'errors' => array (
 										$l->t('Invalid password')
 								)
 						), '');
 			} else {
 				$_SESSION ['AUTHENTICATED_CONTACT'] = $contact;
-				return $this->getFile();
+				return $this->getFileList();
 			}
 		} catch(\Exception $e) {
 			return $this->render('authenticate', array (

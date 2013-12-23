@@ -12,12 +12,24 @@ use \OCA\FidelApp\Db\ContactShareItemMapper;
 use \OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\InvalidConfigException;
 use OCA\FidelApp\Db\ContactItem;
+use OCA\FidelApp\Db\ContactShareItem;
 
 class PageController extends Controller {
 
-	public function __construct($api, $request) {
+	/**
+	 *
+	 * @var string the secret password known only by this Owncloud Server.
+	 *      It is used to encrypt client ids in URLs
+	 */
+	private $password;
+
+	private $fidelboxConfig;
+
+	public function __construct(API $api, FidelboxConfig $fidelboxConfig, $request) {
 		parent::__construct($api, $request);
+		$this->fidelboxConfig = $fidelboxConfig;
 	}
+
 
 	/**
 	 * @CSRFExemption
@@ -43,7 +55,6 @@ class PageController extends Controller {
 				));
 
 		try {
-			$fidelboxConfig = new FidelboxConfig($this->api);
 
 			$templateParams->add('accessType', $this->api->getAppValue('access_type'));
 			if ($this->hasParam('selection')) {
@@ -78,12 +89,12 @@ class PageController extends Controller {
 					$this->api->setAppValue('domain_name', $templateParams->get('domain'));
 					$this->api->setAppValue('fixed_ip', $templateParams->get('fixedIp'));
 				} elseif ($this->params('action') == 'createFidelboxAccount') {
-					$fidelboxAccount = $fidelboxConfig->createAccount($templateParams->get('fidelboxTempUser'),
+					$fidelboxAccount = $this->fidelboxConfig->createAccount($templateParams->get('fidelboxTempUser'),
 							$this->params('captcha'));
 					$this->api->setAppValue('fidelbox_account', $fidelboxAccount);
 					$templateParams->add('wizard_step2', 'wizard_fidelbox');
 				} elseif ($this->params('action') == 'deleteFidelboxAccount') {
-					$fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
+					$this->fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
 					$this->api->setAppValue('fidelbox_account', null);
 					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
 						$this->api->setAppValue('access_type', null);
@@ -122,22 +133,22 @@ class PageController extends Controller {
 			} elseif ($templateParams->get('selection') == 'accessTypeFidelbox') {
 				if ($this->api->getAppValue('fidelbox_account')) {
 					$templateParams->add('validFidelboxAccount',
-							$fidelboxConfig->validateAccount($this->api->getAppValue('fidelbox_account')));
+							$this->fidelboxConfig->validateAccount($this->api->getAppValue('fidelbox_account')));
 					$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
 					$templateParams->add('wizard_step2', 'wizard_fidelbox');
 				} else {
 					$templateParams->add(
 							array (
 									'wizard_step2' => 'wizard_fidelbox_createaccount',
-									'urlFidelboxCaptcha' => $fidelboxConfig->createCaptchaURL(
+									'urlFidelboxCaptcha' => $this->fidelboxConfig->createCaptchaURL(
 											$templateParams->get('fidelboxTempUser'))
 							));
 				}
 			}
 			if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
-				$fidelboxConfig->startRegularIpUpdate();
+				$this->fidelboxConfig->startRegularIpUpdate();
 			} else {
-				$fidelboxConfig->stopRegularIpUpdate();
+				$this->fidelboxConfig->stopRegularIpUpdate();
 			}
 		} catch(\Exception $e) {
 			$templateParams->add('errors', array (
@@ -175,10 +186,9 @@ class PageController extends Controller {
 			$itemType = $this->params('data_item_type');
 			$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
 
-			array_walk($shareItems,
-					function (&$contactShareItem, $key, $api) {
-						$contactShareItem->downloadUrl = PageController::generateUrl($contactShareItem->getContactItem(), $api);
-					}, $this->api);
+			foreach ( $shareItems as &$contactShareItem ) {
+				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem->getContactItem());
+			}
 			$response = $this->render('sharedropdown',
 					array (
 							'itemSource' => $itemSource,
@@ -195,26 +205,28 @@ class PageController extends Controller {
 		}
 	}
 
-	private static function generateUrl(ContactItem $contact,\OCA\FidelApp\API $api) {
-		$url = $api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
-		$localPath = $api->linkToRoute('fidelapp_authenticate_contact');
-		switch ($api->getAppValue('access_type')) {
+	private function generateUrl(ContactItem $contact) {
+		$url = $this->api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
+		$localPath = $this->api->linkToRoute('fidelapp_authenticate_contact',
+				array (
+						'clientId' => PageController::makeClientId($contact->getId(), $this->getPassword())
+				));
+		switch ($this->api->getAppValue('access_type')) {
 			case 'FIXED_IP' :
-				$url .= $api->getAppValue('fixed_ip') . "$localPath?";
+				$url .= $this->api->getAppValue('fixed_ip') . $localPath;
 				break;
 			case 'DOMAIN_NAME' :
-				$url .= $api->getAppValue('domain_name') . "$localPath?";
+				$url .= $this->api->getAppValue('domain_name') . $localPath;
 				break;
 			case 'FIDELBOX_ACCOUNT' :
-				// TODO: Create correct redirect URL for download applet
+				// TODO: Create correct redirect URL for download applet, including account ID
 				$url = FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' .
-						 $api->getAppValue('fidelbox_account') . '&';
+						 $this->api->getAppValue('fidelbox_account');
 				break;
 			default :
-				$l = $api->getTrans();
+				$l = $this->api->getTrans();
 				throw new InvalidConfigException($l->t('Please configure access type in fidelapp first'));
 		}
-		$url .= 'id=' . $contact->getId();
 		return $url;
 	}
 
@@ -257,4 +269,26 @@ class PageController extends Controller {
 		$clientId = bin2hex($encrypted);
 		return $clientId;
 	}
+
+	private function getPassword() {
+		$passwordBase64 = $this->api->getAppValue('secret');
+		if ($passwordBase64) {
+			return base64_decode($passwordBase64, true);
+		} else {
+			return $this->makePassword();
+		}
+	}
+
+	private function makePassword() {
+		$td = mcrypt_module_open('rijndael-128', '', 'ofb', '');
+		$maxKeySize = mcrypt_enc_get_key_size($td);
+		$password = '';
+		while ( strlen($password) < $maxKeySize ) {
+			$password .= md5(uniqid('', true), true);
+		}
+		$passwordBase64 = base64_encode(substr($password, 0, $maxKeySize));
+		$this->api->setAppValue('secret', $passwordBase64);
+		\OC_Log::write($this->api->getAppName(), 'Generated new secret password', \OC_Log::INFO);
+	}
+
 }

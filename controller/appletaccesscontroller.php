@@ -4,12 +4,10 @@ namespace OCA\FidelApp\Controller;
 
 \OC::$CLASSPATH ['OCA\FidelApp\SecurityException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
-define('ERROR_WRONG_CLIENT_ID', 6000);
-
 use OCA\AppFramework\Controller\Controller;
 use OCA\FidelApp\Db\ShareItemMapper;
 use OCA\FidelApp\SecurityException;
-use OCA\FidelApp\FidelboxConfig;
+use OCA\FidelApp\EncryptionHelper;
 
 class AppletAccessController extends Controller {
 
@@ -18,6 +16,10 @@ class AppletAccessController extends Controller {
 	}
 
 	/**
+	 * Get a list of file IDs for applet download
+	 * <p>
+	 * IDs of shared files for the contact identified by the encrypted client ID are sent back one ID per line
+	 * </p>
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
@@ -27,11 +29,14 @@ class AppletAccessController extends Controller {
 		// TODO: Add brute force prevention
 		// (e.g. http://stackoverflow.com/questions/15798918/what-is-the-best-method-to-prevent-a-brute-force-attack)
 		try {
-			$fidelboxConfig = new FidelboxConfig($this->api);
+			$passwordBase64 = $this->api->getAppValue('secret');
+			if (! $passwordBase64) {
+				throw new SecurityException(ERROR_NO_SECRET_KEY);
+			}
+			$password = base64_decode($passwordBase64, true);
+			$decryptedContactId = EncryptionHelper::processContactId($this->params('clientId'), $password);
 
-			$decryptedContactId = $this->processContactId($this->params('client_id'), $fidelboxConfig->getFidelboxAccountId());
-
-			$shareItemMapper = new ShareItemMapper($api);
+			$shareItemMapper = new ShareItemMapper($this->api);
 			$shareItems = $shareItemMapper->findByContact($decryptedContactId);
 			return $this->render('filelistforapplet', array (
 					'shareItems' => $shareItems
@@ -51,7 +56,7 @@ class AppletAccessController extends Controller {
 		else
 			$chunkId = 1;
 		$submissionId = $this->params('submission-id');
-		$contactId = $this->processContactId($this->params('client-id'));
+		$contactId = EncryptionHelper::processContactId($this->params('clientId'));
 
 		$share = new Share(array (
 				'id' => $submissionId
@@ -66,7 +71,7 @@ class AppletAccessController extends Controller {
 		while ( strlen($pass) < 12 ) // Stuff to at least 12 characters
 			$pass .= $pass;
 		$pass = substr($pass, 0, 12); // Cut to exactly 12 characters
-		\OC_Log::write($this->api->getAppName(), 'pass=$pass', \OC_Log::DEBUG);
+		\OC_Log::write($this->api->getAppName(), "pass=$pass", \OC_Log::DEBUG);
 		$key = base64_decode($pass, true);
 		if (! $key)
 			throw new WrongPasswordException($pass); // TODO
@@ -220,32 +225,4 @@ class AppletAccessController extends Controller {
 	}
 
 
-	/**
-	 * Decrypt and extract an URL encoded client ID with stuffing
-	 *
-	 * @param string $encryptedContactId the encrypted client ID
-	 * @param string $password the password used for encryption
-	 * @throws SecurityException when decryption failed
-	 * @return number the decrypted client ID
-	 */
-	private function processContactId($encryptedContactId, $password) {
-		try {
-			$encryptedBinary = $bin_str = pack("H*", $encryptedContactId);
-			$td = mcrypt_module_open('rijndael-128', '', 'ofb', '');
-			mcrypt_generic_init($td, $password, '0000000000000000');
-			$contactId = mdecrypt_generic($td, $encryptedBinary);
-			mcrypt_generic_deinit($td);
-			if (preg_match('?^[0-9]{32}$?', $contactId)) {
-				$position = ( int ) substr($contactId, 0, 2);
-				if ($position >= 2 && $position <= 28) {
-					$decryptedContactId = ( int ) substr($contactId, $position, 4);
-					\OC_Log::write($this->api->getAppName(), 'Decrypted client_id ' . $decryptedContactId, \OC_Log::DEBUG);
-					return $decryptedContactId;
-				}
-			}
-		} catch(Exception $e) {
-			// ignore (Exception is thrown later)
-		}
-		throw new SecurityException(ERROR_WRONG_CLIENT_ID);
-	}
 }
