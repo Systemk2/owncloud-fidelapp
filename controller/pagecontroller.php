@@ -207,21 +207,24 @@ class PageController extends Controller {
 
 	private function generateUrl(ContactItem $contact) {
 		$url = $this->api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
-		$localPath = $this->api->linkToRoute('fidelapp_authenticate_contact',
+		$clientId = PageController::makeClientId($contact->getId(), $this->getPassword());
+		$localPathManual = $this->api->linkToRoute('fidelapp_authenticate_contact',
 				array (
-						'clientId' => PageController::makeClientId($contact->getId(), $this->getPassword())
+						'clientId' => $clientId
 				));
+		$localPathBase = $this->api->linkToRoute('fidelapp_index');
+
 		switch ($this->api->getAppValue('access_type')) {
 			case 'FIXED_IP' :
-				$url .= $this->api->getAppValue('fixed_ip') . $localPath;
+				$url .= $this->api->getAppValue('fixed_ip') . $localPathManual;
 				break;
 			case 'DOMAIN_NAME' :
-				$url .= $this->api->getAppValue('domain_name') . $localPath;
+				$url .= $this->api->getAppValue('domain_name') . $localPathManual;
 				break;
 			case 'FIDELBOX_ACCOUNT' :
 				// TODO: Create correct redirect URL for download applet, including account ID
-				$url = FIDELBOX_URL . 'redirect.php?path=' . urlencode($localPath) . '&account=' .
-						 $this->api->getAppValue('fidelbox_account');
+				$url = FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
+						 md5($this->api->getAppValue('fidelbox_account')) . "&clientId=$clientId";
 				break;
 			default :
 				$l = $this->api->getTrans();

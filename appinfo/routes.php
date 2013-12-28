@@ -30,10 +30,26 @@ $this->create('fidelapp_authenticate_contact', '/authenticate/{clientId}')->acti
 			App::main('PublicController', 'authenticateContact', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_filelist_for_applet', '/getfilesforclient/{clientId}')->action(
+$this->create('fidelapp_filelist_for_applet', '/getfilesforclient')->action(
 		function ($params) {
 			App::main('AppletAccessController', 'getFilesForClient', $params, new DIContainer());
 		});
+
+$this->create('fidelapp_applet_request_getchunk', '/getchunk')->action(
+		function ($params) {
+			App::main('AppletAccessController', 'getChunk', $params, new DIContainer());
+		});
+
+$this->create('fidelapp_applet_request_getkey', '/getkey')->action(
+		function ($params) {
+			App::main('AppletAccessController', 'getKey', $params, new DIContainer());
+		});
+
+$this->create('fidelapp_applet_request_confirm', '/confirm')->action(
+		function ($params) {
+			App::main('AppletAccessController', 'confirm', $params, new DIContainer());
+		});
+
 
 
 

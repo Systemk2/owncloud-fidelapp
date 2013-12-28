@@ -20,13 +20,13 @@ class CalculateMD5BackgroundJob {
 			$fileMapper = new FileItemMapper($api);
 			try {
 				$fileItem = $fileMapper->findByFileId($fileId);
+				if ($fileItem->getCalculationInProgress() || $fileItem->getChecksum()) {
+					return;
+				}
 			} catch(DoesNotExistException $e) {
 				$fileItem = new FileItem();
 				$fileItem->setFileId($fileId);
 				$fileItem->setCalculationInProgress(false);
-			}
-			if ($fileItem->getCalculationInProgress()) {
-				return;
 			}
 			$fileItem->setCalculationInProgress(true);
 			$fileMapper->save($fileItem);

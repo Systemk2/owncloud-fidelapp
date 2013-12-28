@@ -28,19 +28,17 @@ try {
 
 		$contactItem->setUserId($userId);
 		$contactItem->setEmail($email);
-		// TODO: Need to calculate checksum
 		$shareItem->setDownloadType('SECURE');
 		$shareItem->setFileId($fileId);
 
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
-	} else if (count($sharedItems) === 1) {
-		$contactShareItem = $sharedItems [0];
-	} else {
-		throw new \OCA\AppFramework\Db\MultipleObjectsReturnedException(
-				"More than one share for user $userId, file $fileId, email $email");
+
+		$mapper->save($contactShareItem);
+
+		$fidelConfig = new FidelboxConfig($api);
+		$fidelConfig->calculateHashAsync($shareItem);
 	}
 
-	$mapper->save($contactShareItem);
 	\OC_JSON::success();
 } catch(Exception $e) {
 	\OC_JSON::error($e->getMessage());

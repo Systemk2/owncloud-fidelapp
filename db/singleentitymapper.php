@@ -27,6 +27,14 @@ class SingleEntityMapper extends Mapper {
 		));
 	}
 
+	public function findByFileId($fileId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `file_id` = ?';
+
+		return $this->findEntities($sql, array (
+				$fileId
+		));
+	}
+
 	public function save(Entity $entity) {
 		$id = $entity->getId();
 		if ($id === null) {

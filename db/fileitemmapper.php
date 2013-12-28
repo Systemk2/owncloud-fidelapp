@@ -7,7 +7,7 @@ use \OCA\FidelApp\API;
 class FileItemMapper extends SingleEntityMapper {
 
 	public function __construct(API $api) {
-		parent::__construct($api, 'fidelapp_files'); // tablename is fidelapp_shares
+		parent::__construct($api, 'fidelapp_files'); // tablename is fidelapp_files
 	}
 
 	/**

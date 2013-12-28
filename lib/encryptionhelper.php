@@ -3,19 +3,27 @@
 namespace OCA\FidelApp;
 
 class EncryptionHelper {
+	private $api;
+
+	public function __construct(API $api) {
+		$this->api = $api;
+	}
 
 	/**
 	 * Decrypt and extract an URL encoded client ID with stuffing
 	 *
 	 * @param string $encryptedContactId
 	 *        	the encrypted client ID
-	 * @param string $password
-	 *        	the password used for encryption
 	 * @throws SecurityException when decryption failed
 	 * @return number the decrypted client ID
 	 */
-	public static function processContactId($encryptedContactId, $password) {
+	public function processContactId($encryptedContactId) {
+		$passwordBase64 = $this->api->getAppValue('secret');
+		if (! $passwordBase64) {
+			throw new SecurityException(ERROR_NO_SECRET_KEY);
+		}
 		try {
+			$password = base64_decode($passwordBase64, true);
 			$encryptedBinary = $bin_str = pack("H*", $encryptedContactId);
 			$td = mcrypt_module_open('rijndael-128', '', 'ofb', '');
 			mcrypt_generic_init($td, $password, '0000000000000000');

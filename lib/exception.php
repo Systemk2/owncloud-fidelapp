@@ -5,6 +5,9 @@ namespace OCA\FidelApp;
 
 define('ERROR_WRONG_CLIENT_ID', 6000);
 define('ERROR_NO_SECRET_KEY', 6001);
+define('ERROR_NO_PASSWORD_SET', 6002);
+define('ERROR_INVALID_PASSWORD_SET', 6003);
+define('ERROR_NO_SALT_SET', 6004);
 
 /**
  * The entered captcha did not match the image
@@ -27,3 +30,8 @@ class SecurityException extends \Exception {
 	}
 }
 
+/**
+ * The requested file is not available
+ */
+class FileNotFoundException extends \Exception {
+}

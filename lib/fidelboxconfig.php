@@ -23,6 +23,7 @@ define('NO_RESULT_FROM_REMOTE_HOST', 7000);
 define('UNPARSABLE_RESULT_FROM_REMOTE_HOST', 7001);
 
 use \OCA\FidelApp\API;
+use OCA\FidelApp\Db\ShareItem;
 
 /**
  * Manage interaction with fidelbox.de
@@ -35,8 +36,6 @@ use \OCA\FidelApp\API;
  * <li>Handle dynamic IP update</li>
  * </ul>
  *
- * @author Sebastian Kanzow
- *
  */
 class FidelboxConfig {
 	protected $api;
@@ -46,11 +45,6 @@ class FidelboxConfig {
 	}
 
 	/**
-	 *
-	 *
-	 *
-	 *
-	 *
 	 * Create a fidelbox.de URL for captcha generation
 	 *
 	 * @param string $tempUserId

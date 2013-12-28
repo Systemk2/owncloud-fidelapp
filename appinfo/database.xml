@@ -133,6 +133,13 @@
 				<length>32</length>
 				<comments>BASIC or SECURE</comments>
 			</field>
+			<field>
+				<name>nb_chunks</name>
+				<default>0</default>
+				<type>integer</type>
+				<length>4</length>
+				<comments>The number of encrypted chunks</comments>
+			</field>
 			<index>
 				<name>primary_key_fidelapp_shares</name>
 				<primary>true</primary>
@@ -212,6 +219,68 @@
 				<references>
 					<table>*dbprefix*fidelapp_shares</table>
 					<field>file_id</field>
+				</references>
+				<ondelete>cascade</ondelete>
+				<onupdate>cascade</onupdate>
+			</foreign>
+		</declaration>
+	</table>
+	<table>
+		<name>*dbprefix*fidelapp_chunks</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
+				<name>chunk_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>The download chunk Id</comments>
+			</field>
+			<field>
+				<name>share_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Reference to fidelapp_shares</comments>
+			</field>
+			<field>
+				<name>checksum</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>32</length>
+				<comments>The MD5 hash of the download chunk</comments>
+			</field>
+			<index>
+				<name>primary_key_fidelapp_chunks</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+			<index>
+				<name>constraint_unique_fidelapp_chunks</name>
+				<unique>true</unique>
+				<field>
+					<name>chunk_id</name>
+				</field>
+				<field>
+					<name>share_id</name>
+				</field>
+			</index>
+			<foreign>
+				<name>foreign_key_shares</name>
+				<field>share_id</field>
+				<references>
+					<table>*dbprefix*fidelapp_shares</table>
+					<field>id</field>
 				</references>
 				<ondelete>cascade</ondelete>
 				<onupdate>cascade</onupdate>
