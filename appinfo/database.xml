@@ -100,6 +100,7 @@
 			<field>
 				<name>download_time</name>
 				<type>timestamp</type>
+				<default></default>
 				<comments>When has the file been downloaded</comments>
 			</field>
 			<field>

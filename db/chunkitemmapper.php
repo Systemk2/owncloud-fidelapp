@@ -40,4 +40,14 @@ class ChunkItemMapper extends SingleEntityMapper {
 				$chunkId
 		));
 	}
+
+	/**
+	 * Delete all chunk information for the given share Id
+	 *
+	 * @param integer $shareId
+	 */
+	public function deleteByShareId($shareId) {
+		$sql = 'DELETE FROM `' . $this->getTableName() . '` ' . 'WHERE `share_id` = ?';
+		$this->execute($sql, array($shareId));
+	}
 }
