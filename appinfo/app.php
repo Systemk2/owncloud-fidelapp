@@ -1,6 +1,8 @@
 <?php
-define('FIDELBOX_URL', 'http://192.168.0.120/fidelserver');
 define('FIDELAPP_APPNAME', 'fidelapp');
+
+$config = parse_ini_file(FIDELAPP_APPNAME . '/config/config.ini');
+define('FIDELBOX_URL', $config['FIDELBOX_URL']);
 
 OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
 

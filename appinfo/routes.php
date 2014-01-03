@@ -20,6 +20,16 @@ $this->create('fidelapp_wizard', '/wizard')->action(
 			App::main('PageController', 'wizard', $params, new DIContainer());
 		});
 
+$this->create('fidelapp_shares', '/shares')->action(
+		function ($params) {
+			App::main('PageController', 'shares', $params, new DIContainer());
+		});
+
+$this->create('fidelapp_passwords', '/passwords')->action(
+		function ($params) {
+			App::main('PageController', 'passwords', $params, new DIContainer());
+		});
+
 $this->create('fidelapp_get_file', '/download')->action(
 		function ($params) {
 			App::main('PublicController', 'getFileList', $params, new DIContainer());

@@ -33,14 +33,13 @@
 }
 
 #fidelapp_dropdown a.checked.disabled {
-	background-image: url("/owncloud/apps/fidelapp/img/checkmark-gray.png");
+	background-image: url("%appswebroot%/fidelapp/img/checkmark-gray.png");
 	color: #000000;
 	cursor: default;
 }
 
 #fidelapp_dropdown a.checked {
-	background-image: url("/owncloud/apps/fidelapp/img/checkmark-green.png");
-	/* margin: 3px 0 3px -25px; */
+	background-image: url("%appswebroot%/fidelapp/img/checkmark-green.png");
 }
 
 #fidelapp_dropdown a.checked.action {
@@ -80,7 +79,7 @@
 }
 
 #shareWithFidelAppList .fidelapp_mailto {
-	background-image: url("/owncloud/core/img/actions/mail.svg");
+	background-image: url("%webroot%/core/img/actions/mail.svg");
 	cursor: pointer;
 	float: right;
 }
@@ -101,17 +100,17 @@
 }
 
 #shareWithFidelAppList .fidelapp_delete {
-	background-image: url("/owncloud/core/img/actions/delete.svg");
+	background-image: url("%webroot%/core/img/actions/delete.svg");
 	float: right;
 	cursor: pointer;
 }
 
 #shareWithFidelAppList .fidelapp_delete:hover {
-	background-image: url("/owncloud/core/img/actions/delete-hover.svg");
+	background-image: url("%webroot%/core/img/actions/delete-hover.svg");
 }
 
 #shareWithFidelAppList .fidelapp_triangle {
-	background-image: url("/owncloud/core/img/actions/triangle-s.svg");
+	background-image: url("%webroot%/core/img/actions/triangle-s.svg");
 	cursor: pointer;
 	opacity: 0.5;
 }
@@ -122,11 +121,11 @@
 }
 
 .fidelapp_key-green {
-	background-image: url("/owncloud/apps/fidelapp/img/key-green.png");
+	background-image: url("%appswebroot%/fidelapp/img/key-green.png");
 }
 
 .fidelapp_key-red {
-	background-image: url("/owncloud/apps/fidelapp/img/key-red.png");
+	background-image: url("%appswebroot%/fidelapp/img/key-red.png");
 }
 
 #fidelapp_password_div {

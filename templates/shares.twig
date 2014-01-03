@@ -1,0 +1,19 @@
+
+<table>
+	<th>{{ trans('Contact') }}</th>
+	<th>{{ trans('File') }}</th>
+	<th>{{ trans('Shared') }}</th>
+	<th>{{ trans('Downloaded') }}</th>
+	<th>{{ trans('Share type') }}</th>
+
+	{% for item in shares %}
+	<tr>
+		<td>{{ item.contactName }}</td>
+		<td>{{ item.fileName }}</td>
+		<td>{{ item.shareItem.shareTime }}</td>
+		<td>{{ item.shareItem.downloadTime }}</td>
+		<td>{{ item.shareItem.downloadType }}</td>
+		<td></td>
+	</tr>
+	{% endfor %}
+</table>

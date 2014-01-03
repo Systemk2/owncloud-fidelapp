@@ -10,6 +10,8 @@ use OCA\FidelApp\Db\ShareItem;
 \OCP\JSON::callCheck();
 \OC_App::loadApps();
 
+
+
 try {
 	$api = new API();
 
@@ -28,6 +30,10 @@ try {
 
 		$contactItem->setUserId($userId);
 		$contactItem->setEmail($email);
+		$contactsappId = $api->findContactsappIdByEmail($api, $email);
+		if($contactsappId) {
+			$contactItem->setContactsappId($contactsappId);
+		}
 		$shareItem->setDownloadType('SECURE');
 		$shareItem->setFileId($fileId);
 

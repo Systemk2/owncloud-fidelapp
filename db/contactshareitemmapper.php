@@ -77,6 +77,18 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
+	public function findByUser($userId) {
+		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
+		'` S, `' . $this->contactItemMapper->getTableName() .
+		'` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
+
+		$contactShareItems = $this->findEntities($sql, array (
+				$userId
+		));
+
+		return $contactShareItems;
+	}
+
 	public function findByShareId($shareId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 		'` S, `' . $this->contactItemMapper->getTableName() .

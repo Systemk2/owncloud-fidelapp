@@ -22,7 +22,6 @@ class PageController extends Controller {
 	 *      It is used to encrypt client ids in URLs
 	 */
 	private $password;
-
 	private $fidelboxConfig;
 
 	public function __construct(API $api, FidelboxConfig $fidelboxConfig, $request) {
@@ -30,14 +29,55 @@ class PageController extends Controller {
 		$this->fidelboxConfig = $fidelboxConfig;
 	}
 
-
 	/**
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 */
 	public function fidelApp() {
-		return $this->render(FIDELAPP_APPNAME);
+		return $this->render('fidelapp');
+	}
+
+	/**
+	 * @CSRFExemption
+	 * @IsAdminExemption
+	 * @IsSubAdminExemption
+	 */
+	public function passwords() {
+		$mapper = new ContactShareItemMapper($this->api);
+		$shares = $mapper->findByUser($this->api->getUserId());
+		foreach ( $shares as &$item ) {
+			$contactId = $item->getContactItem()->getId();
+			if(!isset($shareItems[$contactId])) {
+				$item->contactName = $this->makeContactName($item->getContactItem());
+				$shareItems[$contactId] = &$item;
+			}
+		}
+		$params = array (
+				'menu' => 'passwords',
+				'actionTemplate' => 'passwords',
+				'shares' => $shareItems
+		);
+		return $this->render('fidelapp', $params);
+	}
+	/**
+	 * @CSRFExemption
+	 * @IsAdminExemption
+	 * @IsSubAdminExemption
+	 */
+	public function shares() {
+		$mapper = new ContactShareItemMapper($this->api);
+		$shares = $mapper->findByUser($this->api->getUserId());
+		foreach ( $shares as &$item ) {
+			$item->contactName = $this->makeContactName($item->getContactItem());
+			$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
+		}
+		$params = array (
+				'menu' => 'shares',
+				'actionTemplate' => 'shares',
+				'shares' => $shares
+		);
+		return $this->render($this->api->getAppName(), $params);
 	}
 
 	/**
@@ -158,10 +198,10 @@ class PageController extends Controller {
 		}
 		if ($this->hasParam('reload')) {
 			// Subsequent call: Render page without header and footer
-			return $this->render($this->api->getAppName(), $templateParams->getAll(), '');
+			return $this->render('fidelapp', $templateParams->getAll(), '');
 		} else {
 			// First call: Render page with header and footer
-			return $this->render($this->api->getAppName(), $templateParams->getAll());
+			return $this->render('fidelapp', $templateParams->getAll());
 		}
 	}
 
@@ -208,10 +248,9 @@ class PageController extends Controller {
 	private function generateUrl(ContactItem $contact) {
 		$url = $this->api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
 		$clientId = PageController::makeClientId($contact->getId(), $this->getPassword());
-		$localPathManual = $this->api->linkToRoute('fidelapp_authenticate_contact',
-				array (
-						'clientId' => $clientId
-				));
+		$localPathManual = $this->api->linkToRoute('fidelapp_authenticate_contact', array (
+				'clientId' => $clientId
+		));
 		$localPathBase = $this->api->linkToRoute('fidelapp_index');
 
 		switch ($this->api->getAppValue('access_type')) {
@@ -283,7 +322,8 @@ class PageController extends Controller {
 	}
 
 	private function makePassword() {
-		$td = mcrypt_module_open('rijndael-128', '', 'ofb', '');
+		// TODO: Check if mcrypt is available
+		$td = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_OFB, '');
 		$maxKeySize = mcrypt_enc_get_key_size($td);
 		$password = '';
 		while ( strlen($password) < $maxKeySize ) {
@@ -294,4 +334,16 @@ class PageController extends Controller {
 		\OC_Log::write($this->api->getAppName(), 'Generated new secret password', \OC_Log::INFO);
 	}
 
+	private function makeContactName(ContactItem $item) {
+		$contactsappId = $item->getContactsappId();
+		$email = $item->getEmail();
+		if($contactsappId) {
+			// TODO: Cache result (but how?)
+			$contactName = $this->api->findContactNameById($contactsappId);
+			if($contactName) {
+				return $contactName . " <$email>";
+			}
+		}
+		return $email;
+	}
 }

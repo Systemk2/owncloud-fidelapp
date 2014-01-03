@@ -48,8 +48,16 @@ class AppletAccessController extends Controller {
 			\OC_Util::obEnd();
 			header('Content-Type: text/plain; charset=utf-8');
 			foreach ( $shareItems as &$shareItem ) {
-				if($fileItemMapper->findByFileId($shareItem->getFileId())->getChecksum()) {
-					echo $shareItem->getId() . "\n";
+				try {
+					if ($fileItemMapper->findByFileId($shareItem->getFileId())->getChecksum()) {
+						echo $shareItem->getId() . "\n";
+					} else {
+						\OC_Log::write($this->api->getAppName(), 'Checksum calculation is still in progress', \OC_Log::WARN);
+					}
+				} catch(DoesNotExistException $e) {
+					\OC_Log::write($this->api->getAppName(),
+							'The checksum calculation has not started yet: ' . $e->getMessage() .
+									 ". Maybe the CRON job is not set up correctly?", \OC_Log::WARN);
 				}
 			}
 			exit(0);
@@ -86,8 +94,9 @@ class AppletAccessController extends Controller {
 			$salt = $shareItem->getSalt();
 			if (! $salt) {
 				$salt = '';
-				for($i = 0; $i < 7; $i ++)
+				for($i = 0; $i < 7; $i ++) {
 					$salt .= pack('C', mt_rand(0, 255));
+				}
 				$shareItem->setSalt(bin2hex($salt));
 				$shareItemMapper = new ShareItemMapper($this->api);
 				$shareItemMapper->save($shareItem);
@@ -196,9 +205,7 @@ class AppletAccessController extends Controller {
 			for($i = 1; $i <= $chunkCount; $i ++) {
 				try {
 					$chunk = $chunkMapper->findByShareAndChunkId($shareId, $i);
-					if (! $this->params(
-							"chunk-message-digest_$i"
-					)) {
+					if (! $this->params("chunk-message-digest_$i")) {
 						\OC_Log::write($this->api->getAppName(), "Validation of chunk $i failed, no chunk info sent by client",
 								\OC_Log::WARN);
 						$corruptChunks [] = $i;
@@ -287,9 +294,9 @@ class AppletAccessController extends Controller {
 	}
 
 	private function createKey($pass, $salt) {
-		if (! $pass || trim($pass) == '')
+		if (count($pass) == 0)
 			throw new SecurityException(ERROR_NO_PASSWORD_SET);
-		if (! $salt || trim($salt) == '') {
+		if (count($salt) == 0) {
 			throw new SecurityException(ERROR_NO_SALT_SET);
 		}
 		$pass = str_replace(' ', '/', $pass);
@@ -297,12 +304,16 @@ class AppletAccessController extends Controller {
 			$pass .= $pass;
 		$pass = substr($pass, 0, 12); // Cut to exactly 12 characters
 
+		// Our password is composed of characters that can be used to represent a base64 - encoded
+		// binary. Put differently: For the user it is a password, but for the system, it's a base64-code.
+		// All we have to do is to make a binary key out of the base64 code
 		$key = base64_decode($pass, true);
 		if (! $key)
 			throw new SecurityException(ERROR_INVALID_PASSWORD_SET);
 
 			// Combine password and salt
 		$key .= pack('H*', $salt);
+		\OC_Log::write($this->api->getAppName(), 'Created key: ' . bin2hex($key), \OC_Log::DEBUG);
 		return $key;
 	}
 
@@ -317,6 +328,7 @@ class AppletAccessController extends Controller {
 			if (preg_match('?' . $regexp . '?', $name))
 				$matches [$name] = $value;
 		}
+
 		return $matches;
 	}
 }

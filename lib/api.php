@@ -3,6 +3,8 @@
 namespace OCA\FidelApp;
 
 use OCP\BackgroundJob;
+use OCA\Contacts\VCard;
+
 /**
  * Enhanced API, based on the AppFramework's API wrapper
  */
@@ -30,7 +32,68 @@ class API extends \OCA\AppFramework\Core\API {
 	 * @return array of contacts which are arrays of key-value-pairs
 	 */
 	public function search($pattern, $searchProperties = array(), $options = array()) {
+		// The API is not active -> nothing to do
+		if (! \OCP\Contacts::isEnabled()) {
+			$msg = 'Contact app is not enabled';
+			\OCP\Util::writeLog($api->getAppName(), $msg, \OCP\Util::WARN);
+			return array ();
+		}
+
 		return \OCP\Contacts::search($pattern, $searchProperties, $options);
+	}
+
+	public function findContactsByNameOrEmail($term) {
+		// Search in username and e-Mail
+		$result = $api->search($term, array (
+				'FN',
+				'EMAIL'
+		));
+
+		$contacts = array ();
+		foreach ( $result as $r ) {
+			$id = $r ['id'];
+			$fn = $r ['FN'];
+
+			if (isset($r ['EMAIL'])) {
+				$email = $r ['EMAIL'];
+				// loop through all email addresses of this contact
+				foreach ( $email as $e ) {
+					$displayName = $fn . " <$e>";
+					$contacts [] = array (
+							'label' => $displayName,
+							'value' => $e
+					);
+				}
+			}
+		}
+		return $contacts;
+	}
+
+	public function findContactsappIdByEmail(API $api, $email) {
+		$result = $this->search($email, array (
+				'EMAIL'
+		));
+
+		foreach ( $result as $r ) {
+			if (isset($r ['EMAIL'])) {
+				$emails = $r ['EMAIL'];
+				// loop through all email addresses of this contact
+				foreach ( $emails as $e ) {
+					if ($e == $email) {
+						return $r ['id'];
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	public function findContactNameById($contactsappId) {
+		$return = VCard::find($contactsappId);
+		if(isset ($return['fullname'])) {
+			return $return ['fullname'];
+		}
+		return null;
 	}
 
 	/**
@@ -60,9 +123,12 @@ class API extends \OCA\AppFramework\Core\API {
 	/**
 	 * Queues a task
 	 *
-	 * @param $class string class name
-	 * @param $method string [default = 'run'] method name
-	 * @param $parameters string [default = ''] all useful data as text
+	 * @param $class string
+	 *        	class name
+	 * @param $method string
+	 *        	[default = 'run'] method name
+	 * @param $parameters string
+	 *        	[default = ''] all useful data as text
 	 * @return id of task
 	 */
 	public function addQueuedTask($class, $method = 'run', $parameters = '') {

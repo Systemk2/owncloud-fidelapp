@@ -2,7 +2,7 @@
 	<div id="fidelapp_menuheader">&nbsp;</div>
 	<div class="" id="leftcontent">
 		<nav id="grouplist" class="ui-sortable">
-			<a href="{{ url('fidelapp_wizard') }}" class="{{ menu == 'wizard' ? 'active' : '' }}">{{ trans('Configuration Wizard') }}</a> <a class="{{ menu == 'shares' ? 'active' : '' }}">{{ trans('Active shares / receipt notices') }}</a> <a class="{{ menu == 'passwords' ? 'active' : '' }}">{{ trans('Stored Passwords') }}</a> <a class="{{ menu == 'design' ? 'active' : '' }}">{{ trans('Corporate Design') }}</a>
+			<a href="{{ url('fidelapp_wizard') }}" class="{{ menu == 'wizard' ? 'active' : '' }}">{{ trans('Configuration Wizard') }}</a> <a href="{{ url('fidelapp_shares') }} "class="{{ menu == 'shares' ? 'active' : '' }}">{{ trans('Active shares / receipt notices') }}</a> <a href="{{ url('fidelapp_passwords') }}" class="{{ menu == 'passwords' ? 'active' : '' }}">{{ trans('Stored Passwords') }}</a>
 		</nav>
 	</div>
 	{% if(actionTemplate) %}
