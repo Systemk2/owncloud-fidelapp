@@ -41,6 +41,7 @@
 
 #fidelapp>#rightcontent {
 	width: 70%;
+	top: 50px;
 }
 
 #fidelapp>#rightcontent label {
@@ -136,4 +137,21 @@
 	background: url("%webroot%/core/img/actions/triangle-s.svg") no-repeat 0
 		2px;
 	padding-left: 20px;
+}
+
+#fidelapp_password_table .fidelapp_spinner {
+	background-image: url("%webroot%/core/img/loader.gif");
+	background-color: #FFFFFF;
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: inline-block;
+    width: 16px;
+}
+
+input.active[type="button"] {
+    color: #6193CF;
+}
+
+#fidelapp_selector {
+	padding: 1em;
 }

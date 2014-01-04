@@ -75,7 +75,8 @@ class PageController extends Controller {
 		$params = array (
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
-				'shares' => $shares
+				'shares' => $shares,
+				'view' => 'activeshares'
 		);
 		return $this->render($this->api->getAppName(), $params);
 	}
