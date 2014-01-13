@@ -173,6 +173,62 @@
 				</references> <ondelete>cascade</ondelete> <onupdate>cascade</onupdate> </foreign> -->
 		</declaration>
 	</table>
+		<table>
+		<name>*dbprefix*fidelapp_receipts</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
+				<name>user_id</name>
+				<type>integer</type>
+				<notnull>true</notnull>
+				<length>4</length>
+				<comments>Owncloud user</comments>
+			</field>
+			<field>
+				<name>contact_name</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>256</length>
+				<comments>Receiver contact name and e-mail address</comments>
+			</field>
+			<field>
+				<name>file_name</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>256</length>
+				<comments>The name of the file</comments>
+			</field>
+			<field>
+				<name>download_time</name>
+				<type>timestamp</type>
+				<default>CURRENT_TIMESTAMP</default>
+				<notnull>true</notnull>
+				<comments>When has the file been downloaded</comments>
+			</field>
+			<field>
+				<name>download_type</name>
+				<notnull>true</notnull>
+				<type>text</type>
+				<length>32</length>
+				<comments>BASIC or SECURE</comments>
+			</field>
+			<index>
+				<name>primary_key_fidelapp_receipts</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+		</declaration>
+	</table>
 	<table>
 		<name>*dbprefix*fidelapp_files</name>
 		<declaration>

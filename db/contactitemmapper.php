@@ -27,4 +27,12 @@ class ContactItemMapper extends SingleEntityMapper {
 				$email
 		));
 	}
+
+	public function findByContactsappId($contactId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `contactsapp_id` = ?';
+
+		return $this->findEntities($sql, array (
+				$contactId
+		));
+	}
 }

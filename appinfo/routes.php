@@ -22,7 +22,13 @@ $this->create('fidelapp_wizard', '/wizard')->action(
 
 $this->create('fidelapp_shares', '/shares')->action(
 		function ($params) {
+			$params['view'] = 'activeshares';
 			App::main('PageController', 'shares', $params, new DIContainer());
+		});
+
+$this->create('fidelapp_receipts', '/receipts')->action(
+		function ($params) {
+			App::main('PageController', 'receipts', $params, new DIContainer());
 		});
 
 $this->create('fidelapp_passwords', '/passwords')->action(

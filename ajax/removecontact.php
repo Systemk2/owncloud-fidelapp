@@ -16,30 +16,8 @@ try {
 
 	$contactId = $_REQUEST ['contactId'];
 
-	$mapper = new ContactItemMapper($api);
-	$shareMapper = new ShareItemMapper($api);
-	$fileMapper = new FileItemMapper($api);
-
-	$contactItem = $mapper->findById($contactId);
-
-	// Cleanup: Remove shares that belong to the deleted contact
-	$shares = $shareMapper->findByContact($contactId);
-	foreach ( $shares as $share ) {
-		$fileId = $share->getFileId();
-		$shareMapper->delete($share);
-
-		if (count($shareMapper->findByFileId($fileId)) == 0) {
-			// File is not shared anymore, clean up checksum table too
-			try {
-				$fileItem = $fileMapper->findByFileId($fileId);
-				$fileMapper->delete($fileItem);
-			} catch(DoesNotExistException $e) {
-				// The checksum information has already been deleted? Ignore....
-			}
-		}
-	}
-	// Finally delete the contact itself
-	$mapper->delete($contactItem);
+	$contactManager = new ContactManager($api);
+	$contactManager->removeContact($contactId);
 
 	\OC_JSON::success(array (
 			'contact' => $contactId,

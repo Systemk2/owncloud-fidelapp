@@ -1,0 +1,14 @@
+<table>
+	<th>{{ trans('E-Mail') }}</th>
+	<th>{{ trans('File') }}</th>
+	<th>{{ trans('Downloaded') }}</th>
+	<th>{{ trans('Downloadtype') }}</th>
+	{% for item in receipts %}
+	<tr>
+		<td>{{ item.contactName }}</td>
+		<td>{{ item.fileName }}</td>
+		<td>{{ item.downloadTime }}</td>
+		<td>{{ item.downloadType }}</td>
+	</tr>
+	{% endfor %}
+</table>

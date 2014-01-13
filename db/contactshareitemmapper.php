@@ -79,8 +79,7 @@ class ContactShareItemMapper extends Mapper {
 
 	public function findByUser($userId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
-		'` S, `' . $this->contactItemMapper->getTableName() .
-		'` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
+				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId
@@ -91,14 +90,53 @@ class ContactShareItemMapper extends Mapper {
 
 	public function findByShareId($shareId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
-		'` S, `' . $this->contactItemMapper->getTableName() .
-		'` C WHERE C.`id` = S.`contact_id` AND S.`id` = ?';
+				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND S.`id` = ?';
 
 		$contactShareItem = $this->findEntity($sql, array (
 				$shareId
 		));
 
 		return $contactShareItem;
+	}
+
+	public function deleteAllForUser($userId) {
+		// Delete chunks
+		$chunkItemMapper = new ChunkItemMapper($this->api);
+		$sql = 'DELETE FROM `' . $chunkItemMapper->getTableName() . '` WHERE `share_id` IN (SELECT S.`id` from `' .
+				 $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+				 '` C WHERE S.`contact_id` = C.`id` AND C.`user_id` = ? )';
+		$this->execute($sql, array (
+				$userId
+		));
+
+		// Delete file checksums
+		$fileItemMapper = new FileItemMapper($this->api);
+		$sql = 'DELETE FROM `' . $fileItemMapper->getTableName() . '` WHERE `file_id` IN (SELECT S.`file_id` from `' .
+				 $this->shareItemMapper->getTableName() . '` S, `' . $this->contactItemMapper->getTableName() .
+				 '` C WHERE S.`contact_id` = C.`id` AND C.`user_id` = ? )';
+		$this->execute($sql, array (
+				$userId
+		));
+
+		// Delete shares
+		$sql = 'DELETE FROM `' . $this->shareItemMapper->getTableName() . '` WHERE `contact_id` IN (SELECT `id` from `' .
+				 $this->contactItemMapper->getTableName() . '` WHERE `user_id` = ?)';
+		$this->execute($sql, array (
+				$userId
+		));
+
+		// Delete download receipts
+		$receiptItemMapper = new ReceiptItemMapper($this->api);
+		$sql = 'DELETE FROM `' . $receiptItemMapper->getTableName() . '` WHERE `user_id` = ?';
+		$this->execute($sql, array (
+				$userId
+		));
+
+		// Delete contacts
+		$sql = 'DELETE FROM `' . $this->contactItemMapper->getTableName() . '` WHERE `user_id` = ?';
+		$this->execute($sql, array (
+				$userId
+		));
 	}
 
 	public function save(ContactShareItem $item) {

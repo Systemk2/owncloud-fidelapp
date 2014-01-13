@@ -4,6 +4,7 @@ namespace OCA\FidelApp;
 
 use OCP\BackgroundJob;
 use OCA\Contacts\VCard;
+use Sabre\VObject\Reader;
 
 /**
  * Enhanced API, based on the AppFramework's API wrapper
@@ -94,6 +95,24 @@ class API extends \OCA\AppFramework\Core\API {
 			return $return ['fullname'];
 		}
 		return null;
+	}
+
+	public function findEMailAddressesByContactsappId($contactsappId) {
+		$contactData = VCard::find($contactsappId);
+		if(!$contactData) {
+			return array();
+		}
+		$vCardData = $contactData['carddata'];
+		$vCard = Reader::read($vCardData);
+		$emails = array();
+		foreach ($vCard->children() as $property) {
+			if(is_a($property, '\Sabre\VObject\Property')) {
+				if($property->name == 'EMAIL') {
+					$emails[] = $property->value;
+				}
+			}
+		}
+		return $emails;
 	}
 
 	/**

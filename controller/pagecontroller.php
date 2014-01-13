@@ -13,6 +13,8 @@ use \OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\InvalidConfigException;
 use OCA\FidelApp\Db\ContactItem;
 use OCA\FidelApp\Db\ContactShareItem;
+use OCA\FidelApp\Db\ReceiptItemMapper;
+use OCA\FidelApp\ContactManager;
 
 class PageController extends Controller {
 
@@ -46,10 +48,11 @@ class PageController extends Controller {
 	public function passwords() {
 		$mapper = new ContactShareItemMapper($this->api);
 		$shares = $mapper->findByUser($this->api->getUserId());
+		$contactManager = new ContactManager($this->api);
 		foreach ( $shares as &$item ) {
 			$contactId = $item->getContactItem()->getId();
 			if(!isset($shareItems[$contactId])) {
-				$item->contactName = $this->makeContactName($item->getContactItem());
+				$item->contactName = $contactManager->makeContactName($item->getContactItem());
 				$shareItems[$contactId] = &$item;
 			}
 		}
@@ -68,8 +71,9 @@ class PageController extends Controller {
 	public function shares() {
 		$mapper = new ContactShareItemMapper($this->api);
 		$shares = $mapper->findByUser($this->api->getUserId());
+		$contactManager = new ContactManager($this->api);
 		foreach ( $shares as &$item ) {
-			$item->contactName = $this->makeContactName($item->getContactItem());
+			$item->contactName = $contactManager->makeContactName($item->getContactItem());
 			$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
 		}
 		$params = array (
@@ -78,7 +82,24 @@ class PageController extends Controller {
 				'shares' => $shares,
 				'view' => 'activeshares'
 		);
-		return $this->render($this->api->getAppName(), $params);
+		return $this->render('fidelapp', $params);
+	}
+
+	/**
+	 * @CSRFExemption
+	 * @IsAdminExemption
+	 * @IsSubAdminExemption
+	 */
+	public function receipts() {
+		$mapper = new ReceiptItemMapper($this->api);
+		$receipts = $mapper->findByUser($this->api->getUserId());
+		$params = array (
+				'menu' => 'shares',
+				'actionTemplate' => 'shares',
+				'receipts' => $receipts,
+				'view' => 'receiptnotices'
+		);
+		return $this->render('fidelapp', $params);
 	}
 
 	/**
@@ -333,18 +354,5 @@ class PageController extends Controller {
 		$passwordBase64 = base64_encode(substr($password, 0, $maxKeySize));
 		$this->api->setAppValue('secret', $passwordBase64);
 		\OC_Log::write($this->api->getAppName(), 'Generated new secret password', \OC_Log::INFO);
-	}
-
-	private function makeContactName(ContactItem $item) {
-		$contactsappId = $item->getContactsappId();
-		$email = $item->getEmail();
-		if($contactsappId) {
-			// TODO: Cache result (but how?)
-			$contactName = $this->api->findContactNameById($contactsappId);
-			if($contactName) {
-				return $contactName . " <$email>";
-			}
-		}
-		return $email;
 	}
 }

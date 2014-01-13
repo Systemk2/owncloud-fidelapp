@@ -18,6 +18,9 @@ use OC\Files\Filesystem;
 use OCA\FidelApp\Db\ChunkItemMapper;
 use OCA\FidelApp\Db\ChunkItem;
 use OCA\AppFramework\Db\DoesNotExistException;
+use OCA\FidelApp\Db\ReceiptItemMapper;
+use OCA\FidelApp\Db\ReceiptItem;
+use OCA\FidelApp\ContactManager;
 
 class AppletAccessController extends Controller {
 
@@ -97,7 +100,8 @@ class AppletAccessController extends Controller {
 				for($i = 0; $i < 7; $i ++) {
 					$salt .= pack('C', mt_rand(0, 255));
 				}
-				$shareItem->setSalt(bin2hex($salt));
+				$salt = bin2hex($salt);
+				$shareItem->setSalt($salt);
 				$shareItemMapper = new ShareItemMapper($this->api);
 				$shareItemMapper->save($shareItem);
 			}
@@ -262,15 +266,30 @@ class AppletAccessController extends Controller {
 			$contactShareItem = $this->getCurrentContactShareItem($this->params('submission-id'));
 			$share = $contactShareItem->getShareItem();
 			$fileItemMapper = new FileItemMapper($this->api);
-			$fileItem = $fileItemMapper->findByFileId($share->getFileId());
+			$fileId = $share->getFileId();
+			$fileItem = $fileItemMapper->findByFileId($fileId);
 			$expectedHash = $fileItem->getChecksum();
 			if (strtolower($this->params('plain-file-hash')) == $expectedHash) {
 				\OC_Log::write($this->api->getAppName(), 'Finalized download of ' . $share->getFileId(), \OC_Log::INFO);
-				$share->setDownloadTime(date('Y-m-d H:i:s'));
+				$now = date('Y-m-d H:i:s');
+				$share->setDownloadTime($now);
 				$shareItemMapper = new ShareItemMapper($this->api);
 				$shareItemMapper->save($share);
 				$chunkItemMapper = new ChunkItemMapper($this->api);
 				$chunkItemMapper->deleteByShareId($share->getId());
+				$contactManager = new ContactManager($this->api);
+				$receipt = new ReceiptItem();
+				$receipt->setContactName($contactShareItem->getContactItem()->getEmail());
+				$receipt->setDownloadTime($now);
+				$userId = $contactShareItem->getContactItem()->getUserId();
+				$this->api->setupFS($userId);
+				$fileName = trim($this->api->getPath($fileId), " /");
+				$receipt->setFileName($fileName);
+				$receipt->setUserId($userId);
+				$receipt->setDownloadType($share->getDownloadType());
+				$receiptItemMapper = new ReceiptItemMapper($this->api);
+				$receiptItemMapper->save($receipt);
+				\OC_Log::write($this->api->getAppName(), 'Wrote receipt', \OC_Log::DEBUG);
 			} else {
 				\OC_Log::write($this->api->getAppName(),
 						'Plain file hash for ' . $share->getId() . "  is not correct!. Expected $expectedHash but received " .
@@ -305,8 +324,8 @@ class AppletAccessController extends Controller {
 		$pass = substr($pass, 0, 12); // Cut to exactly 12 characters
 
 		// Our password is composed of characters that can be used to represent a base64 - encoded
-		// binary. Put differently: For the user it is a password, but for the system, it's a base64-code.
-		// All we have to do is to make a binary key out of the base64 code
+		                              // binary. Put differently: For the user it is a password, but for the system, it's a base64-code.
+		                              // All we have to do is to make a binary key out of the base64 code
 		$key = base64_decode($pass, true);
 		if (! $key)
 			throw new SecurityException(ERROR_INVALID_PASSWORD_SET);

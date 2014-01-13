@@ -1,33 +1,7 @@
-<form id="fidelapp_selector">
-	<input id="fidelapp_activeshares_radio" {{ view == 'activeshares'? 'class="active"' : '' }} type="button" value="{{ trans('Active shares') }}">
+{{ script('shares') }}
+
+<form  id="fidelapp_selector">
+	<input id="fidelapp_activeshares_radio" {{ view == 'activeshares' ? 'class="active"' : '' }} type="button" value="{{ trans('Active shares') }}">
 	<input id="fidelapp_receiptnotices_radio"  {{ view == 'receiptnotices'? 'class="active"' : '' }} type="button" value="{{ trans('Receipt notices') }}">
 </form>
-{% if(view == 'activeshares') %}
-<table>
-	<th>{{ trans('Contact') }}</th>
-	<th>{{ trans('File') }}</th>
-	<th>{{ trans('Shared') }}</th>
-	<th>{{ trans('Downloaded') }}</th>
-	<th>{{ trans('Share type') }}</th> {% for item in shares %}
-	<tr>
-		<td>{{ item.contactName }}</td>
-		<td>{{ item.fileName }}</td>
-		<td>{{ item.shareItem.shareTime }}</td>
-		<td>{{ item.shareItem.downloadTime }}</td>
-		<td>{{ item.shareItem.downloadType }}</td>
-	</tr>
-	{% endfor %}
-</table>
-{% else %}
-<table>
-	<th>{{ trans('Contact') }}</th>
-	<th>{{ trans('File') }}</th>
-	<th>{{ trans('Downloaded') }}</th> {% for item in shares %}
-	<tr>
-		<td>{{ item.contactName }}</td>
-		<td>{{ item.fileName }}</td>
-		<td>{{ item.downloadTime }}</td>
-	</tr>
-	{% endfor %}
-</table>
-{% endif %}
+{%  include "#{view}.twig" %}
