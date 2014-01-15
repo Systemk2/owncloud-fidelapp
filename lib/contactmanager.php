@@ -30,9 +30,9 @@ class ContactManager {
 	 * @throws OCA\AppFramework\Db\DoesNotExistException if the contact does not exist
 	 */
 	public function removeContact($contactId) {
-		$mapper = new ContactItemMapper($api);
-		$shareMapper = new ShareItemMapper($api);
-		$fileMapper = new FileItemMapper($api);
+		$mapper = new ContactItemMapper($this->api);
+		$shareMapper = new ShareItemMapper($this->api);
+		$fileMapper = new FileItemMapper($this->api);
 
 		$contactItem = $mapper->findById($contactId);
 

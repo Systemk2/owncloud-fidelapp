@@ -36,7 +36,7 @@ class API extends \OCA\AppFramework\Core\API {
 		// The API is not active -> nothing to do
 		if (! \OCP\Contacts::isEnabled()) {
 			$msg = 'Contact app is not enabled';
-			\OCP\Util::writeLog($api->getAppName(), $msg, \OCP\Util::WARN);
+			\OCP\Util::writeLog($this->getAppName(), $msg, \OCP\Util::WARN);
 			return array ();
 		}
 
@@ -45,7 +45,7 @@ class API extends \OCA\AppFramework\Core\API {
 
 	public function findContactsByNameOrEmail($term) {
 		// Search in username and e-Mail
-		$result = $api->search($term, array (
+		$result = $this->search($term, array (
 				'FN',
 				'EMAIL'
 		));
@@ -70,7 +70,7 @@ class API extends \OCA\AppFramework\Core\API {
 		return $contacts;
 	}
 
-	public function findContactsappIdByEmail(API $api, $email) {
+	public function findContactsappIdByEmail($email) {
 		$result = $this->search($email, array (
 				'EMAIL'
 		));

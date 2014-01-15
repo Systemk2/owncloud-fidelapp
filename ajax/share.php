@@ -30,7 +30,7 @@ try {
 
 		$contactItem->setUserId($userId);
 		$contactItem->setEmail($email);
-		$contactsappId = $api->findContactsappIdByEmail($api, $email);
+		$contactsappId = $api->findContactsappIdByEmail($email);
 		if($contactsappId) {
 			$contactItem->setContactsappId($contactsappId);
 		}

@@ -17,6 +17,7 @@ class Hooks {
 	 * @return <code>true</code>
 	 */
 	public static function deleteUser(array $parameters) {
+		// TODO: Test!!!
 		$deletedUser = $parameters ['uid'];
 		$mapper = new ContactShareItemMapper($api);
 		$mapper->deleteAllForUser($deletedUser);
@@ -38,21 +39,21 @@ class Hooks {
 		$api = new API();
 
 		$contactMapper = new ContactItemMapper($api);
-		try {
-			$contact = $contactMapper->findByContactsappId($contactId);
-			$contactManager = new ContactManager($api);
-			$contactManager->removeContact($contact->getId());
-		} catch(DoesNotExistException $e) {
-			// No corresponding fidelapp contact, nothing to do
+
+		$contacts = $contactMapper->findByContactsappId($contactId);
+		if (count($contacts) == 0) {
+			return true;
 		}
+		$contactManager = new ContactManager($api);
+		$contactManager->removeContact($contacts[0]->getId());
 		return true;
 	}
 
 	/**
 	 * When a contactapp contact has been updated, check if the shared e-Mail addressis still there
 	 *
-	 * @param
-	 *        	$id integer containing  a vCard id from \OCA\Contacts\VCard::post_updateVCard  - Hook
+	 * @param $id integer
+	 *        	containing a vCard id from \OCA\Contacts\VCard::post_updateVCard - Hook
 	 * @return <code>true</code>
 	 */
 	// \OC_Hook::emit('\OCA\Contacts\VCard', 'post_updateVCard', $id);
@@ -66,24 +67,17 @@ class Hooks {
 		foreach ( $contacts as $contact ) {
 			$emails = $api->findEMailAddressesByContactsappId($contactsappId);
 			$found = false;
-			foreach ($emails as $email) {
-				foreach($contacts as $contact) {
-					if($contact>getEmail() == $email) {
-						$found = true;
-						break;
-					}
-				}
-				if($found) {
+			foreach ( $emails as $email ) {
+				if ($contact->getEmail() == $email) {
+					$found = true;
 					break;
 				}
 			}
-			if(!$found) {
+			if (! $found) {
 				// E-mail for contact does not exist anymore
-				if(count($emails) > 0) {
-					// Just set it to the first new e-mail
-					$contact->setEmail($emails[0]);
-					$contactMapper->save($contact);
-				}
+				// remove Contact Id from contact
+				$contact->setContactsappId(null);
+				$contactMapper->save($contact);
 			}
 		}
 		return true;
