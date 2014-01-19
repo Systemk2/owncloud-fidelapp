@@ -8,7 +8,6 @@ use OCA\FidelApp\Db\ContactShareItemMapper;
 
 class Hooks {
 
-	// TODO: system test for all methods
 	/**
 	 * Deletes all shares and contacts of a deleted user
 	 *

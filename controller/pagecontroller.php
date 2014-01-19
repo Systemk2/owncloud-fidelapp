@@ -35,6 +35,9 @@ class PageController extends Controller {
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
+	 *
+	 * @throws \Exception
+	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function fidelApp() {
 		return $this->render('fidelapp');
@@ -44,6 +47,9 @@ class PageController extends Controller {
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
+	 *
+	 * @throws \Exception
+	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function passwords() {
 		$mapper = new ContactShareItemMapper($this->api);
@@ -51,9 +57,9 @@ class PageController extends Controller {
 		$contactManager = new ContactManager($this->api);
 		foreach ( $shares as &$item ) {
 			$contactId = $item->getContactItem()->getId();
-			if(!isset($shareItems[$contactId])) {
+			if (! isset($shareItems [$contactId])) {
 				$item->contactName = $contactManager->makeContactName($item->getContactItem());
-				$shareItems[$contactId] = &$item;
+				$shareItems [$contactId] = &$item;
 			}
 		}
 		$params = array (
@@ -63,10 +69,14 @@ class PageController extends Controller {
 		);
 		return $this->render('fidelapp', $params);
 	}
+
 	/**
 	 * @CSRFExemption
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
+	 *
+	 * @throws \Exception
+	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function shares() {
 		$mapper = new ContactShareItemMapper($this->api);
@@ -80,7 +90,8 @@ class PageController extends Controller {
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
 				'shares' => $shares,
-				'view' => 'activeshares'
+				'view' => 'activeshares',
+				'isFidelbox' => ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT')
 		);
 		return $this->render('fidelapp', $params);
 	}
@@ -104,8 +115,9 @@ class PageController extends Controller {
 
 	/**
 	 * @CSRFExemption
-	 * @IsAdminExemption
-	 * @IsSubAdminExemption
+	 *
+	 * @throws \Exception
+	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function wizard() {
 		$l = $this->api->getTrans();
@@ -193,11 +205,19 @@ class PageController extends Controller {
 			if ($templateParams->get('selection') == 'accessTypeDirect') {
 				$templateParams->add('wizard_step2', 'wizard_fixedipordomain');
 			} elseif ($templateParams->get('selection') == 'accessTypeFidelbox') {
-				if ($this->api->getAppValue('fidelbox_account')) {
-					$templateParams->add('validFidelboxAccount',
-							$this->fidelboxConfig->validateAccount($this->api->getAppValue('fidelbox_account')));
-					$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
+				$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
+				if ($fidelboxAccount) {
+					$templateParams->add('validFidelboxAccount', $this->fidelboxConfig->validateAccount($fidelboxAccount));
+					$templateParams->add('fidelboxAccount', $fidelboxAccount);
 					$templateParams->add('wizard_step2', 'wizard_fidelbox');
+					$isReachable = false;
+					try {
+						$isReachable = $this->fidelboxConfig->pingBack();
+					} catch(\Exception $e) {
+						$templateParams->add('reachableFailedMsg', $e->getMessage());
+					}
+					$templateParams->add('isReachable', $isReachable);
+					;
 				} else {
 					$templateParams->add(
 							array (
@@ -249,7 +269,7 @@ class PageController extends Controller {
 			$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
 
 			foreach ( $shareItems as &$contactShareItem ) {
-				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem->getContactItem());
+				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
 			}
 			$response = $this->render('sharedropdown',
 					array (
@@ -267,9 +287,9 @@ class PageController extends Controller {
 		}
 	}
 
-	private function generateUrl(ContactItem $contact) {
+	private function generateUrl(ContactShareItem $contactShare) {
 		$url = $this->api->getAppValue('use_ssl') == 'true' ? 'https://' : 'http://';
-		$clientId = PageController::makeClientId($contact->getId(), $this->getPassword());
+		$clientId = PageController::makeClientId($contactShare->getContactItem()->getId(), $this->getPassword());
 		$localPathManual = $this->api->linkToRoute('fidelapp_authenticate_contact', array (
 				'clientId' => $clientId
 		));
@@ -283,9 +303,13 @@ class PageController extends Controller {
 				$url .= $this->api->getAppValue('domain_name') . $localPathManual;
 				break;
 			case 'FIDELBOX_ACCOUNT' :
-				// TODO: Create correct redirect URL for download applet, including account ID
-				$url = FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
-						 md5($this->api->getAppValue('fidelbox_account')) . "&clientId=$clientId";
+				if ($contactShare->getShareItem()->getDownloadType() == 'SECURE') {
+					$url = FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
+							 md5($this->api->getAppValue('fidelbox_account')) . "&clientId=$clientId";
+				} else {
+					$url = FIDELBOX_URL . '/fidelapp/redirect.php?path=' . urlencode($localPathManual) . '&accountHash=' .
+							 md5($this->api->getAppValue('fidelbox_account'));
+				}
 				break;
 			default :
 				$l = $this->api->getTrans();

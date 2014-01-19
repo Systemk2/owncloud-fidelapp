@@ -283,10 +283,14 @@ class AppletAccessController extends Controller {
 				$receipt->setDownloadTime($now);
 				$userId = $contactShareItem->getContactItem()->getUserId();
 				$this->api->setupFS($userId);
-				$fileName = trim($this->api->getPath($fileId), " /");
+				$fileName = trim($this->api->getPath($fileId), DIRECTORY_SEPARATOR);
 				$receipt->setFileName($fileName);
 				$receipt->setUserId($userId);
-				$receipt->setDownloadType($share->getDownloadType());
+				if($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+					$receipt->setDownloadType($share->getDownloadType());
+				} else {
+					$receipt->setDownloadType('BASIC');
+				}
 				$receiptItemMapper = new ReceiptItemMapper($this->api);
 				$receiptItemMapper->save($receipt);
 				\OC_Log::write($this->api->getAppName(), 'Wrote receipt', \OC_Log::DEBUG);

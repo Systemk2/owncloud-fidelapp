@@ -46,6 +46,11 @@ $this->create('fidelapp_authenticate_contact', '/authenticate/{clientId}')->acti
 			App::main('PublicController', 'authenticateContact', $params, new DIContainer());
 		});
 
+$this->create('pingback', '/pingback')->action(
+		function ($params) {
+			App::main('PublicController', 'pingback', $params, new DIContainer());
+		});
+
 $this->create('fidelapp_filelist_for_applet', '/getfilesforclient')->action(
 		function ($params) {
 			App::main('AppletAccessController', 'getFilesForClient', $params, new DIContainer());

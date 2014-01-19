@@ -7,6 +7,10 @@ use \OCA\FidelApp\API;
 use \OCA\FidelApp\Db\ContactItemMapper;
 use \OCA\FidelApp\Db\ShareItemMapper;
 use OCA\FidelApp\EncryptionHelper;
+use OCA\FidelApp\Db\ReceiptItemMapper;
+use OCA\FidelApp\Db\ReceiptItem;
+use OCA\FidelApp\Db\ShareItem;
+use OCA\FidelApp\Db\ContactItem;
 
 class PublicController extends Controller {
 
@@ -35,7 +39,8 @@ class PublicController extends Controller {
 			$password = base64_decode($passwordBase64, true);
 			$id = $this->params('clientId');
 			if ($id) {
-				$decryptedContactId = EncryptionHelper::processContactId($id, $password);
+				$encryptionHelper = new EncryptionHelper($this->api);
+				$decryptedContactId = $encryptionHelper->processContactId($id, $password);
 
 				$contactMapper = new ContactItemMapper($this->api);
 				try {
@@ -99,12 +104,12 @@ class PublicController extends Controller {
 		$this->api->setupFS($contact->getUserId());
 		if ($this->params('shareId')) {
 			$shareItem = $shareMapper->findById($this->params('shareId'));
-			return ($this->serveFile($shareItem->getFileId()));
+			return ($this->serveFile($shareItem, $contact));
 		} else {
 			$shareItems = $shareMapper->findByContact($contact->getId());
 
 			foreach ( $shareItems as &$shareItem ) {
-				$shareItem->fileName = $this->api->getPath($shareItem->getFileId());
+				$shareItem->fileName = trim($this->api->getPath($shareItem->getFileId()), DIRECTORY_SEPARATOR);
 			}
 			return $this->render('filelist', array (
 					'shareItems' => $shareItems
@@ -112,12 +117,38 @@ class PublicController extends Controller {
 		}
 	}
 
-	private function serveFile($fileId) {
-		$filename = $this->api->getPath($fileId);
+	/**
+	 * @CSRFExemption
+	 * @IsAdminExemption
+	 * @IsSubAdminExemption
+	 * @IsLoggedInExemption
+	 */
+	public function pingback() {
+		\OC_JSON::success(array (
+				'pingback' => 'ok'
+		));
+		exit(0);
+	}
+
+	private function serveFile(ShareItem $shareItem, ContactItem $contactItem) {
+		$filename = $this->api->getPath($shareItem->getFileId());
 		if (! \OC\Files\Filesystem::file_exists($filename)) {
 			unset($this->request->parameters ['shareId']);
-			return $this->getFile();
+			return $this->getFileList();
 		}
+
+		$receiptItem = new ReceiptItem();
+		$receiptItem->setContactName($contactItem->getEmail());
+		$receiptItem->setDownloadTime(date('Y-m-d H:i:s'));
+		if($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+			$receiptItem->setDownloadType($shareItem->getDownloadType());
+		} else {
+			$receiptItem->setDownloadType('BASIC');
+		}
+		$receiptItem->setFileName(trim($filename, DIRECTORY_SEPARATOR));
+		$receiptItem->setUserId($contactItem->getUserId());
+		$receiptItemMapper = new ReceiptItemMapper($this->api);
+		$receiptItemMapper->save($receiptItem);
 
 		$ftype = \OC\Files\Filesystem::getMimeType($filename);
 

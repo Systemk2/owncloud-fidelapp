@@ -1,12 +1,7 @@
 <div>
 	<fieldset class="personalblock">
-		<p>
-			{% if( validFidelboxAccount) %}
-				{{ trans('Active fidelbox.de account with ID = %s', fidelboxAccount) }}
-			{% else %}
-				{{ trans('Broken fidelbox.de account detected') }}
-			{% endif %}
-		</p>
+		<p>{% if( validFidelboxAccount) %} {{ trans('Active fidelbox.de account with ID = %s', fidelboxAccount) }} {% else %} {{ trans('Broken fidelbox.de account detected') }} {% endif %}</p>
 		<button id="fidelapp_fidelbox_delete">{{ trans('Delete account') }}</button>
+		<p>{% if( isReachable) %} {{ trans('This owncloud server can be reached from Internet') }} {% elseif ( reachableFailedMsg )  %} {{ trans('Verification if this server can be reached from Internet failed with message "%s"', reachableFailedMsg) }} {% endif %}</p>
 	</fieldset>
 </div>

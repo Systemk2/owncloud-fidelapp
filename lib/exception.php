@@ -39,3 +39,9 @@ class FileNotFoundException extends \Exception {
 		parent::__construct("FileNotFound: $fileName", FILE_NOT_FOUND);
 	}
 }
+/**
+ * The Owncloud server is not reachable from Internet
+ */
+class ServerNotReachableException extends \Exception {
+}
+

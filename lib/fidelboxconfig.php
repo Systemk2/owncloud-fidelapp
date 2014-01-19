@@ -4,6 +4,7 @@ namespace OCA\FidelApp;
 
 \OC::$CLASSPATH ['OCA\FidelApp\CaptchaNotMatchException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 \OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = FIDELAPP_APPNAME . '/lib/exception.php';
+\OC::$CLASSPATH ['OCA\FidelApp\ServerNotReachableException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
 /**
  * Error codes from fidelbox.de
@@ -35,7 +36,6 @@ use OCA\FidelApp\Db\ShareItem;
  * <li>Handle checksum calculation</li>
  * <li>Handle dynamic IP update</li>
  * </ul>
- *
  */
 class FidelboxConfig {
 	protected $api;
@@ -184,7 +184,7 @@ class FidelboxConfig {
 
 		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
 			throw new InvalidConfigException(
-					$l->t('Cannot update IP address, because access type is') . ' ' . $entity->getAccessType());
+					$l->t('Cannot update IP address, because access type is') . ' ' . $this->api->getAppValue('access_type'));
 		}
 		$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
 		if (! $fidelboxAccount) {
@@ -201,11 +201,32 @@ class FidelboxConfig {
 	public function updateIp() {
 		$return = $this->get(
 				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
-						 ($this->api->getAppValue('use_ssl') ? 'true' : 'false'));
+						 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false'));
 		if ($return ['status'] != 'success') {
 			$this->raiseError($return);
 		}
 		return ($return ['ip']);
+	}
+
+	/**
+	 * Check if the server can be reached from Internet
+	 * This method is only available if the access type 'FIDELBOX_ACCOUNT'
+	 *
+	 * @return boolean <code>true</code> if this Owncloud server is reacheable via Internet, throw an Exception otherwise
+	 * @throws ServerNotReachableException when the ping back failed
+	 * @throws \RuntimeException when the call to the fidelserver failed
+	 * @throws InvalidConfigException if either the access type is not "FIDELBOX_ACCOUNT" or no account ID is configured
+	 */
+	public function pingBack() {
+		$return = $this->get('/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback')));
+		if($return ['status'] != 'success') {
+			if (! isset($return ['message'])) {
+				$l = $this->api->getTrans();
+				throw new ServerNotReachableException($l->t('Validation of Internet access to this Owncloud server failed for an unknown reason'));
+			}
+			throw new ServerNotReachableException($return['message']);
+		}
+		return true;
 	}
 
 	/**
