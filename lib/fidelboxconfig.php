@@ -147,7 +147,6 @@ class FidelboxConfig {
 	 *        	the item that designates the file for MD5 calculation
 	 */
 	public function calculateHashAsync(ShareItem $shareItem) {
-		// TODO: Make sure this is called initially, not only when downloadtype is changed...
 		$this->api->addQueuedTask('OCA\FidelApp\CalculateMD5BackgroundJob', 'run', $shareItem->getId());
 		// \OCA\FidelApp\CalculateMD5BackgroundJob::run($shareItem->getId());
 	}

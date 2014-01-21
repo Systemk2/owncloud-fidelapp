@@ -44,24 +44,13 @@ class AppletAccessController extends Controller {
 		try {
 			$encryptionHelper = new EncryptionHelper($this->api);
 			$decryptedContactId = $encryptionHelper->processContactId($this->params('client-id'));
-			$fileItemMapper = new FileItemMapper($this->api);
 			$shareItemMapper = new ShareItemMapper($this->api);
 			$shareItems = $shareItemMapper->findByContact($decryptedContactId);
 			// TODO: Exclude files where checksum is not yet calculated
 			\OC_Util::obEnd();
 			header('Content-Type: text/plain; charset=utf-8');
 			foreach ( $shareItems as &$shareItem ) {
-				try {
-					if ($fileItemMapper->findByFileId($shareItem->getFileId())->getChecksum()) {
-						echo $shareItem->getId() . "\n";
-					} else {
-						\OC_Log::write($this->api->getAppName(), 'Checksum calculation is still in progress', \OC_Log::WARN);
-					}
-				} catch(DoesNotExistException $e) {
-					\OC_Log::write($this->api->getAppName(),
-							'The checksum calculation has not started yet: ' . $e->getMessage() .
-									 ". Maybe the CRON job is not set up correctly?", \OC_Log::WARN);
-				}
+				echo $shareItem->getId() . "\n";
 			}
 			exit(0);
 		} catch(\Exception $e) {
@@ -89,9 +78,6 @@ class AppletAccessController extends Controller {
 			$this->api->setupFS($userId);
 			$shareItem = $contactShareItem->getShareItem();
 			$fileId = $shareItem->getFileId();
-			$fileItemMapper = new FileItemMapper($this->api);
-			$fileItem = $fileItemMapper->findByFileId($fileId);
-
 			$fileName = trim($this->api->getPath($fileId));
 			$pass = $contactShareItem->getContactItem()->getPassword();
 			$salt = $shareItem->getSalt();
@@ -149,7 +135,14 @@ class AppletAccessController extends Controller {
 			$this->createHeader('fileBlockLength', $fileEncryptedLength);
 			$this->createHeader('chunkCount', $chunkCount);
 			$this->createHeader('comment', ''); // TODO: Implement comment (?)
-			$this->createHeader('filePlainDigest', $fileItem->getChecksum());
+			try {
+				$fileItemMapper = new FileItemMapper($this->api);
+				$fileItem = $fileItemMapper->findByFileId($fileId);
+				$checksum = $fileItem->getChecksum();
+			} catch (DoesNotExistException $e ) {
+				$checksum = null;
+			}
+			$this->createHeader('filePlainDigest', $checksum);
 
 			// Individual chunk information
 			$this->createHeader('chunkId', $chunkId);
@@ -286,7 +279,7 @@ class AppletAccessController extends Controller {
 				$fileName = trim($this->api->getPath($fileId), DIRECTORY_SEPARATOR);
 				$receipt->setFileName($fileName);
 				$receipt->setUserId($userId);
-				if($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+				if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
 					$receipt->setDownloadType($share->getDownloadType());
 				} else {
 					$receipt->setDownloadType('BASIC');

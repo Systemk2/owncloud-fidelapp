@@ -104,17 +104,24 @@ class PublicController extends Controller {
 		$this->api->setupFS($contact->getUserId());
 		if ($this->params('shareId')) {
 			$shareItem = $shareMapper->findById($this->params('shareId'));
-			return ($this->serveFile($shareItem, $contact));
-		} else {
-			$shareItems = $shareMapper->findByContact($contact->getId());
-
-			foreach ( $shareItems as &$shareItem ) {
-				$shareItem->fileName = trim($this->api->getPath($shareItem->getFileId()), DIRECTORY_SEPARATOR);
+			$filename = $this->api->getPath($shareItem->getFileId());
+			if (\OC\Files\Filesystem::file_exists($filename)) {
+				return ($this->serveFile($shareItem, $contact));
 			}
-			return $this->render('filelist', array (
-					'shareItems' => $shareItems
-			), '');
 		}
+		$shareItems = $shareMapper->findByContact($contact->getId());
+
+		foreach ( $shareItems as &$shareItem ) {
+			$filename = $this->api->getPath($shareItem->getFileId());
+			if(\OC\Files\Filesystem::file_exists($filename)) {
+				$shareItem->fileName = trim($filename, DIRECTORY_SEPARATOR);
+			} else {
+				$shareItem->fileName = null;
+			}
+		}
+		return $this->render('filelist', array (
+				'shareItems' => $shareItems
+		), '');
 	}
 
 	/**
@@ -132,15 +139,11 @@ class PublicController extends Controller {
 
 	private function serveFile(ShareItem $shareItem, ContactItem $contactItem) {
 		$filename = $this->api->getPath($shareItem->getFileId());
-		if (! \OC\Files\Filesystem::file_exists($filename)) {
-			unset($this->request->parameters ['shareId']);
-			return $this->getFileList();
-		}
 
 		$receiptItem = new ReceiptItem();
 		$receiptItem->setContactName($contactItem->getEmail());
 		$receiptItem->setDownloadTime(date('Y-m-d H:i:s'));
-		if($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+		if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
 			$receiptItem->setDownloadType($shareItem->getDownloadType());
 		} else {
 			$receiptItem->setDownloadType('BASIC');

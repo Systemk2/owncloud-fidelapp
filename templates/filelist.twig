@@ -1,2 +1,6 @@
-Shared Files:<br>
-{% for item in shareItems %} <a href="{{ url('fidelapp_get_file', { shareId :  item.id }) }}">{{ item.fileName }}</a><br> {% endfor %}
+Shared Files:
+<br>
+{% for item in shareItems %} {% if (item.fileName) %}
+<a href="{{ url('fidelapp_get_file', { shareId :  item.id }) }}">{{ item.fileName }}</a>
+<br>
+{% endif %} {% endfor %}
