@@ -2,12 +2,14 @@
 define('FIDELAPP_APPNAME', 'fidelapp');
 
 $config = parse_ini_file(FIDELAPP_APPNAME . '/config/config.ini');
-define('FIDELBOX_URL', $config['FIDELBOX_URL']);
+define('FIDELBOX_URL', $config ['FIDELBOX_URL']);
 
 OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
 OCP\Util::connectHook('OC_Use', 'post_deleteUser', 'OCA\FidelApp\FidelappHooks', 'deleteUser');
 OCP\Util::connectHook('\OCA\Contacts\VCard', 'pre_deleteVCard', 'OCA\FidelApp\Hooks', 'deleteContact');
 OCP\Util::connectHook('\OCA\Contacts\VCard', 'post_updateVCard', 'OCA\FidelApp\Hooks', 'updateEmail');
+\OCP\Util::connectHook('\OCA\Files_Trashbin\Trashbin', 'post_moveToTrash', 'OCA\FidelApp\Hooks', 'moveFileToTrash');
+\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_delete, 'OCA\FidelApp\Hooks', 'deleteFile');
 
 // dont break owncloud when the appframework is not enabled
 if (\OCP\App::isEnabled('appframework')) {
@@ -23,7 +25,6 @@ if (\OCP\App::isEnabled('appframework')) {
 	$api->addScript('fidelshare');
 	$api->addStyle('fidelapp_dropdown_style');
 	$api->addStyle('fidelapp_style');
-
 
 	$api->addNavigationEntry(
 			array (

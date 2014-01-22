@@ -5,6 +5,8 @@ namespace OCA\FidelApp;
 use OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\Db\ContactItemMapper;
 use OCA\FidelApp\Db\ContactShareItemMapper;
+use OCA\FidelApp\Db\FileItemMapper;
+use OCA\FidelApp\Db\ShareItemMapper;
 
 class Hooks {
 
@@ -80,5 +82,48 @@ class Hooks {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Remove active shares when a file is moved to the thrash bin
+	 *
+	 * @param array $params contains the file name with key 'filePath'
+	 */
+	public static function moveFileToTrash(array $params) {
+		$path = $params['filePath'];
+		Hooks::removeSharesForDeletedFiles($path);
+	}
+
+	/**
+	 * Remove active shares when a file is deleted
+	 *
+	 * @param array $params contains the file name with key 'path'
+	 */
+	public static function deleteFile(array $params) {
+		$path = $params['path'];
+		Hooks::removeSharesForDeletedFiles($path);
+	}
+
+	private static function removeSharesForDeletedFiles($path) {
+		$api = new API();
+		$contactShareItemMapper = new ContactShareItemMapper($api);
+		$fileItemMapper = new FileItemMapper($api);
+		$shareItemMapper = new ShareItemMapper($api);
+		$contactShareItems = $contactShareItemMapper->findByUser($api->getUserId());
+
+		foreach($contactShareItems as $contactShareItem) {
+			$fileId = $contactShareItem->getShareItem()->getFileId();
+			$fileName = $api->getPath($fileId);
+			if (! \OC\Files\Filesystem::file_exists($fileName) || $fileName == $path) { // TODO: Move to api
+				try {
+					$fileItem = $fileItemMapper->findByFileId($fileId);
+					$fileItemMapper->delete($fileItem);
+				} catch ( DoesNotExistException $e) {
+					// Ignore non-existent files
+				}
+				$shareItemMapper->delete($contactShareItem->getShareItem());
+			}
+		}
+
 	}
 }

@@ -78,7 +78,7 @@ class AppletAccessController extends Controller {
 			$this->api->setupFS($userId);
 			$shareItem = $contactShareItem->getShareItem();
 			$fileId = $shareItem->getFileId();
-			$fileName = trim($this->api->getPath($fileId));
+			$fileName = $this->api->getPath($fileId);
 			$pass = $contactShareItem->getContactItem()->getPassword();
 			$salt = $shareItem->getSalt();
 			if (! $salt) {
