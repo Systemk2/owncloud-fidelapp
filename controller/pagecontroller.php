@@ -149,12 +149,26 @@ class PageController extends Controller {
 			$templateParams->add('domain', $this->api->getAppValue('domain_name'));
 			$templateParams->add('fixedIp', $this->api->getAppValue('fixed_ip'));
 			$templateParams->add('useSSL', $this->api->getAppValue('use_ssl'));
+			if ($this->params('port') == 'STANDARD_PORT') {
+				$templateParams->add(array (
+						'port' => null
+				));
+			} else {
+				$templateParams->add('port', $this->api->getAppValue('port'));
+			}
 			$templateParams->add('fidelboxTempUser', uniqid('', true));
 			$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
 
 			if ($this->hasParam('action')) {
 				$this->api->setAppValue('use_ssl', $templateParams->get('useSSL'));
 				$this->api->setAppValue('access_type', $templateParams->get('accessType'));
+				$port = $templateParams->get('port');
+				if (is_numeric($port)) {
+					$this->api->setAppValue('port', $port);
+				} else {
+					$this->api->setAppValue('port', null);
+				}
+
 				if ($this->params('action') == 'saveDirectAccess') {
 					if (! $templateParams->get('domain') && ! $templateParams->get('fixedIp')) {
 						// TODO: Formal validation of IP and domain formats
@@ -294,7 +308,10 @@ class PageController extends Controller {
 				'clientId' => $clientId
 		));
 		$localPathBase = $this->api->linkToRoute('fidelapp_index');
-
+		$port = $this->api->getAppValue('port');
+		if($port) {
+			$localPathManual = ":$port$localPathManual";
+		}
 		switch ($this->api->getAppValue('access_type')) {
 			case 'FIXED_IP' :
 				$url .= $this->api->getAppValue('fixed_ip') . $localPathManual;

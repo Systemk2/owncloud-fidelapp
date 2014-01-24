@@ -200,7 +200,8 @@ class FidelboxConfig {
 	public function updateIp() {
 		$return = $this->get(
 				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
-						 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false'));
+						 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false') .
+						 ($this->api->getAppValue('port') ? '&port=' . $this->api->getAppValue('port') : ''));
 		if ($return ['status'] != 'success') {
 			$this->raiseError($return);
 		}
@@ -217,13 +218,16 @@ class FidelboxConfig {
 	 * @throws InvalidConfigException if either the access type is not "FIDELBOX_ACCOUNT" or no account ID is configured
 	 */
 	public function pingBack() {
-		$return = $this->get('/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback')));
-		if($return ['status'] != 'success') {
+		$return = $this->get(
+				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) .
+						 '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback')));
+		if ($return ['status'] != 'success') {
 			if (! isset($return ['message'])) {
 				$l = $this->api->getTrans();
-				throw new ServerNotReachableException($l->t('Validation of Internet access to this Owncloud server failed for an unknown reason'));
+				throw new ServerNotReachableException(
+						$l->t('Validation of Internet access to this Owncloud server failed for an unknown reason'));
 			}
-			throw new ServerNotReachableException($return['message']);
+			throw new ServerNotReachableException($return ['message']);
 		}
 		return true;
 	}

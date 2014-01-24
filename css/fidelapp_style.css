@@ -101,6 +101,10 @@
 	width: 15em;
 }
 
+#fidelapp_access_type #fidelapp_port {
+	width: 5em;
+}
+
 #fidelapp_errors {
 	margin-left: 3em;
 	color: #FF2000;

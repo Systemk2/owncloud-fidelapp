@@ -17,7 +17,7 @@ class ReceiptItemMapper extends SingleEntityMapper {
 	 * @return array \OCA\FidelApp\Db\ReceiptItem
 	 */
 	public function findByUser($userId) {
-		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `user_id` = ?';
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `user_id` = ? ORDER BY download_time DESC';
 
 		return $this->findEntities($sql, array (
 				$userId

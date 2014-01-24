@@ -11,6 +11,7 @@
 			var domain = null;
 			var fixedIp = null;
 			var captcha = null;
+			var port = null;
 			var fidelboxTempUser = null;
 			var useSSL = $('#fidelapp_https').prop('checked');
 
@@ -36,8 +37,15 @@
 				accessType = 'FIDELBOX_ACCOUNT';
 			} else if (eventId == 'fidelapp_fidelbox_delete') {
 				action = 'deleteFidelboxAccount';
-			} else if(eventId == 'fidelapp_https') {
+			} else if (eventId == 'fidelapp_https') {
 				action = 'changeSslState';
+			} else if (eventId == 'fidelapp_non_standard_port_check') {
+				action = 'changePort';
+			}
+			if ($('#fidelapp_non_standard_port_check').prop('checked')) {
+				port = $('#fidelapp_port').val();
+			} else {
+				port = 'STANDARD_PORT';
 			}
 			$('#fidelapp_errors').hide();
 			$('#rightcontent')
@@ -54,6 +62,7 @@
 					selection : selection,
 					domain : domain,
 					fixedIp : fixedIp,
+					port : port,
 					useSSL : useSSL,
 					captcha : captcha,
 					fidelboxTempUser : fidelboxTempUser,
@@ -86,6 +95,16 @@
 				$('#fidelapp_fixedIp').val('').prop('readonly', 'true');
 				$('#fidelapp_domainName').removeProp('readonly');
 			}
+		},
+		toggleReadonlyState : function(event) {
+			var pattern = new RegExp(/^[0-9]{2,5}$/i);
+			var port = $('#fidelapp_port').val();
+			$('#fidelapp_non_standard_port_check').removeAttr('checked');
+			if (pattern.test(port)) {
+				$('#fidelapp_non_standard_port_check').removeAttr('disabled');
+			} else {
+				$('#fidelapp_non_standard_port_check').attr('disabled', 'true');
+			}
 		}
 	};
 	$(document)
@@ -102,7 +121,10 @@
 						$('#content')
 								.on(
 										'click',
-										'#fidelapp_fixedipordomain, #fidelapp_fidelbox, #fidelapp_https, #fidelapp_fidelbox_delete',
+										'#fidelapp_fixedipordomain, #fidelapp_fidelbox, #fidelapp_https, #fidelapp_non_standard_port_check, #fidelapp_fidelbox_delete',
 										fidelwizard.doSelection);
+						$('#content').on('keyup', '#fidelapp_port',
+								fidelwizard.toggleReadonlyState);
+
 					});
 })(jQuery);

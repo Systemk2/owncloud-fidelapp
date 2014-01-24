@@ -1,19 +1,23 @@
 <div>
 	<fieldset class="personalblock">
 		<p>
-			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_fixedIp" value="fixedIp" readonly="true" {{ accessType == 'FIXED_IP' ? 'checked="true"' : '' }} />
+			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_fixedIp" value="fixedIp" readonly="true"    {{ accessType == 'FIXED_IP' ? 'checked="true"' : '' }} />
 			<label for="fidelapp_fixedIp">{{ trans('Fixed IP-Address') }}:</label>
 			<input id="fidelapp_fixedIp" type="text" placeholder="x.x.x.x" maxlength="15" value="{{ fixedIp  }}"
 			{% if(not fixedIp) %} readonly="true"
 			{% endif %} />
 		</p>
 		<p>
-			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_domainName" value="domainName" readonly="true" {{ accessType == 'DOMAIN_NAME' ? 'checked="true"' : '' }} />
+			<input type="radio" name="fidelapp_fixedIpOrDomain" id="fidelapp_radio_domainName" value="domainName" readonly="true"    {{ accessType == 'DOMAIN_NAME' ? 'checked="true"' : '' }} />
 			<label for="fidelapp_domainName">{{ trans('Own Domain') }}:</label>
 			<input id="fidelapp_domainName" type="text" placeholder="myserver.mydomain.com" maxlength="512" value="{{ domain  }}"
 			{% if(not domain) %} readonly="true"
 			{% endif %} />
 		</p>
-		<button id="fidelapp_fixedipordomain">{{ trans('Save') }}</button>
+	</fieldset>
+	<fieldset class="personalblock">
+		<p>
+			<button id="fidelapp_fixedipordomain">{{ trans('Save') }}</button>
+		</p>
 	</fieldset>
 </div>
