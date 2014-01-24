@@ -44,13 +44,21 @@ class AppletAccessController extends Controller {
 		try {
 			$encryptionHelper = new EncryptionHelper($this->api);
 			$decryptedContactId = $encryptionHelper->processContactId($this->params('client-id'));
-			$shareItemMapper = new ShareItemMapper($this->api);
-			$shareItems = $shareItemMapper->findByContact($decryptedContactId);
-			// TODO: Exclude files where checksum is not yet calculated
+			$mapper = new ContactShareItemMapper($this->api);
+			$contactShareItems = $mapper->findByContact($decryptedContactId);
+			if(count($contactShareItems) > 0) {
+				$userId = $contactShareItems[0]->getContactItem()->getUserId();
+				$this->api->setupFS($userId);
+			}
 			\OC_Util::obEnd();
 			header('Content-Type: text/plain; charset=utf-8');
-			foreach ( $shareItems as &$shareItem ) {
-				echo $shareItem->getId() . "\n";
+			foreach ( $contactShareItems as &$item ) {
+				$shareItem = $item->getShareItem();
+				$fileId = $shareItem->getFileId();
+				$fileName = $this->api->getPath($fileId);
+				if($fileName != "" && \OC\Files\Filesystem::file_exists($fileName)) {
+					echo $shareItem->getId() . "\n";
+				}
 			}
 			exit(0);
 		} catch(\Exception $e) {
@@ -94,7 +102,7 @@ class AppletAccessController extends Controller {
 
 			$key = $this->createKey($pass, $salt);
 
-			if (! \OC\Files\Filesystem::file_exists($fileName)) { // TODO: Move to api
+			if ($fileName == "" || ! \OC\Files\Filesystem::file_exists($fileName)) { // TODO: Move to api
 				throw new FileNotFoundException($fileName);
 			}
 			$fileLength = \OC\Files\Filesystem::filesize($fileName);

@@ -64,13 +64,12 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
-	public function findByUserContact($userId, $contactId) {
+	public function findByContact($contactId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 				 '` S, `' . $this->contactItemMapper->getTableName() .
-				 '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ? AND S.`contact_id` = ?';
+				 '` C WHERE C.`id` = S.`contact_id` AND S.`contact_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
-				$userId,
 				$contactId
 		));
 
