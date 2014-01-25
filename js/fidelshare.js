@@ -228,6 +228,10 @@
 			}
 			var inputElement = $('#fidelapp_shareLink_' + contactId);
 			if (event.target.checked) {
+				if($(event.target).prop('readonly')) {
+					$(event.target).removeProp('checked');
+					return;
+				}
 				inputElement.removeClass('hidden');
 			} else {
 				inputElement.addClass('hidden');

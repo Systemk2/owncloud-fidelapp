@@ -84,6 +84,7 @@
 	float: right;
 }
 
+
 #shareWithFidelAppList .fidelapp_mailto:hover,#shareWithFidelAppList .fidelapp_triangle:hover
 	{
 	opacity: 0.8;
@@ -99,6 +100,11 @@
 	background-repeat: no-repeat;
 }
 
+#shareWithFidelAppList .fidelapp_mailto_disabled {
+	background-image: url("%appswebroot%/fidelapp/img/mail_disabled.svg");
+	width: 19px;
+	float: right;
+}
 #shareWithFidelAppList .fidelapp_delete {
 	background-image: url("%webroot%/core/img/actions/delete.svg");
 	float: right;

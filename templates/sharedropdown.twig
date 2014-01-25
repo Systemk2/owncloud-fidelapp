@@ -9,7 +9,16 @@
 			{% set id = contactShareItem.contactItem.id %}
 				<div data-contact-id="{{ id }}" data-share-id="{{ contactShareItem.shareItem.id }}">
 					<div>
-						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span> <span class="fidelapp_contact_email">{{ contactShareItem.contactItem.email }}</span> <span class="fidelapp_icon fidelapp_triangle">&nbsp;</span> <span class="fidelapp_icon fidelapp_delete">&nbsp;</span> <a href="mailto:{{ contactShareItem.contactItem.email }}" class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>
+						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span>
+						<span class="fidelapp_contact_email">{{ contactShareItem.contactItem.email }}</span>
+						<span class="fidelapp_icon fidelapp_triangle">&nbsp;</span>
+						<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
+						{% if(contactShareItem.contactItem.password) %}
+							<a href="mailto:{{ contactShareItem.contactItem.email }}?body={{ trans('Please remember to tell the recipient the appropriate password (%s)', contactShareItem.contactItem.password) }}:%20{{ contactShareItem.downloadUrl }}"
+								class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>
+						{% else %}
+							<span class="fidelapp_icon fidelapp_mailto_disabled fidelapp_tooltip" title="{{ trans('Please choose a password first') }}">&nbsp;</span>
+						{% endif %}
 					</div>
 					<div id="fidelapp_details_{{ id }}" class="fidelapp_contact_details{{ contactShareItem.contactItem.password ? ' hidden' : '' }}">
 						<div>
@@ -30,7 +39,8 @@
 						</div>
 						{% endif %}
 						<div>
-							<input id="fidelapp_showlink_{{ id }}" type="checkbox" name="fidelapp_showlink" value="{{ id }}" />
+							{% set disabled = 'readonly="true" class="fidelapp_tooltip" title="' ~ trans('Please choose a password first') ~ '"' %}
+							<input id="fidelapp_showlink_{{ id }}" type="checkbox" name="fidelapp_showlink" value="{{ id }}" {{ contactShareItem.contactItem.password ? '' : disabled|raw }}/>
 							<label for="fidelapp_showlink_{{ id }}">{{ trans('Show download link for this contact') }}</label>
 						</div>
 						<div id="fidelapp_shareLink_{{ id }}" class="hidden">
