@@ -29,7 +29,8 @@ class TemplateParams {
 	 *        	if of type <code>array</code>, the parameters are simply added to the template parameters list,
 	 *        	when of type <code>string</code> and different from "null" (four characters: 'n', 'u', 'l', 'l'),
 	 *        	the request parameter with the corresponding key is added as a new template parameter
-	 * @param unknown $defaultValue [default = NULL] will be set, if no matching request param was found
+	 * @param unknown $defaultValue
+	 *        	[default = NULL] will be set, if no matching request param was found
 	 *
 	 * @throws \BadMethodCallException when the parameter is neither an <code>array</code> nor a <code>string</code>
 	 */
@@ -37,7 +38,8 @@ class TemplateParams {
 		if (is_array($paramsToAdd)) {
 			$this->twigParams = array_merge($this->twigParams, $paramsToAdd);
 		} elseif (gettype($paramsToAdd) == 'string') {
-			if (isset($this->requestParams [$paramsToAdd]) && $this->requestParams [$paramsToAdd] != 'null') {
+			if (isset($this->requestParams [$paramsToAdd]) && $this->requestParams [$paramsToAdd] != 'null' &&
+					 trim($this->requestParams [$paramsToAdd]) != '') {
 				$this->twigParams [$paramsToAdd] = $this->requestParams [$paramsToAdd];
 			} else {
 				$this->twigParams [$paramsToAdd] = $defaultValue;
@@ -59,9 +61,11 @@ class TemplateParams {
 		if (! $param || ! (gettype($param) == 'string')) {
 			throw new \BadMethodCallException("set: Wrong parameter [$param]");
 		}
-		$this->twigParams[$param] = $value;
+		$this->twigParams [$param] = $value;
 	}
+
 	/**
+	 *
 	 * @param string $param
 	 * @return the param value or NULL
 	 *
@@ -71,11 +75,12 @@ class TemplateParams {
 		if (! $param || ! (gettype($param) == 'string')) {
 			throw new \BadMethodCallException("set: Wrong parameter [$param]");
 		}
-		if(isset($this->twigParams[$param])) {
-			return $this->twigParams[$param];
+		if (isset($this->twigParams [$param])) {
+			return $this->twigParams [$param];
 		}
 		return null;
 	}
+
 	/**
 	 *
 	 * @return array the template parameters

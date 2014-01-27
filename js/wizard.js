@@ -51,7 +51,7 @@
 			$('#rightcontent')
 					.prepend(
 							'<div id="fidelapp_spinner"><img src="'
-									+ OC.imagePath('core', 'loader.gif')
+									+ OC.imagePath('core', 'loading.gif')
 									+ '" /></div>');
 			$.ajax({
 				type : 'GET',

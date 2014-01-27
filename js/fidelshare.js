@@ -120,7 +120,7 @@
 			var tr = $('tr').filterAttr('data-file', fidelapp.file);
 			$(tr).find('img[src="' + fidelapp.icon + '"]').replaceWith(
 					'<img id="fidelapp_spinner" src="'
-							+ OC.imagePath('core', 'loader.gif') + '" />');
+							+ OC.imagePath('core', 'loading.gif') + '" />');
 		},
 		hideSpinner : function() {
 			$('#fidelapp_spinner').replaceWith(
