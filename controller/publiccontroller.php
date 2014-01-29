@@ -11,6 +11,10 @@ use OCA\FidelApp\Db\ReceiptItemMapper;
 use OCA\FidelApp\Db\ReceiptItem;
 use OCA\FidelApp\Db\ShareItem;
 use OCA\FidelApp\Db\ContactItem;
+use OCA\FidelApp\WrongDownloadTypeException;
+
+\OC::$CLASSPATH ['OCA\FidelApp\WrongDownloadTypeException'] = FIDELAPP_APPNAME . '/lib/exception.php';
+\OC::$CLASSPATH ['OCA\FidelApp\FileNotFoundException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
 class PublicController extends Controller {
 
@@ -89,39 +93,55 @@ class PublicController extends Controller {
 	 * @IsLoggedInExemption
 	 */
 	public function getFileList() {
-		$l = $this->api->getTrans();
+		try {
+			$l = $this->api->getTrans();
 
-		if (! isset($_SESSION ['AUTHENTICATED_CONTACT'])) {
-			return $this->render('authenticate', array (
+			if (! isset($_SESSION ['AUTHENTICATED_CONTACT'])) {
+				return $this->render('authenticate',
+						array (
+								'errors' => array (
+										$l->t('Not authenticated')
+								)
+						), '');
+			}
+			$contact = $_SESSION ['AUTHENTICATED_CONTACT'];
+			$shareMapper = new ShareItemMapper($this->api);
+
+			$this->api->setupFS($contact->getUserId());
+			if ($this->params('shareId')) {
+				$shareItem = $shareMapper->findById($this->params('shareId'));
+				$filename = $this->api->getPath($shareItem->getFileId());
+				if (\OC\Files\Filesystem::file_exists($filename)) {
+					return ($this->serveFile($shareItem, $contact));
+				}
+			}
+			$shareItems = $shareMapper->findByContact($contact->getId());
+
+			foreach ( $shareItems as &$shareItem ) {
+				$filename = $this->api->getPath($shareItem->getFileId());
+				if (\OC\Files\Filesystem::file_exists($filename) && $filename != '') {
+					$shareItem->fileName = trim($filename, DIRECTORY_SEPARATOR);
+					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' && $shareItem->getDownloadType() != 'BASIC') {
+						$shareItem->fileName .= ' (' . $l->t('Can only be downloaded with Download Manager') . ')';
+						$shareItem->downloadable = false;
+					} else {
+						$shareItem->downloadable = true;
+					}
+				} else {
+					$shareItem->fileName = null;
+					$shareItem->downloadable = false;
+				}
+			}
+			return $this->render('filelist', array (
+					'shareItems' => $shareItems
+			), '');
+		} catch(\Exception $e) {
+			return $this->render('error', array (
 					'errors' => array (
-							$l->t('Not authenticated')
+							'message' => $e->getMessage()
 					)
 			), '');
 		}
-		$contact = $_SESSION ['AUTHENTICATED_CONTACT'];
-		$shareMapper = new ShareItemMapper($this->api);
-
-		$this->api->setupFS($contact->getUserId());
-		if ($this->params('shareId')) {
-			$shareItem = $shareMapper->findById($this->params('shareId'));
-			$filename = $this->api->getPath($shareItem->getFileId());
-			if (\OC\Files\Filesystem::file_exists($filename)) {
-				return ($this->serveFile($shareItem, $contact));
-			}
-		}
-		$shareItems = $shareMapper->findByContact($contact->getId());
-
-		foreach ( $shareItems as &$shareItem ) {
-			$filename = $this->api->getPath($shareItem->getFileId());
-			if(\OC\Files\Filesystem::file_exists($filename)) {
-				$shareItem->fileName = trim($filename, DIRECTORY_SEPARATOR);
-			} else {
-				$shareItem->fileName = null;
-			}
-		}
-		return $this->render('filelist', array (
-				'shareItems' => $shareItems
-		), '');
 	}
 
 	/**
@@ -138,17 +158,19 @@ class PublicController extends Controller {
 	}
 
 	private function serveFile(ShareItem $shareItem, ContactItem $contactItem) {
-		$filename = $this->api->getPath($shareItem->getFileId());
+		$filename = trim($this->api->getPath($shareItem->getFileId()), DIRECTORY_SEPARATOR);
+		if($filename == '') {
+			throw new FileNotFoundException($filename);
+		}
+		if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' && $shareItem->getDownloadType() != 'BASIC') {
+			throw new WrongDownloadTypeException($filename);
+		}
 
 		$receiptItem = new ReceiptItem();
 		$receiptItem->setContactName($contactItem->getEmail());
 		$receiptItem->setDownloadTime(date('Y-m-d H:i:s'));
-		if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
-			$receiptItem->setDownloadType($shareItem->getDownloadType());
-		} else {
-			$receiptItem->setDownloadType('BASIC');
-		}
-		$receiptItem->setFileName(trim($filename, DIRECTORY_SEPARATOR));
+		$receiptItem->setDownloadType('BASIC');
+		$receiptItem->setFileName(filename);
 		$receiptItem->setUserId($contactItem->getUserId());
 		$receiptItemMapper = new ReceiptItemMapper($this->api);
 		$receiptItemMapper->save($receiptItem);

@@ -1,6 +1,7 @@
 Shared Files:
 <br>
-{% for item in shareItems %} {% if (item.fileName) %}
+{% for item in shareItems %} {% if (item.fileName) %} {% if(item.downloadable) %}
 <a href="{{ url('fidelapp_get_file', { shareId :  item.id }) }}">{{ item.fileName }}</a>
+{% else %} {{ item.fileName }} {% endif %}
 <br>
 {% endif %} {% endfor %}

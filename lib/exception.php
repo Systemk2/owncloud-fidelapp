@@ -9,6 +9,7 @@ define('ERROR_NO_PASSWORD_SET', 6002);
 define('ERROR_INVALID_PASSWORD_SET', 6003);
 define('ERROR_NO_SALT_SET', 6004);
 define('FILE_NOT_FOUND', 6005);
+define('WRONG_DOWNLOAD_TYPE', 6006);
 
 /**
  * The entered captcha did not match the image
@@ -45,3 +46,11 @@ class FileNotFoundException extends \Exception {
 class ServerNotReachableException extends \Exception {
 }
 
+/**
+ * Somebody tries to download a file in basic mode, but it should be secure
+ */
+class WrongDownloadTypeException extends \Exception {
+	public function __construct($fileName) {
+		parent::__construct("Wrong download type: $fileName", WRONG_DOWNLOAD_TYPE);
+	}
+}
