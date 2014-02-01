@@ -85,7 +85,6 @@
 	background-image: url("%appswebroot%/fidelapp/img/checkmark-green.png");
 }
 
-
 #fidelapp_wizard_step2 label[for="fidelapp_fixedIp"],#fidelapp_wizard_step2 label[for="fidelapp_domainName"]
 	{
 	display: inline-block;
@@ -107,7 +106,6 @@
 
 #fidelapp_errors {
 	margin-left: 3em;
-	color: #FF2000;
 	width: 50em;
 }
 
@@ -146,16 +144,35 @@
 #fidelapp_password_table .fidelapp_spinner {
 	background-image: url("%webroot%/core/img/loading.gif");
 	background-color: #FFFFFF;
-    background-position: center center;
-    background-repeat: no-repeat;
-    display: inline-block;
-    width: 16px;
+	background-position: center center;
+	background-repeat: no-repeat;
+	display: inline-block;
+	width: 16px;
 }
 
 input.active[type="button"] {
-    color: #6193CF;
+	color: #6193CF;
 }
 
 #fidelapp_selector {
 	padding: 1em;
+}
+
+
+#fidelapp_errors  h1 {
+	font-size: 1.5em;
+	margin-top: 1em;
+}
+
+.fidelapp_error_messages, .fidelapp_warning_messages {
+	margin-top: 1em;
+	padding: 0.5em 1.5em;
+}
+
+.fidelapp_error_messages LI {
+	background-color: RED;
+}
+
+.fidelapp_warning_messages LI {
+	background-color: YELLOW;
 }

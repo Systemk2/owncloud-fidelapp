@@ -7,7 +7,10 @@
 			<a href="{{ url('fidelapp_passwords') }}" class="{{ menu == 'passwords' ? 'active' : '' }}">{{ trans('Stored Passwords') }}</a>
 		</nav>
 	</div>
-	{% if(actionTemplate) %}
-	<div id="rightcontent">{% include "error.twig" %}{% include "#{actionTemplate}.twig" %}</div>
-	{% endif %}
+	<div id="rightcontent">
+		{% include "error.twig" %}
+		{% if(actionTemplate) %}
+			{% include "#{actionTemplate}.twig" %}
+		{% endif %}
+	</div>
 </div>

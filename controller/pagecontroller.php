@@ -40,7 +40,17 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function fidelApp() {
-		return $this->render('fidelapp');
+		$checkResult = \OCA\FidelApp\Init::checkPrerequisites();
+		if (count($checkResult ['warnings']) == 0) {
+			if ($this->api->getAppValue('access_type')) {
+				return $this->shares();
+			} else {
+				return $this->wizard();
+			}
+		}
+		return $this->render('fidelapp', array (
+				'warnings' => $checkResult ['warnings']
+		));
 	}
 
 	/**
@@ -189,29 +199,20 @@ class PageController extends Controller {
 					}
 					$templateParams->add('wizard_step2', 'wizard_fidelbox_createaccount');
 				}
-			} else {
-				// No action... just check if selection does not match saved state any more and save it, if changed
-				if ($this->api->getAppValue('access_type') && $this->hasParam('selection')) {
-					if (($this->api->getAppValue('access_type') == 'FIXED_IP' ||
-							 $this->api->getAppValue('access_type') == 'DOMAIN_NAME') &&
-							 $this->params('selection') == 'accessTypeFidelbox') {
-						// Stored value is fixed ip or domain name, but selection id fidelbox
-						if ($this->api->getAppValue('fidelbox_account')) {
-							$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
-						} else {
-							$this->api->setAppValue('access_type', null);
-						}
+			} else if ($this->hasParam('selection')) {
+				if ($this->params('selection') == 'accessTypeFidelbox') {
+					if ($this->api->getAppValue('fidelbox_account')) {
+						$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
+					} else {
+						$this->api->setAppValue('access_type', null);
 					}
-					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' &&
-							 $this->params('selection') != 'accessTypeFidelbox') {
-						// Stored value is fidelbox, but current selection is different
-						if ($this->api->getAppValue('fixed_ip')) {
-							$this->api->setAppValue('access_type', 'FIXED_IP');
-						} else if ($this->api->getAppValue('domain_name')) {
-							$this->api->setAppValue('access_type', 'DOMAIN_NAME');
-						} else {
-							$this->api->setAppValue('access_type', null);
-						}
+				} else {
+					if ($this->api->getAppValue('fixed_ip')) {
+						$this->api->setAppValue('access_type', 'FIXED_IP');
+					} else if ($this->api->getAppValue('domain_name')) {
+						$this->api->setAppValue('access_type', 'DOMAIN_NAME');
+					} else {
+						$this->api->setAppValue('access_type', null);
 					}
 				}
 			}
@@ -231,7 +232,6 @@ class PageController extends Controller {
 						$templateParams->add('reachableFailedMsg', $e->getMessage());
 					}
 					$templateParams->add('isReachable', $isReachable);
-					;
 				} else {
 					$templateParams->add(
 							array (
@@ -284,6 +284,7 @@ class PageController extends Controller {
 
 			foreach ( $shareItems as &$contactShareItem ) {
 				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
+				$contactShareItem->mailToLink = $this->generateMailToLink($contactShareItem);
 			}
 			$response = $this->render('sharedropdown',
 					array (
@@ -309,7 +310,7 @@ class PageController extends Controller {
 		));
 		$localPathBase = $this->api->linkToRoute('fidelapp_index');
 		$port = $this->api->getAppValue('port');
-		if($port) {
+		if ($port) {
 			$localPathManual = ":$port$localPathManual";
 		}
 		switch ($this->api->getAppValue('access_type')) {
@@ -395,5 +396,31 @@ class PageController extends Controller {
 		$passwordBase64 = base64_encode(substr($password, 0, $maxKeySize));
 		$this->api->setAppValue('secret', $passwordBase64);
 		\OC_Log::write($this->api->getAppName(), 'Generated new secret password', \OC_Log::INFO);
+	}
+
+	private function generateMailToLink(ContactShareItem $item) {
+		$l = $this->api->getTrans();
+		$passwordHint = $l->t('(Please remember to tell the recipient the appropriate password: %s)',
+				$item->getContactItem()->getPassword());
+		$mailto = 'mailto:' . $item->getContactItem()->getEmail() . '?body=' . $this->escapeMailTo("$item->downloadUrl $passwordHint");
+		return $mailto;
+	}
+
+	private function escapeMailTo($text) {
+		$charArray = str_split($text);
+		$escaped = '';
+		foreach ( $charArray as $char ) {
+			if ($char == '%')
+				$escaped .= '%25';
+			else if ($char == '"')
+				$escaped .= '%22';
+			else if ($char == '&')
+				$escaped .= '%26';
+			else if (ord($char) > 126) {
+				$escaped .= '%' . bin2hex($char);
+			} else
+				$escaped .= $char;
+		}
+		return $escaped;
 	}
 }

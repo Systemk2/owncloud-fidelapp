@@ -14,7 +14,7 @@
 						<span class="fidelapp_icon fidelapp_triangle">&nbsp;</span>
 						<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
 						{% if(contactShareItem.contactItem.password) %}
-							<a href="mailto:{{ contactShareItem.contactItem.email }}?body={{ trans('Please remember to tell the recipient the appropriate password (%s)', contactShareItem.contactItem.password) }}:%20{{ contactShareItem.downloadUrl }}"
+							<a href="{{ contactShareItem.mailToLink|raw }}"
 								class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>
 						{% else %}
 							<span class="fidelapp_icon fidelapp_mailto_disabled fidelapp_tooltip" title="{{ trans('Please choose a password first') }}">&nbsp;</span>

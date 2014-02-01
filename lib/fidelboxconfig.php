@@ -183,7 +183,7 @@ class FidelboxConfig {
 
 		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
 			throw new InvalidConfigException(
-					$l->t('Cannot update IP address, because access type is') . ' ' . $this->api->getAppValue('access_type'));
+					$l->t('Cannot get fidelbox account id, because access type is') . ' ' . $this->api->getAppValue('access_type'));
 		}
 		$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
 		if (! $fidelboxAccount) {
