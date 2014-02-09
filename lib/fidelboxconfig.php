@@ -2,9 +2,7 @@
 
 namespace OCA\FidelApp;
 
-\OC::$CLASSPATH ['OCA\FidelApp\CaptchaNotMatchException'] = FIDELAPP_APPNAME . '/lib/exception.php';
-\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = FIDELAPP_APPNAME . '/lib/exception.php';
-\OC::$CLASSPATH ['OCA\FidelApp\ServerNotReachableException'] = FIDELAPP_APPNAME . '/lib/exception.php';
+
 
 /**
  * Error codes from fidelbox.de
@@ -42,6 +40,10 @@ class FidelboxConfig {
 
 	public function __construct(API $api) {
 		$this->api = $api;
+
+		$this->api->registerFidelappException('CaptchaNotMatchException');
+		$this->api->registerFidelappException('InvalidConfigException');
+		$this->api->registerFidelappException('ServerNotReachableException');
 	}
 
 	/**

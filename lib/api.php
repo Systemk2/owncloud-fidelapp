@@ -163,4 +163,12 @@ class API extends \OCA\AppFramework\Core\API {
 	public function deleteQueuedTask($id) {
 		return BackgroundJob::deleteQueuedTask($id);
 	}
+
+	/**
+	 * Register an exception class in lib/exception with OC's classloader
+	 * @param string $exceptionClassName
+	 */
+	public function registerFidelappException($exceptionClassName) {
+		\OC::$CLASSPATH ["OCA\\FidelApp\\$exceptionClassName"] = FIDELAPP_APPNAME . '/lib/exception.php';
+	}
 }

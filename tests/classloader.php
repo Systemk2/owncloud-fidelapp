@@ -21,17 +21,31 @@
  *
  */
 
-require_once __DIR__ . '/../3rdparty/SimplePie/autoloader.php';
+// require_once __DIR__ . '/../../appframework/3rdparty/SimplePie/autoloader.php';
 
 // to execute without owncloud, we need to create our own classloader
-spl_autoload_register(function ($className){
-	if (strpos($className, 'OCA\\') === 0) {
+spl_autoload_register(
+		function ($className) {
 
-		$path = strtolower(str_replace('\\', '/', substr($className, 3)) . '.php');
-		$relPath = __DIR__ . '/../..' . $path;
+			$relPath = false;
 
-		if(file_exists($relPath)){
-			require_once $relPath;
-		}
-	}
-});
+			if (strpos($className, 'OCA\\') === 0) {
+				$path = strtolower(str_replace('\\', '/', substr($className, 3)) . '.php');
+				$relPath = __DIR__ . '/../..' . $path;
+				if (!file_exists($relPath)) {
+					// If not found in the root of the app directory, insert '/lib' after app id and try again
+					$parts = split(strtolower(FIDELAPP_APPNAME), $relPath);
+					if(count($parts) == 3) {
+						$relPath = $parts[0] . strtolower(FIDELAPP_APPNAME) . '/lib' . $parts[2];
+					}
+				}
+			}
+
+			if ($relPath) {
+				if (file_exists($relPath)) {
+					require_once $relPath;
+				} else {
+					die("FATAL: Class $className could not be loaded, because file does not exist: $relPath\n");
+				}
+			}
+		});

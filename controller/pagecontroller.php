@@ -2,19 +2,13 @@
 
 namespace OCA\FidelApp\Controller;
 
-\OC::$CLASSPATH ['OCA\FidelApp\InvalidConfigException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 
 use \OCA\AppFramework\Controller\Controller;
-use \OCA\FidelApp\API;
-use \OCA\FidelApp\FidelboxConfig;
 use \OCA\FidelApp\TemplateParams;
-use \OCA\FidelApp\Db\ContactShareItemMapper;
 use \OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\InvalidConfigException;
-use OCA\FidelApp\Db\ContactItem;
 use OCA\FidelApp\Db\ContactShareItem;
-use OCA\FidelApp\Db\ReceiptItemMapper;
-use OCA\FidelApp\ContactManager;
+use OCA\FidelApp\DependencyInjection\DIContainer;
 
 class PageController extends Controller {
 
@@ -24,11 +18,23 @@ class PageController extends Controller {
 	 *      It is used to encrypt client ids in URLs
 	 */
 	private $password;
-	private $fidelboxConfig;
 
-	public function __construct(API $api, FidelboxConfig $fidelboxConfig, $request) {
-		parent::__construct($api, $request);
-		$this->fidelboxConfig = $fidelboxConfig;
+	// The following properties are set by Dependency Injection
+	private $fidelboxConfig;
+	private $app;
+	private $contactManager;
+	private $contactShareItemMapper;
+	private $receiptItemMapper;
+
+	public function __construct(DIContainer $diContainer, $request) {
+		parent::__construct($diContainer ['API'], $request);
+		$this->fidelboxConfig = $diContainer ['FidelboxConfig'];
+		$this->app = $diContainer ['App'];
+		$this->contactManager = $diContainer ['ContactManager'];
+		$this->contactShareItemMapper = $diContainer ['ContactShareItemMapper'];
+		$this->receiptItemMapper = $diContainer ['ReceiptItemMapper'];
+
+		$this->api->registerFidelappException('InvalidConfigException');
 	}
 
 	/**
@@ -40,7 +46,7 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function fidelApp() {
-		$checkResult = \OCA\FidelApp\Init::checkPrerequisites();
+		$checkResult = $this->app->checkPrerequisites();
 		if (count($checkResult ['warnings']) == 0) {
 			if ($this->api->getAppValue('access_type')) {
 				return $this->shares();
@@ -62,13 +68,11 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function passwords() {
-		$mapper = new ContactShareItemMapper($this->api);
-		$shares = $mapper->findByUser($this->api->getUserId());
-		$contactManager = new ContactManager($this->api);
+		$shares = $this->contactShareItemMapper->findByUser($this->api->getUserId());
 		foreach ( $shares as &$item ) {
 			$contactId = $item->getContactItem()->getId();
 			if (! isset($shareItems [$contactId])) {
-				$item->contactName = $contactManager->makeContactName($item->getContactItem());
+				$item->contactName = $this->contactManager->makeContactName($item->getContactItem());
 				$shareItems [$contactId] = &$item;
 			}
 		}
@@ -89,11 +93,9 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function shares() {
-		$mapper = new ContactShareItemMapper($this->api);
-		$shares = $mapper->findByUser($this->api->getUserId());
-		$contactManager = new ContactManager($this->api);
+		$shares = $this->contactShareItemMapper->findByUser($this->api->getUserId());
 		foreach ( $shares as &$item ) {
-			$item->contactName = $contactManager->makeContactName($item->getContactItem());
+			$item->contactName = $this->contactManager->makeContactName($item->getContactItem());
 			$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
 		}
 		$params = array (
@@ -112,8 +114,7 @@ class PageController extends Controller {
 	 * @IsSubAdminExemption
 	 */
 	public function receipts() {
-		$mapper = new ReceiptItemMapper($this->api);
-		$receipts = $mapper->findByUser($this->api->getUserId());
+		$receipts = $this->receiptItemMapper->findByUser($this->api->getUserId());
 		$params = array (
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
@@ -276,11 +277,10 @@ class PageController extends Controller {
 	 */
 	public function createDropdown() {
 		try {
-			$mapper = new ContactShareItemMapper($this->api);
 
 			$itemSource = $this->params('data_item_source');
 			$itemType = $this->params('data_item_type');
-			$shareItems = $mapper->findByUserFile($this->api->getUserId(), $itemSource);
+			$shareItems = $this->contactShareItemMapper->findByUserFile($this->api->getUserId(), $itemSource);
 
 			foreach ( $shareItems as &$contactShareItem ) {
 				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
@@ -386,7 +386,6 @@ class PageController extends Controller {
 	}
 
 	private function makePassword() {
-		// TODO: Check if mcrypt is available
 		$td = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_OFB, '');
 		$maxKeySize = mcrypt_enc_get_key_size($td);
 		$password = '';
@@ -402,7 +401,8 @@ class PageController extends Controller {
 		$l = $this->api->getTrans();
 		$passwordHint = $l->t('(Please remember to tell the recipient the appropriate password: %s)',
 				$item->getContactItem()->getPassword());
-		$mailto = 'mailto:' . $item->getContactItem()->getEmail() . '?body=' . $this->escapeMailTo("$item->downloadUrl $passwordHint");
+		$mailto = 'mailto:' . $item->getContactItem()->getEmail() . '?body=' .
+				 $this->escapeMailTo("$item->downloadUrl $passwordHint");
 		return $mailto;
 	}
 

@@ -10,6 +10,10 @@ use \OCA\FidelApp\TwigMiddleware;
 use OCA\FidelApp\Controller\AppletAccessController;
 use OCA\FidelApp\EncryptionHelper;
 use OCA\FidelApp\FidelboxConfig;
+use OCA\FidelApp\App;
+use OCA\FidelApp\ContactManager;
+use OCA\FidelApp\Db\ContactShareItemMapper;
+use OCA\FidelApp\Db\ReceiptItemMapper;
 
 class DIContainer extends BaseContainer {
 
@@ -19,10 +23,25 @@ class DIContainer extends BaseContainer {
 		// use this to specify the template directory
 		$this ['TwigTemplateDirectory'] = __DIR__ . '/../templates';
 
+		$this ['App'] = $this->share(function ($c) {
+			return new App();
+		});
+
 		$this ['API'] = $this->share(function ($c) {
 			return new API();
 		});
 
+		$this ['ContactManager'] = $this->share(function ($c) {
+			return new ContactManager($c ['API']);
+		});
+
+		$this ['ContactShareItemMapper'] = $this->share(function ($c) {
+			return new ContactShareItemMapper($c ['API']);
+		});
+
+		$this ['ReceiptItemMapper'] = $this->share(function ($c) {
+			return new ReceiptItemMapper($c ['API']);
+		});
 		$this ['EncryptionHelper'] = $this->share(function ($c) {
 			return new EncryptionHelper();
 		});
@@ -32,7 +51,7 @@ class DIContainer extends BaseContainer {
 		});
 
 		$this ['PageController'] = $this->share(function ($c) {
-			return new PageController($c ['API'], $c ['FidelboxConfig'], $c ['Request']);
+			return new PageController($c, $c ['Request']);
 		});
 
 		$this ['PublicController'] = $this->share(function ($c) {
