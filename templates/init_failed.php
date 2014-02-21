@@ -1,5 +1,5 @@
 <?php
-	$checkResult = \OCA\Fidelapp\Init::checkPrerequisites();
+	$checkResult = \OCA\Fidelapp\App::checkPrerequisites();
 ?>
 <div id="fidelapp_errors">
 	<h1><?php p($l->t('Your current settings do not meet the basic requirements for the FidelApp')); ?></h1>
