@@ -8,16 +8,16 @@
 			<div id="fidelapp_access_type">
 				<legend>{{ trans('How should your OwnCloud server be accessed from Internet?') }}</legend>
 				<p>
-					<input id="accessTypeDirect"  {{ selection == 'accessTypeDirect' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeDirect" />
+					<input id="accessTypeDirect"  {{ accessType == 'FIXED_IP' or accessType == 'DOMAIN_NAME' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeDirect" />
 					<label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. myserver.mydomain.com)') }}</label>
 				</p>
 				<p>
-					<input id="accessTypeFidelbox"   {{ selection == 'accessTypeFidelbox' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
+					<input id="accessTypeFidelbox"   {{ accessType == 'FIDELBOX_ACCOUNT' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
 					<label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
 				</p>
 				<p>
 					<input type="checkbox" name="fidelapp_https" value="https" id="fidelapp_https"  {{ useSSL == 'true' ? 'checked="true"' : '' }} />
-					<label for="fidelapp_https">{{ trans('Connection to my Owncloud server should be made via secure https (You will need to setup https certificates on your server)') }}</label>
+					<label for="fidelapp_https">{{ trans('Connection to my Owncloud server should be made via secure https (You will need to set up https certificates on your server)') }}</label>
 				</p>
 				<p>
 					<label for="fidelapp_port">{{ trans('Internet port number') }}:</label>

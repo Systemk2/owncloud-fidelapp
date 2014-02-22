@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,10 +20,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Controller;
-
 
 use \OCA\AppFramework\Controller\Controller;
 use \OCA\FidelApp\TemplateParams;
@@ -30,6 +28,7 @@ use \OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\InvalidConfigException;
 use OCA\FidelApp\Db\ContactShareItem;
 use OCA\FidelApp\DependencyInjection\DIContainer;
+use OCA\FidelApp\API;
 
 class PageController extends Controller {
 
@@ -41,7 +40,7 @@ class PageController extends Controller {
 	private $password;
 
 	// The following properties are set by Dependency Injection
-	private $fidelboxConfig;
+	public $fidelboxConfig;
 	private $app;
 	private $contactManager;
 	private $contactShareItemMapper;
@@ -152,138 +151,212 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function wizard() {
-		$l = $this->api->getTrans();
-
-		$templateParams = new TemplateParams($this->getParams(),
-				array (
-						'menu' => 'wizard',
-						'actionTemplate' => 'wizard'
-				));
-
-		try {
-
-			$templateParams->add('accessType', $this->api->getAppValue('access_type'));
-			if ($this->hasParam('selection')) {
-				// One of the radio buttons is selected
-				$templateParams->add('selection');
-			} else {
-				// No radio selected: determine state from saved configuration
-				switch ($this->api->getAppValue('access_type')) {
-					case ('FIXED_IP') :
-					case ('DOMAIN_NAME') :
-						$templateParams->set('selection', 'accessTypeDirect');
-						break;
-					case ('FIDELBOX_ACCOUNT') :
-						$templateParams->set('selection', 'accessTypeFidelbox');
-				}
-			}
-
-			$templateParams->add('domain', $this->api->getAppValue('domain_name'));
-			$templateParams->add('fixedIp', $this->api->getAppValue('fixed_ip'));
-			$templateParams->add('useSSL', $this->api->getAppValue('use_ssl'));
-			if ($this->params('port') == 'STANDARD_PORT') {
-				$templateParams->add(array (
-						'port' => null
-				));
-			} else {
-				$templateParams->add('port', $this->api->getAppValue('port'));
-			}
-			$templateParams->add('fidelboxTempUser', uniqid('', true));
-			$templateParams->add('fidelboxAccount', $this->api->getAppValue('fidelbox_account'));
-
-			if ($this->hasParam('action')) {
-				$this->api->setAppValue('use_ssl', $templateParams->get('useSSL'));
-				$this->api->setAppValue('access_type', $templateParams->get('accessType'));
-				$port = $templateParams->get('port');
-				if (is_numeric($port)) {
-					$this->api->setAppValue('port', $port);
-				} else {
-					$this->api->setAppValue('port', null);
-				}
-
-				if ($this->params('action') == 'saveDirectAccess') {
-					if (! $templateParams->get('domain') && ! $templateParams->get('fixedIp')) {
-						// TODO: Formal validation of IP and domain formats
-						throw new \Exception($l->t('No IP or Domain Name specified'));
-					}
-					$this->api->setAppValue('domain_name', $templateParams->get('domain'));
-					$this->api->setAppValue('fixed_ip', $templateParams->get('fixedIp'));
-				} elseif ($this->params('action') == 'createFidelboxAccount') {
-					$fidelboxAccount = $this->fidelboxConfig->createAccount($templateParams->get('fidelboxTempUser'),
-							$this->params('captcha'));
-					$this->api->setAppValue('fidelbox_account', $fidelboxAccount);
-					$templateParams->add('wizard_step2', 'wizard_fidelbox');
-				} elseif ($this->params('action') == 'deleteFidelboxAccount') {
-					$this->fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
-					$this->api->setAppValue('fidelbox_account', null);
-					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
-						$this->api->setAppValue('access_type', null);
-					}
-					$templateParams->add('wizard_step2', 'wizard_fidelbox_createaccount');
-				}
-			} else if ($this->hasParam('selection')) {
-				if ($this->params('selection') == 'accessTypeFidelbox') {
-					if ($this->api->getAppValue('fidelbox_account')) {
-						$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
-					} else {
-						$this->api->setAppValue('access_type', null);
-					}
-				} else {
-					if ($this->api->getAppValue('fixed_ip')) {
-						$this->api->setAppValue('access_type', 'FIXED_IP');
-					} else if ($this->api->getAppValue('domain_name')) {
-						$this->api->setAppValue('access_type', 'DOMAIN_NAME');
-					} else {
-						$this->api->setAppValue('access_type', null);
-					}
-				}
-			}
-
-			if ($templateParams->get('selection') == 'accessTypeDirect') {
-				$templateParams->add('wizard_step2', 'wizard_fixedipordomain');
-			} elseif ($templateParams->get('selection') == 'accessTypeFidelbox') {
-				$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
-				if ($fidelboxAccount) {
-					$templateParams->add('validFidelboxAccount', $this->fidelboxConfig->validateAccount($fidelboxAccount));
-					$templateParams->add('fidelboxAccount', $fidelboxAccount);
-					$templateParams->add('wizard_step2', 'wizard_fidelbox');
-					$isReachable = false;
-					try {
-						$isReachable = $this->fidelboxConfig->pingBack();
-					} catch(\Exception $e) {
-						$templateParams->add('reachableFailedMsg', $e->getMessage());
-					}
-					$templateParams->add('isReachable', $isReachable);
-				} else {
-					$templateParams->add(
-							array (
-									'wizard_step2' => 'wizard_fidelbox_createaccount',
-									'urlFidelboxCaptcha' => $this->fidelboxConfig->createCaptchaURL(
-											$templateParams->get('fidelboxTempUser'))
-							));
-				}
-			}
-			if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
-				$this->fidelboxConfig->startRegularIpUpdate();
-			} else {
-				$this->fidelboxConfig->stopRegularIpUpdate();
-			}
-		} catch(\Exception $e) {
-			$templateParams->add('errors', array (
-					$e->getMessage()
-			));
-			$templateParams->set('selection', null);
+		switch ($this->api->getAppValue('access_type')) {
+			case 'FIDELBOX_ACCOUNT' :
+				return $this->wizardFidelbox();
+			case 'DOMAIN_NAME' :
+				return $this->wizardDomainName();
+			case 'FIXED_IP' :
+				return $this->wizardFixedIp();
 		}
-		if ($this->hasParam('reload')) {
-			// Subsequent call: Render page without header and footer
-			return $this->render('fidelapp', $templateParams->getAll(), '');
+		$params = array (
+				'menu' => 'wizard',
+				'actionTemplate' => 'wizard',
+				'useSSL' => $this->api->getAppValue('use_ssl'),
+				'port' => $this->api->getAppValue('port')
+		);
+
+		// Render page with header and footer
+		return $this->render('fidelapp', $params);
+	}
+
+	/**
+	 * Handle generic function (Exception handling etc.) for all wizard
+	 * requests
+	 *
+	 * @param function $callbackFunction
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	private function doWizardAction($callbackFunction) {
+		try {
+			$params = array (
+					'menu' => 'wizard',
+					'actionTemplate' => 'wizard',
+					'useSSL' => $this->api->getAppValue('use_ssl'),
+					'port' => $this->api->getAppValue('port')
+			);
+			$callbackFunction($params, $this, $this->api);
+		} catch(\Exception $e) {
+			$params ['errors'] = array (
+					$e->getMessage()
+			);
+		}
+		if ($this->hasParam('ajax')) {
+			// Ajax call: Render page without header and footer
+			return $this->render('fidelapp', $params, '');
 		} else {
 			// First call: Render page with header and footer
-			return $this->render('fidelapp', $templateParams->getAll());
+			return $this->render('fidelapp', $params);
 		}
 	}
 
-	private function hasParam($param) {
+	/**
+	 * Display or set the "Fixed IP" configuration
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardFixedIp() {
+		return $this->doWizardAction(
+				function (&$params, PageController $context, API $api) {
+
+					$params ['wizard_step2'] = 'wizard_fixedipordomain';
+					$params ['accessType'] = 'FIXED_IP';
+					if ($api->getAppValue('access_type') != 'FIXED_IP') {
+						$api->setAppValue('access_type', 'FIXED_IP');
+						$context->fidelboxConfig->stopRegularIpUpdate();
+					}
+					$currentIp = $api->getAppValue('fixed_ip');
+					if ($context->hasParam('fixedIp')) {
+						$params ['fixedIp'] = $context->params('fixedIp');
+						if ($context->params('fixedIp') != $currentIp) {
+							$api->setAppValue('fixed_ip', $context->params('fixedIp'));
+						}
+					} else {
+						$params ['fixedIp'] = $currentIp;
+					}
+					$params ['domain'] = $api->getAppValue('domain_name');
+				});
+	}
+
+	/**
+	 * Display or set the "Domain Name" configuration
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardDomainName() {
+		return $this->doWizardAction(
+				function (&$params, PageController $context, API $api) {
+
+					$params ['wizard_step2'] = 'wizard_fixedipordomain';
+					$params ['accessType'] = 'DOMAIN_NAME';
+					if ($api->getAppValue('access_type') != 'DOMAIN_NAME') {
+						$api->setAppValue('access_type', 'DOMAIN_NAME');
+						$context->fidelboxConfig->stopRegularIpUpdate();
+					}
+					$currentDomain = $api->getAppValue('domain_name');
+					if ($context->hasParam('domain')) {
+						$params ['domain'] = $context->params('domain');
+						if ($context->params('domain') != $currentDomain) {
+							$api->setAppValue('domain_name', $context->params('domain'));
+						}
+					} else {
+						$params ['domain'] = $currentDomain;
+					}
+					$params ['fixedIp'] = $api->getAppValue('fixed_ip');
+				});
+	}
+
+	/**
+	 * Display or set the "Fidelbox" configuration
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardFidelbox() {
+		return $this->doWizardAction(
+				function (&$params, PageController $context, API $api) {
+					$params ['wizard_step2'] = 'wizard_fidelbox_createaccount';
+					$params ['accessType'] = 'FIDELBOX_ACCOUNT';
+					$params ['fidelboxTempUser'] = uniqid('', true);
+					$params ['urlFidelboxCaptcha'] = $context->fidelboxConfig->createCaptchaURL($params ['fidelboxTempUser']);
+
+					if ($context->hasParam('captcha')) {
+						$tempUser = $context->params('fidelboxTempUser');
+						$captcha = $context->params('captcha');
+						$fidelboxAccount = $context->fidelboxConfig->createAccount($tempUser, $captcha);
+						$api->setAppValue('fidelbox_account', $fidelboxAccount);
+						$context->fidelboxConfig->startRegularIpUpdate();
+					}
+
+					if ($api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
+						$api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
+					}
+					$fidelboxAccount = $api->getAppValue('fidelbox_account');
+					if ($fidelboxAccount) {
+						$params ['wizard_step2'] = 'wizard_fidelbox';
+						$params ['validFidelboxAccount'] = $context->fidelboxConfig->validateAccount($fidelboxAccount);
+						$params ['fidelboxAccount'] = $fidelboxAccount;
+						$isReachable = false;
+						try {
+							$isReachable = $context->fidelboxConfig->pingBack();
+						} catch(\Exception $e) {
+							$params ['reachableFailedMsg'] = $e->getMessage();
+						}
+						$params ['isReachable'] = $isReachable;
+					}
+				});
+	}
+
+	/**
+	 * Toggle SSL usage
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardSsl() {
+		if ($this->params('useSSL') != $this->api->getAppValue('use_ssl')) {
+			$this->api->setAppValue('use_ssl', $this->params('useSSL'));
+		}
+		return $this->wizard();
+	}
+
+	/**
+	 * Change port settings
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardPort() {
+		$currentPort = $this->api->getAppValue('port');
+		$newPort = $this->params('port');
+		if ($newPort == 'STANDARD_PORT') {
+			$newPort = null;
+		}
+		if ($newPort != $currentPort) {
+			$this->api->setAppValue('port', $newPort);
+		}
+		return $this->wizard();
+	}
+
+	/**
+	 * Delete an existing fidelbox account
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardDeleteFidelboxAccount() {
+		try {
+			$this->fidelboxConfig->deleteAccount($api->getAppValue('fidelbox_account'));
+		} catch(\Exception $e) {
+			// Safely ignore any problems with account deletion, just create a new one afterwards
+		}
+		$this->api->setAppValue('fidelbox_account', null);
+		$this->api->setAppValue('access_type', null);
+		return $this->wizardFidelbox();
+	}
+
+	/**
+	 * Check if a request parameter exists
+	 *
+	 * @param string $param
+	 * @throws \BadMethodCallException if the parameter is not of type <code>string</code>
+	 * @return boolean <code>true</code> if a request parameter with the given name exists,
+	 *         is not empty and not <code>null</code> and not the string 'n','u','l','l'
+	 */
+	public function hasParam($param) {
 		if (gettype($param) != 'string')
 			throw new \BadMethodCallException('hasParam expected parameter to be string, but ' . gettype($param) . ' given');
 
@@ -292,6 +365,8 @@ class PageController extends Controller {
 	}
 
 	/**
+	 * Create the share dropdown in the file view
+	 *
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 * @Ajax

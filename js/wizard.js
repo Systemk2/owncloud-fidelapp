@@ -6,8 +6,6 @@
 			var eventId = event.target.id;
 			var selection = $('input[name=fidelapp_accessType]:checked').val();
 			var url = OC.Router.generate('fidelapp_wizard');
-			var accessType = null;
-			var action = null;
 			var domain = null;
 			var fixedIp = null;
 			var captcha = null;
@@ -24,23 +22,30 @@
 				}
 				if (selection2 == 'fixedIp') {
 					fixedIp = $('#fidelapp_fixedIp').val();
-					accessType = 'FIXED_IP';
+					url = OC.Router.generate('fidelapp_wizard_fixed_ip');
+
 				} else if (selection2 == 'domainName') {
 					domain = $('#fidelapp_domainName').val();
-					accessType = 'DOMAIN_NAME';
+					url = OC.Router.generate('fidelapp_wizard_domain_name');
 				}
-				action = 'saveDirectAccess';
 			} else if (eventId == 'fidelapp_fidelbox') {
 				captcha = $('#fidelapp_captcha').val();
 				fidelboxTempUser = $('#fidelboxTempUser').val();
-				action = 'createFidelboxAccount';
-				accessType = 'FIDELBOX_ACCOUNT';
+				url = OC.Router
+						.generate('fidelapp_wizard_fidelbox');
 			} else if (eventId == 'fidelapp_fidelbox_delete') {
-				action = 'deleteFidelboxAccount';
+				url = OC.Router
+						.generate('fidelapp_wizard_delete_fidelbox_account');
 			} else if (eventId == 'fidelapp_https') {
-				action = 'changeSslState';
+				url = OC.Router.generate('fidelapp_wizard_ssl');
 			} else if (eventId == 'fidelapp_non_standard_port_check') {
-				action = 'changePort';
+				url = OC.Router.generate('fidelapp_wizard_port');
+			} else if (selection == 'accessTypeFidelbox') {
+				url = OC.Router.generate('fidelapp_wizard_fidelbox');
+			} else if (selection == 'accessTypeDirect') {
+				// We do not know which of fixed IP or domain name to chose
+				// Just take the first one
+				url = OC.Router.generate('fidelapp_wizard_fixed_ip');
 			}
 			if ($('#fidelapp_non_standard_port_check').prop('checked')) {
 				port = $('#fidelapp_port').val();
@@ -48,25 +53,21 @@
 				port = 'STANDARD_PORT';
 			}
 			$('#fidelapp_errors').hide();
-			$('#rightcontent')
-					.prepend(
-							'<div id="fidelapp_spinner"><img src="'
-									+ OC.imagePath('core', 'loading.gif')
-									+ '" /></div>');
+			$('#rightcontent').prepend(
+					'<div id="fidelapp_spinner"><img src="'
+							+ OC.imagePath('core', 'loading.gif')
+							+ '" /></div>');
 			$.ajax({
 				type : 'GET',
 				url : url,
 				data : {
-					action : action,
-					accessType : accessType,
-					selection : selection,
 					domain : domain,
 					fixedIp : fixedIp,
 					port : port,
 					useSSL : useSSL,
 					captcha : captcha,
 					fidelboxTempUser : fidelboxTempUser,
-					reload : true
+					ajax : true
 				},
 				async : false,
 				success : function(html) {
@@ -85,14 +86,14 @@
 					|| id == 'fidelapp_radio_fixedIp') {
 				$('#fidelapp_radio_domainName').removeProp('checked');
 				$('#fidelapp_radio_fixedIp').prop('checked', 'true');
-				$('#fidelapp_domainName').val('').prop('readonly', 'true');
+				$('#fidelapp_domainName').prop('readonly', 'true');
 				$('#fidelapp_fixedIp').removeProp('readonly');
 			} else if ((id == 'fidelapp_domainName' && !$(
 					'#fidelapp_radio_domainName').prop('checked'))
 					|| id == 'fidelapp_radio_domainName') {
 				$('#fidelapp_radio_fixedIp').removeProp('checked');
 				$('#fidelapp_radio_domainName').prop('checked', 'true');
-				$('#fidelapp_fixedIp').val('').prop('readonly', 'true');
+				$('#fidelapp_fixedIp').prop('readonly', 'true');
 				$('#fidelapp_domainName').removeProp('readonly');
 			}
 		},
