@@ -89,6 +89,7 @@ class PageController extends Controller {
 	 */
 	public function passwords() {
 		$shares = $this->contactShareItemMapper->findByUser($this->api->getUserId());
+		$shareItems = array();
 		foreach ( $shares as &$item ) {
 			$contactId = $item->getContactItem()->getId();
 			if (! isset($shareItems [$contactId])) {

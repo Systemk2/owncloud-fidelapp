@@ -69,7 +69,7 @@ class ContactShareItemMapper extends Mapper {
 	 * @param int $fileId
 	 * @param string $email
 	 *
-	 * @return array of OCA\FidelApp\Db\ContactShareItem\ContactShareItem
+	 * @return array of OCA\FidelApp\Db\ContactShareItem
 	 */
 	public function findByUserFileEmail($userId, $fileId, $email) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
@@ -97,6 +97,12 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
+	/**
+	 * Get all contact share items for the given user id
+	 *
+	 * @param string $userId
+	 * @return array of OCA\FidelApp\Db\ContactShareItem
+	 */
 	public function findByUser($userId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
@@ -108,6 +114,14 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItems;
 	}
 
+	/**
+	 * Get the contact share item with the given share id
+	 *
+	 * @param integer $shareId
+	 * @return OCA\FidelApp\Db\ContactShareItem
+	 * @throws OCA\AppFramework\Db\DoesNotExistException if the item does not exist
+	 * @throws OCA\AppFramework\Db\MultipleObjectsReturnedException if more than one item exists
+	 */
 	public function findByShareId($shareId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND S.`id` = ?';
@@ -119,6 +133,15 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItem;
 	}
 
+
+	/**
+	 * Remove all contacts, shares, receipts, checksums and chunks for the given user id
+	 * This is called when a user is deleted from ownCloud
+	 *
+	 * @param string $userId
+	 *
+	 * TODO: Test it!
+	 */
 	public function deleteAllForUser($userId) {
 		// Delete chunks
 		$chunkItemMapper = new ChunkItemMapper($this->api);
