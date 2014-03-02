@@ -321,7 +321,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->cutPageController->expects($this->never())->method('wizardFixedIp');
 
 		// Run the test
-		$result = $this->cutPageController->wizard();
+		$this->cutPageController->wizard();
 	}
 
 	public function returnAccessTypeFidelBox($argument) {
@@ -350,7 +350,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->cutPageController->expects($this->once())->method('wizardFixedIp');
 
 		// Run the test
-		$result = $this->cutPageController->wizard();
+		$this->cutPageController->wizard();
 	}
 
 	public function returnAccessTypeFixedIp($argument) {
@@ -379,7 +379,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->cutPageController->expects($this->never())->method('wizardFixedIp');
 
 		// Run the test
-		$result = $this->cutPageController->wizard();
+		$this->cutPageController->wizard();
 	}
 
 	public function returnAccessTypeDomainName($argument) {

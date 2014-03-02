@@ -40,13 +40,15 @@
 				url = OC.Router.generate('fidelapp_wizard_ssl');
 			} else if (eventId == 'fidelapp_non_standard_port_check') {
 				url = OC.Router.generate('fidelapp_wizard_port');
+			} else if(eventId == 'fidelapp_wizard_confirm_tos') {
+				url = OC.Router.generate('fidelapp_wizard_confirm_tos');
 			} else if (selection == 'accessTypeFidelbox') {
 				url = OC.Router.generate('fidelapp_wizard_fidelbox');
 			} else if (selection == 'accessTypeDirect') {
 				// We do not know which of fixed IP or domain name to chose
 				// Just take the first one
 				url = OC.Router.generate('fidelapp_wizard_fixed_ip');
-			}
+			} 
 			if ($('#fidelapp_non_standard_port_check').prop('checked')) {
 				port = $('#fidelapp_port').val();
 			} else {
@@ -74,8 +76,21 @@
 					$('#content').html(html);
 				},
 				error : function(error) {
+					$('#fidelapp_spinner').remove();
+					var errorMessage = '';
+					try {
+						if(typeof error.statusText != 'undefined') {
+							errorMessage += 'Status: ' + error.statusText + ' ';
+						}
+						if (typeof error.responseText != 'undefined') {
+							errorObject = $.parseJSON(error.responseText);
+							errorMessage += 'Message: ' + errorObject.message;
+						}
+					} catch (e) {
+						// Ignore
+					}
 					OC.dialogs
-							.alert(error, t('fidelapp', 'Transmission Error'));
+							.alert(errorMessage, t('fidelapp', 'Error while executing action ') + url);
 				}
 			});
 		},
@@ -122,10 +137,9 @@
 						$('#content')
 								.on(
 										'click',
-										'#fidelapp_fixedipordomain, #fidelapp_fidelbox, #fidelapp_https, #fidelapp_non_standard_port_check, #fidelapp_fidelbox_delete',
+										'#fidelapp_fixedipordomain, #fidelapp_fidelbox, #fidelapp_https, #fidelapp_non_standard_port_check, #fidelapp_fidelbox_delete, #fidelapp_wizard_confirm_tos',
 										fidelwizard.doSelection);
 						$('#content').on('keyup', '#fidelapp_port',
 								fidelwizard.toggleReadonlyState);
-
 					});
 })(jQuery);

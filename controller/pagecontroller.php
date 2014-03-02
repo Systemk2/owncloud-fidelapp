@@ -67,16 +67,18 @@ class PageController extends Controller {
 	 */
 	public function fidelApp() {
 		$checkResult = $this->app->checkPrerequisites();
-		if (count($checkResult ['warnings']) == 0) {
+		if (count($checkResult ['warnings']) == 0 && count($checkResult ['errors']) == 0) {
 			if ($this->api->getAppValue('access_type')) {
 				return $this->shares();
 			} else {
 				return $this->wizard();
 			}
 		}
-		return $this->render('fidelapp', array (
-				'warnings' => $checkResult ['warnings']
-		));
+		return $this->render('fidelapp',
+				array (
+						'warnings' => $checkResult ['warnings'],
+						'errors' => $checkResult ['errors']
+				));
 	}
 
 	/**
@@ -89,7 +91,7 @@ class PageController extends Controller {
 	 */
 	public function passwords() {
 		$shares = $this->contactShareItemMapper->findByUser($this->api->getUserId());
-		$shareItems = array();
+		$shareItems = array ();
 		foreach ( $shares as &$item ) {
 			$contactId = $item->getContactItem()->getId();
 			if (! isset($shareItems [$contactId])) {
@@ -194,10 +196,10 @@ class PageController extends Controller {
 			);
 		}
 		if ($this->hasParam('ajax')) {
-			// Ajax call: Render page without header and footer
+			// Ajax call: Render result without header and footer
 			return $this->render('fidelapp', $params, '');
 		} else {
-			// First call: Render page with header and footer
+			// Other call: Render page with header and footer
 			return $this->render('fidelapp', $params);
 		}
 	}
@@ -262,11 +264,28 @@ class PageController extends Controller {
 
 	/**
 	 * Display or set the "Fidelbox" configuration
+	 * Check if the Terms of Service (ToS) have been confirmed
+	 * If this is the case, show fidelbox wizard, otherwise show ToS confirmation page
 	 * @Ajax
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function wizardFidelbox() {
+		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
+			$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
+		}
+		if (! $this->api->getAppValue('fidelbox_account') && ! $this->hasParam('captcha')) {
+			return $this->doWizardAction(
+					function (&$params, PageController $context, API $api) {
+						$params ['wizard_step2'] = 'fidelbox_confirm_tos';
+						$params ['accessType'] = 'FIDELBOX_ACCOUNT';
+					});
+		}
+		return $this->wizardFidelboxTosConfirmed();
+	}
+
+	private function wizardFidelboxTosConfirmed() {
+
 		return $this->doWizardAction(
 				function (&$params, PageController $context, API $api) {
 					$params ['wizard_step2'] = 'wizard_fidelbox_createaccount';
@@ -282,9 +301,6 @@ class PageController extends Controller {
 						$context->fidelboxConfig->startRegularIpUpdate();
 					}
 
-					if ($api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
-						$api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
-					}
 					$fidelboxAccount = $api->getAppValue('fidelbox_account');
 					if ($fidelboxAccount) {
 						$params ['wizard_step2'] = 'wizard_fidelbox';
@@ -299,6 +315,16 @@ class PageController extends Controller {
 						$params ['isReachable'] = $isReachable;
 					}
 				});
+	}
+
+	/**
+	 * Set the Terms Of Service as accepted
+	 * @Ajax
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function wizardFidelboxConfirmToS() {
+		return $this->wizardFidelboxTosConfirmed();
 	}
 
 	/**
@@ -340,12 +366,13 @@ class PageController extends Controller {
 	 */
 	public function wizardDeleteFidelboxAccount() {
 		try {
-			$this->fidelboxConfig->deleteAccount($api->getAppValue('fidelbox_account'));
+			$this->fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
 		} catch(\Exception $e) {
 			// Safely ignore any problems with account deletion, just create a new one afterwards
 		}
 		$this->api->setAppValue('fidelbox_account', null);
 		$this->api->setAppValue('access_type', null);
+		$this->fidelboxConfig->stopRegularIpUpdate();
 		return $this->wizardFidelbox();
 	}
 

@@ -56,6 +56,12 @@ $this->create('fidelapp_wizard_fidelbox', '/wizardFidelbox')->action(
 			AppFrameworkApp::main('PageController', 'wizardFidelbox', $params, new DIContainer());
 		});
 
+$this->create('fidelapp_wizard_confirm_tos', '/wizardFidelboxConfirmToS')->action(
+		function ($params) {
+			AppFrameworkApp::main('PageController', 'wizardFidelboxConfirmToS', $params, new DIContainer());
+		});
+
+
 $this->create('fidelapp_wizard_ssl', '/wizardSsl')->action(
 		function ($params) {
 			AppFrameworkApp::main('PageController', 'wizardSsl', $params, new DIContainer());

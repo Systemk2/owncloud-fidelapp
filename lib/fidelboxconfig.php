@@ -44,6 +44,8 @@ define('UNPARSABLE_RESULT_FROM_REMOTE_HOST', 7001);
 
 use \OCA\FidelApp\API;
 use OCA\FidelApp\Db\ShareItem;
+use OCP\BackgroundJob;
+use OC\BackgroundJob\JobList;
 
 /**
  * Manage interaction with fidelbox.de
@@ -178,20 +180,20 @@ class FidelboxConfig {
 	 * Launch a queued task to communicate our current IP address to fidelbox.de on a regular basis
 	 */
 	public function startRegularIpUpdate() {
-		$taskId = $this->api->addQueuedTask('OCA\FidelApp\UpdateIpBackgroundJob');
-		// $taskId = UpdateIpBackgroundJob::run();
-		$this->api->setAppValue('update_ip_task_id', $taskId);
+		$job = new UpdateIpBackgroundJob();
+		// Run it once immediately
+		$job->run();
+		BackgroundJob::registerJob($job);
 	}
 
 	/**
 	 * Remove the queued task communicating our current IP address to fidelbox.de on a regular basis
 	 */
 	public function stopRegularIpUpdate() {
-		$taskId = $this->api->getAppValue('update_ip_task_id');
-		if ($taskId) {
-			$this->api->deleteQueuedTask($taskId);
-			$this->api->setAppValue('update_ip_task_id', null);
-		}
+		// Unfortunately there is no public API to remove timed tobs from scheduler,
+		// So we need to use internal API instead
+		$jobList = new JobList();
+		$jobList->remove(new UpdateIpBackgroundJob());
 	}
 
 	/**

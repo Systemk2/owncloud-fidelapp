@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,39 +20,26 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 use OCA\FidelApp\Db\ConfigItemMapper;
+use \OC\BackgroundJob\TimedJob;
+
 // Run at most every 5 minutes (maybe longer, depending on the cron job definition)
 define('MIN_TIME_INTERVAL_SECS', 299);
 
-class UpdateIpBackgroundJob {
+class UpdateIpBackgroundJob extends TimedJob {
+
+	public function __construct() {
+		$this->setInterval(MIN_TIME_INTERVAL_SECS);
+	}
 
 	// TODO: Add documentation
-	public static function run() {
+	public function run($argument) {
 		try {
 			\OC_Log::write(FIDELAPP_APPNAME, 'Starting UpdateIpBackgroundJob', \OC_Log::DEBUG);
 
 			$api = new API(FIDELAPP_APPNAME);
-			// Add this task for next run (Queued tasks are only run once)
-			$taskId = $api->addQueuedTask('OCA\FidelApp\UpdateIpBackgroundJob');
-			$api->setAppValue('update_ip_task_id', $taskId);
-
-			$lastUpdateTime = $api->getAppValue('last_ip_update');
-			$current = new \DateTime();
-			if ($lastUpdateTime != null) {
-				$last = new \DateTime($lastUpdateTime);
-				$dateInterval = new \DateInterval('PT' . MIN_TIME_INTERVAL_SECS . 'S');
-				$current->sub($dateInterval);
-
-				if ($current < $last) {
-					\OC_Log::write(FIDELAPP_APPNAME, 'Skipping update of ip address, because of minimum time interval',
-							\OC_Log::DEBUG);
-					return;
-				}
-			}
 			$config = new FidelboxConfig($api);
 			$ip = $config->updateIp();
 			$now = new \DateTime();
