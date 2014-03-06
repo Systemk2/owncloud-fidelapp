@@ -135,19 +135,24 @@
 	background-repeat: no-repeat;
 }
 
+.fidelapp_delete:hover {
+	background-image: url("%webroot%/core/img/actions/delete-hover.svg");
+}
+
 .fidelapp_triangle_down {
 	background: url("%webroot%/core/img/actions/triangle-s.svg") no-repeat 0
 		2px;
 	padding-left: 20px;
 }
 
-#fidelapp_password_table .fidelapp_spinner {
+#fidelapp_password_table .fidelapp_spinner,  .fidelapp_spinner {
 	background-image: url("%webroot%/core/img/loading.gif");
 	background-color: #FFFFFF;
 	background-position: center center;
 	background-repeat: no-repeat;
 	display: inline-block;
-	width: 16px;
+	width: 32px;
+	height: 32px;
 }
 
 input.active[type="button"] {

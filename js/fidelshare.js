@@ -176,6 +176,8 @@
 				var message;
 				if (result && result.data && result.data.message) {
 					message = result.data.message;
+				} else if(result && result.message) {
+					message = result.message;
 				} else {
 					message = result;
 				}

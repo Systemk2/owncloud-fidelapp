@@ -67,7 +67,7 @@ try {
 	}
 
 	\OC_JSON::success();
-} catch(Exception $e) {
+} catch(\Exception $e) {
 	\OC_JSON::error($e->getMessage());
 }
 

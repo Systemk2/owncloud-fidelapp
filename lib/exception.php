@@ -44,6 +44,16 @@ class CaptchaNotMatchException extends \Exception {
 class InvalidConfigException extends \Exception {
 }
 
+class WrongParameterException extends \Exception {
+	public function __construct($parameter, $value = null) {
+		if($value == null) {
+			parent::__construct("Missing Parameter '$parameter'");
+		} else {
+			parent::__construct("Wrong Value '$value' for Parameter '$parameter'");
+		}
+	}
+}
+
 /**
  * The provided credentials are not accepted
  */

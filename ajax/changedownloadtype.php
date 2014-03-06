@@ -40,6 +40,6 @@ try {
 	$shareItem->setDownloadType($downloadType);
 	$mapper->save($shareItem);
 	\OC_JSON::success();
-} catch(Exception $e) {
+} catch(\Exception $e) {
 	\OC_JSON::error(array('message' => $e->getMessage()));
 }
