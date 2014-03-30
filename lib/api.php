@@ -110,29 +110,48 @@ class API extends \OCA\AppFramework\Core\API {
 		return null;
 	}
 
+	/**
+	 * Get an OwnCloud contact by its ID
+	 *
+	 * @param int $contactsappId
+	 * @return \OCA\Contacts\Contact|NULL
+	 */
+	public function findContactById($contactsappId) {
+		$contactsApp = new \OCA\Contacts\App();
+		$addressBooks = $contactsApp->getAddressBooksForUser();
+		foreach ($addressBooks as $addressBook) {
+			$contact = $addressBook->getChild($contactsappId);
+			if($contact) {
+				return $contact;
+			}
+		}
+		return null;
+	}
+
 	public function findContactNameById($contactsappId) {
-		$return = VCard::find($contactsappId);
-		if(isset ($return['fullname'])) {
-			return $return ['fullname'];
+		$contact = $this->findContactById($contactsappId);
+		if($contact) {
+			return $contact->getDisplayName();
 		}
 		return null;
 	}
 
 	public function findEMailAddressesByContactsappId($contactsappId) {
-		$contactData = VCard::find($contactsappId);
-		if(!$contactData) {
+		$contact = $this->findContactById($contactsappId);
+		if(!$contact) {
 			return array();
 		}
-		$vCardData = $contactData['carddata'];
-		$vCard = Reader::read($vCardData);
 		$emails = array();
-		foreach ($vCard->children() as $property) {
-			if(is_a($property, '\Sabre\VObject\Property')) {
-				if($property->name == 'EMAIL') {
-					$emails[] = $property->value;
-				}
-			}
+		foreach($contact->__get('EMAIL') as $emailProperty) {
+			$emails[] = $emailProperty->value;
 		}
+// 		foreach ($vCard->children() as $property) {
+// 			if(is_a($property, '\Sabre\VObject\Property')) {
+// 				if($property->name == 'EMAIL') {
+// 					$emails[] = $property->value;
+// 				}
+// 			}
+// 		}
 		return $emails;
 	}
 

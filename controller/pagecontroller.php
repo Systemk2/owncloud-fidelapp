@@ -407,8 +407,13 @@ class PageController extends Controller {
 			$shareItems = $this->contactShareItemMapper->findByUserFile($this->api->getUserId(), $itemSource);
 
 			foreach ( $shareItems as &$contactShareItem ) {
-				$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
-				$contactShareItem->mailToLink = $this->generateMailToLink($contactShareItem);
+				if($contactShareItem->getContactItem()->getPassword()) {
+					$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
+					$contactShareItem->mailToLink = $this->generateMailToLink($contactShareItem);
+				} else {
+					$contactShareItem->downloadUrl = '';
+					$contactShareItem->mailToLink = '';
+				}
 			}
 			$response = $this->render('sharedropdown',
 					array (

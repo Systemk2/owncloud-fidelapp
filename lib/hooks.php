@@ -50,11 +50,11 @@ class Hooks {
 	 * Deletes all shares shares for a deleted contactapp contact
 	 *
 	 * @param
-	 *        	parameters array containing a vCard id from \OCA\Contacts\VCard::pre_deleteVCard - Hook
+	 *        	$parameters array containing an id from \OCA\Contacts::pre_deleteContact - Hook
 	 * @return <code>true</code>
 	 */
 	/*
-	 * \OC_Hook::emit('\OCA\Contacts\VCard', 'pre_deleteVCard', array('aid' => null, 'id' => $id, 'uri' => null)
+	 * \OC_Hook::emit('\OCA\Contacts', 'pre_deleteContact, array('id' => $id))
 	 */
 	public static function deleteContact(array $parameters) {
 		$contactId = $parameters ['id'];
@@ -74,12 +74,18 @@ class Hooks {
 	/**
 	 * When a contactapp contact has been updated, check if the shared e-Mail addressis still there
 	 *
-	 * @param $id integer
-	 *        	containing a vCard id from \OCA\Contacts\VCard::post_updateVCard - Hook
+	 * @param $parameters array
+	 *        	containing a 'contactid' from \OCA\Contacts::post_updateContact - Hook
 	 * @return <code>true</code>
 	 */
-	// \OC_Hook::emit('\OCA\Contacts\VCard', 'post_updateVCard', $id);
-	public static function updateEmail($contactsappId) {
+	/* \OC_Hook::emit('\OCA\Contacts', 'post_updateContact', 'backend' => $this->name,
+					'addressBookId' => $addressbookid,
+					'contactId' => $id,
+					'contact' => $contact,
+					'carddav' => $isCardDAV);
+	*/
+	public static function updateEmail($parameters) {
+		$contactsappId = $parameters['contactId'];
 		$api = new API();
 		$contactMapper = new ContactItemMapper($api);
 		$contacts = $contactMapper->findByContactsappId($contactsappId);

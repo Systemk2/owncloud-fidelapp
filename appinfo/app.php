@@ -78,9 +78,9 @@ if (class_exists('OC', false)) {
 	if (count($checkResult ['errors']) == 0) {
 		$hasWarnings = count($checkResult ['warnings']) > 0;
 		\OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
-		\OCP\Util::connectHook('OC_Use', 'post_deleteUser', 'OCA\FidelApp\FidelappHooks', 'deleteUser');
-		\OCP\Util::connectHook('\OCA\Contacts\VCard', 'pre_deleteVCard', 'OCA\FidelApp\Hooks', 'deleteContact');
-		\OCP\Util::connectHook('\OCA\Contacts\VCard', 'post_updateVCard', 'OCA\FidelApp\Hooks', 'updateEmail');
+		\OCP\Util::connectHook('OC_User', 'post_deleteUser', 'OCA\FidelApp\FidelappHooks', 'deleteUser');
+		\OCP\Util::connectHook('OCA\Contacts', 'pre_deleteContact', 'OCA\FidelApp\Hooks', 'deleteContact');
+		\OCP\Util::connectHook('OCA\Contacts', 'post_updateContact', 'OCA\FidelApp\Hooks', 'updateEmail');
 		\OCP\Util::connectHook('\OCA\Files_Trashbin\Trashbin', 'post_moveToTrash', 'OCA\FidelApp\Hooks', 'moveFileToTrash');
 		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_delete, 'OCA\FidelApp\Hooks',
 				'deleteFile');
