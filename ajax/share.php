@@ -57,7 +57,8 @@ try {
 		}
 		$shareItem->setDownloadType('SECURE');
 		$shareItem->setFileId($fileId);
-
+		// Set share time to "now"
+		$shareItem->setShareTime(date('Y-m-d H:i:s'));
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
 
 		$mapper->save($contactShareItem);

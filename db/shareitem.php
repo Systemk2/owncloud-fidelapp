@@ -36,7 +36,7 @@ class ShareItem extends Entity {
 	 */
 	public $fileId;
 	/**
-	 * Set automatically to CURRENT_TIMESTAMP
+	 * When the file has been shared
 	 */
 	public $shareTime;
 	/**

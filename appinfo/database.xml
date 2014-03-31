@@ -27,7 +27,7 @@
 				<name>email</name>
 				<type>text</type>
 				<notnull>true</notnull>
-				<length>512</length>
+				<length>255</length>
 				<comments>e-Mail address of the receiver</comments>
 			</field>
 			<field>
@@ -54,7 +54,7 @@
 				</field>
 			</index>
 			<index>
-				<name>constraint_unique_fidelapp_contacts</name>
+				<name>unique_fidelapp_contacts</name>
 				<unique>true</unique>
 				<field>
 					<name>user_id</name>
@@ -96,7 +96,6 @@
 			<field>
 				<name>share_time</name>
 				<type>timestamp</type>
-				<default>CURRENT_TIMESTAMP</default>
 				<notnull>true</notnull>
 				<comments>When has the file been shared</comments>
 			</field>
@@ -156,7 +155,7 @@
 				</field>
 			</index>
 			<index>
-				<name>constraint_unique_fidelapp_shares</name>
+				<name>unique_fidelapp_shares</name>
 				<unique>true</unique>
 				<field>
 					<name>contact_id</name>
@@ -209,8 +208,6 @@
 			<field>
 				<name>download_time</name>
 				<type>timestamp</type>
-				<notnull>true</notnull>
-				<default>CURRENT_TIMESTAMP</default>
 				<notnull>true</notnull>
 				<comments>When has the file been downloaded</comments>
 			</field>
@@ -320,7 +317,7 @@
 				</field>
 			</index>
 			<index>
-				<name>constraint_unique_fidelapp_chunks</name>
+				<name>unique_fidelapp_chunks</name>
 				<unique>true</unique>
 				<field>
 					<name>chunk_id</name>
