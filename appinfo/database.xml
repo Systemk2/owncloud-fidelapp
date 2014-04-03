@@ -18,9 +18,9 @@
 			</field>
 			<field>
 				<name>user_id</name>
-				<type>integer</type>
+				<type>text</type>
 				<notnull>true</notnull>
-				<length>4</length>
+				<length>100</length>
 				<comments>Owncloud user</comments>
 			</field>
 			<field>
