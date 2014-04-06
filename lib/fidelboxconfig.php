@@ -81,7 +81,7 @@ class FidelboxConfig {
 		if (! $tempUserId || ! (gettype($tempUserId) == 'string')) {
 			throw new \BadMethodCallException("createCaptchaURL: Wrong tempUserId parameter [$tempUserId]");
 		}
-		return FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($tempUserId) . '&token=' . uniqid();
+		return FIDELAPP_FIDELBOX_URL . '/fidelapp/captcha.php?userId=' . urlencode($tempUserId) . '&token=' . uniqid();
 	}
 
 	/**
@@ -182,7 +182,7 @@ class FidelboxConfig {
 	public function startRegularIpUpdate() {
 		$job = new UpdateIpBackgroundJob();
 		// Run it once immediately
-		$job->run();
+		$job->run(null);
 		BackgroundJob::registerJob($job);
 	}
 
@@ -273,7 +273,7 @@ class FidelboxConfig {
 						'timeout' => 10
 				)
 		));
-		$url = FIDELBOX_URL . $pathOnServer;
+		$url = FIDELAPP_FIDELBOX_URL . $pathOnServer;
 		$json = @file_get_contents($url, false, $ctx);
 		if (! $json) {
 			throw new \RuntimeException($url . $l->t(' did not return any result'), NO_RESULT_FROM_REMOTE_HOST);

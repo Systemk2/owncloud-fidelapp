@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 define('FIDELAPP_APPNAME', 'fidelapp');
@@ -28,7 +27,9 @@ try {
 	$config = parse_ini_file(FIDELAPP_APPNAME . '/config/config.ini');
 	if ($config) {
 		define('FIDELAPP_CONFIG_LOADED', true);
-		define('FIDELBOX_URL', $config ['FIDELBOX_URL']);
+		define('FIDELAPP_FIDELBOX_URL', $config ['FIDELBOX_URL']);
+		define('FIDELAPP_MIN_IP_UPDATE_TIME_INTERVAL_SECS', $config ['MIN_IP_UPDATE_TIME_INTERVAL_SECS']);
+		define('FIDELAPP_PUBLIC_SESSION_TIMEOUT_SECS', $config ['PUBLIC_SESSION_TIMEOUT_SECS']);
 	}
 } catch(\Exception $e) {
 	if (class_exists('OC', false)) {
@@ -39,7 +40,7 @@ try {
 
 class App {
 
-	public function checkPrerequisites() {
+	public function checkPrerequisites($api = null) {
 		$l = \OCP\Util::getL10N(FIDELAPP_APPNAME);
 		$return = array (
 				'errors' => array (),
@@ -49,6 +50,7 @@ class App {
 			$return ['errors'] [] = $l->t(
 					'The App config was not loaded correctly. Please verify file ' . FIDELAPP_APPNAME . '/config/config.ini');
 		}
+		$appFrameworkAppEnabled = false;
 		if (! \OCP\App::isEnabled('appframework')) {
 			$return ['errors'] [] = $l->t(
 					'This App requires the Appframework App. Please install and activate the Appframework App');
@@ -66,6 +68,37 @@ class App {
 							 '(see http://doc.owncloud.org/server/6.0/admin_manual/configuration/background_jobs.html) ' .
 							 'Otherwise the App might not be able to calculate checksums on large files for secure file delivery');
 		}
+
+		if(!$api && class_exists('OCA\AppFramework\Core\API', true)) {
+			// API was not given as a parameter, but the appframework is there,
+			// so we can instantiate a new API here
+			$api = new API();
+		}
+
+		if ($api && $api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+			$lastIpUpdateString = $api->getAppValue('last_ip_update');
+			$lastIpUpdateOk = false;
+			if ($lastIpUpdateString) {
+				$lastIpUpdate = \DateTime::createFromFormat(\DateTime::ATOM, $lastIpUpdateString);
+				$interval = time() - $lastIpUpdate->getTimestamp();
+				if ($interval > 2 * FIDELAPP_MIN_IP_UPDATE_TIME_INTERVAL_SECS) {
+					$return ['warnings'] [] = $l->t(
+							'Automatic transmission of this servers IP to %s has not been executed for the last %s seconds,' .
+									 ' but the defined interval in config.ini is %s seconds.' .
+									 ' Maybe your cron job is not working correctly?',
+									array (
+											FIDELAPP_FIDELBOX_URL,
+											$interval,
+											FIDELAPP_MIN_IP_UPDATE_TIME_INTERVAL_SECS
+									));
+				}
+			} else {
+				$return ['warnings'] [] = $l->t('Automatic transmission of this servers IP to %s has not been executed (yet)',
+						array (
+								FIDELAPP_FIDELBOX_URL
+						));
+			}
+		}
 		return $return;
 	}
 }
@@ -73,8 +106,9 @@ class App {
 // Install our app only when in OwnCloud context
 if (class_exists('OC', false)) {
 	$app = new App();
+
 	$checkResult = $app->checkPrerequisites();
-	// dont break owncloud when the appframework or contacts app are not enabled
+
 	if (count($checkResult ['errors']) == 0) {
 		$hasWarnings = count($checkResult ['warnings']) > 0;
 		\OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
@@ -120,7 +154,7 @@ if (class_exists('OC', false)) {
 						'name' => 'FidelApp'
 				));
 	} else {
-		// Degraded mode because of missing appframework API
+		// Degraded mode because of fatal problems (like missing appframework API)
 		\OCP\App::addNavigationEntry(
 				array (
 						'id' => FIDELAPP_APPNAME,

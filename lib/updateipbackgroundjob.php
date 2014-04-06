@@ -25,16 +25,17 @@ namespace OCA\FidelApp;
 use OCA\FidelApp\Db\ConfigItemMapper;
 use \OC\BackgroundJob\TimedJob;
 
-// Run at most every 5 minutes (maybe longer, depending on the cron job definition)
-define('MIN_TIME_INTERVAL_SECS', 299);
-
 class UpdateIpBackgroundJob extends TimedJob {
 
 	public function __construct() {
-		$this->setInterval(MIN_TIME_INTERVAL_SECS);
+		$this->setInterval(FIDELAPP_MIN_IP_UPDATE_TIME_INTERVAL_SECS);
 	}
 
-	// TODO: Add documentation
+	/**
+	 * Transmit the current IP address and port of this ownCloud server to fidelbox.de
+	 *
+	 * @see \OC\BackgroundJob\Job::run()
+	 */
 	public function run($argument) {
 		try {
 			\OC_Log::write(FIDELAPP_APPNAME, 'Starting UpdateIpBackgroundJob', \OC_Log::DEBUG);

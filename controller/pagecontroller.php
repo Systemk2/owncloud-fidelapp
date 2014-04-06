@@ -66,7 +66,7 @@ class PageController extends Controller {
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
 	public function fidelApp() {
-		$checkResult = $this->app->checkPrerequisites();
+		$checkResult = $this->app->checkPrerequisites($this->api);
 		if (count($checkResult ['warnings']) == 0 && count($checkResult ['errors']) == 0) {
 			if ($this->api->getAppValue('access_type')) {
 				return $this->shares();
@@ -298,21 +298,27 @@ class PageController extends Controller {
 						$captcha = $context->params('captcha');
 						$fidelboxAccount = $context->fidelboxConfig->createAccount($tempUser, $captcha);
 						$api->setAppValue('fidelbox_account', $fidelboxAccount);
-						$context->fidelboxConfig->startRegularIpUpdate();
+					} else {
+						$fidelboxAccount = $api->getAppValue('fidelbox_account');
 					}
 
-					$fidelboxAccount = $api->getAppValue('fidelbox_account');
 					if ($fidelboxAccount) {
 						$params ['wizard_step2'] = 'wizard_fidelbox';
-						$params ['validFidelboxAccount'] = $context->fidelboxConfig->validateAccount($fidelboxAccount);
 						$params ['fidelboxAccount'] = $fidelboxAccount;
-						$isReachable = false;
-						try {
-							$isReachable = $context->fidelboxConfig->pingBack();
-						} catch(\Exception $e) {
-							$params ['reachableFailedMsg'] = $e->getMessage();
+						$params ['validFidelboxAccount'] = $context->fidelboxConfig->validateAccount($fidelboxAccount);
+						if($params ['validFidelboxAccount']) {
+							$context->fidelboxConfig->startRegularIpUpdate();
+							$isReachable = false;
+							try {
+								$isReachable = $context->fidelboxConfig->pingBack();
+							} catch(\Exception $e) {
+								$params ['reachableFailedMsg'] = $e->getMessage();
+							}
+							$params ['isReachable'] = $isReachable;
+						} else {
+							$params ['isReachable'] = false;
+							$params ['reachableFailedMsg'] = $this->api->getTrans()->t('Invalid fidelbox account');
 						}
-						$params ['isReachable'] = $isReachable;
 					}
 				});
 	}
@@ -451,10 +457,10 @@ class PageController extends Controller {
 				break;
 			case 'FIDELBOX_ACCOUNT' :
 				if ($contactShare->getShareItem()->getDownloadType() == 'SECURE') {
-					$url = FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
+					$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
 							 md5($this->api->getAppValue('fidelbox_account')) . "&clientId=$clientId";
 				} else {
-					$url = FIDELBOX_URL . '/fidelapp/redirect.php?path=' . urlencode($localPathManual) . '&accountHash=' .
+					$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/redirect.php?path=' . urlencode($localPathManual) . '&accountHash=' .
 							 md5($this->api->getAppValue('fidelbox_account'));
 				}
 				break;

@@ -332,4 +332,68 @@
 				</foreign> -->
 		</declaration>
 	</table>
+	<table>
+		<name>*dbprefix*fidelapp_public_session</name>
+		<declaration>
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<autoincrement>1</autoincrement>
+				<length>4</length>
+				<comments>Internal unique Id</comments>
+			</field>
+			<field>
+				<name>session_token</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>23</length>
+				<comments>Unique session token</comments>
+			</field>
+			<field>
+				<name>password_hash</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>32</length>
+				<comments>The MD5 hash of the password</comments>
+			</field>
+			<field>
+				<name>contact_id</name>
+				<type>integer</type>
+				<notnull>false</notnull>
+				<length>4</length>
+				<comments>Reference to a receiver contact in the fidelapp_contacts
+					table
+				</comments>
+			</field>
+			<field>
+				<name>timestamp</name>
+				<type>timestamp</type>
+				<notnull>true</notnull>
+				<comments>When has this session been authenticated</comments>
+			</field>
+			<index>
+				<name>primary_key_fidelapp_public_session</name>
+				<primary>true</primary>
+				<field>
+					<name>id</name>
+				</field>
+			</index>
+			<index>
+				<name>unique_session_contact</name>
+				<unique>true</unique>
+				<field>
+					<name>contact_id</name>
+				</field>
+			</index>
+						<index>
+				<name>unique_session_token</name>
+				<unique>true</unique>
+				<field>
+					<name>session_token</name>
+				</field>
+			</index>
+		</declaration>
+	</table>
 </database>

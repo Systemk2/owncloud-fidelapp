@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Controller;
 
 use \OCA\AppFramework\Controller\Controller;
@@ -33,6 +32,8 @@ use OCA\FidelApp\Db\ReceiptItem;
 use OCA\FidelApp\Db\ShareItem;
 use OCA\FidelApp\Db\ContactItem;
 use OCA\FidelApp\WrongDownloadTypeException;
+use OCA\FidelApp\Db\SessionItemMapper;
+use OCA\FidelApp\Db\SessionItem;
 
 \OC::$CLASSPATH ['OCA\FidelApp\WrongDownloadTypeException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 \OC::$CLASSPATH ['OCA\FidelApp\FileNotFoundException'] = FIDELAPP_APPNAME . '/lib/exception.php';
@@ -53,7 +54,6 @@ class PublicController extends Controller {
 		// TODO: Add brute force prevention
 		// (e.g. http://stackoverflow.com/questions/15798918/what-is-the-best-method-to-prevent-a-brute-force-attack)
 		$l = $this->api->getTrans();
-		unset($_SESSION ['AUTHENTICATED_CONTACT']);
 
 		try {
 			$contact = null;
@@ -78,7 +78,8 @@ class PublicController extends Controller {
 				return $this->render('error', array (
 						'errors' => array (
 								$l->t('Invalid id')
-						)
+						),
+						'clientId' => $id
 				), '');
 			}
 			$password = $this->params('password');
@@ -95,14 +96,26 @@ class PublicController extends Controller {
 								)
 						), '');
 			} else {
-				$_SESSION ['AUTHENTICATED_CONTACT'] = $contact;
-				return $this->getFileList();
+				// Authentication successful => create a new session
+				$sessionItemMapper = new SessionItemMapper($this->api);
+				$sessionItemMapper->deletebyContactId($contact->getId());
+				$sessionItem = new SessionItem();
+				$sessionToken = uniqid(null, true);
+				$sessionItem->setSessionToken($sessionToken);
+				$sessionItem->setContactId($contact->getId());
+				$sessionItem->setTimestamp(date('Y-m-d H:i:s'));
+				$passwordHash = md5($contact->getPassword());
+				$sessionItem->setPasswordHash($passwordHash);
+				$sessionItemMapper->save($sessionItem);
+				return $this->getFileList($sessionToken, $passwordHash);
 			}
 		} catch(\Exception $e) {
 			return $this->render('authenticate', array (
 					'errors' => array (
 							$e->getMessage()
-					)
+
+					),
+					'clientId' => $id
 			), '');
 		}
 	}
@@ -112,20 +125,36 @@ class PublicController extends Controller {
 	 * @IsAdminExemption
 	 * @IsSubAdminExemption
 	 * @IsLoggedInExemption
+	 *
+	 * Display a list of downloadable files if contact is authenticated and session has not timed out,
+	 * otherwise get back to authentication page
 	 */
-	public function getFileList() {
+	public function getFileList($sessionToken = null, $passwordHash = null) {
 		try {
 			$l = $this->api->getTrans();
+			$contact = false;
+			$sessionItemMapper = new SessionItemMapper($this->api);
+			$sessionItemMapper->deleteOlderThan(new \DateTime('@' . (time() - FIDELAPP_PUBLIC_SESSION_TIMEOUT_SECS)));
+			try {
+				$sessionItem = $sessionItemMapper->findBySessionToken($this->params('session', $sessionToken));
+				if ($sessionItem->getPasswordHash() == $this->params('hash', $passwordHash)) {
+					$contactItemMapper = new ContactItemMapper($this->api);
+					$contact = $contactItemMapper->findById($sessionItem->getContactId());
+				}
+			} catch(\OCA\AppFramework\Db\DoesNotExistException $e) {
+				// Will be handled underneath, by if (! $contact)
+			}
 
-			if (! isset($_SESSION ['AUTHENTICATED_CONTACT'])) {
+			if (! $contact) {
 				return $this->render('authenticate',
 						array (
 								'errors' => array (
 										$l->t('Not authenticated')
-								)
+								),
+								'clientId' => $this->params('clientId')
 						), '');
 			}
-			$contact = $_SESSION ['AUTHENTICATED_CONTACT'];
+
 			$shareMapper = new ShareItemMapper($this->api);
 
 			$this->api->setupFS($contact->getUserId());
@@ -154,8 +183,12 @@ class PublicController extends Controller {
 				}
 			}
 			return $this->render('filelist', array (
-					'shareItems' => $shareItems
-			), '');
+					'shareItems' => $shareItems,
+					'passwordHash' => $sessionItem->getPasswordHash(),
+					'sessionToken' => $sessionItem->getSessionToken(),
+					'clientId' => $this->params('clientId')
+			), '')
+			;
 		} catch(\Exception $e) {
 			return $this->render('error', array (
 					'errors' => array (
@@ -180,7 +213,7 @@ class PublicController extends Controller {
 
 	private function serveFile(ShareItem $shareItem, ContactItem $contactItem) {
 		$filename = trim($this->api->getPath($shareItem->getFileId()), DIRECTORY_SEPARATOR);
-		if($filename == '') {
+		if ($filename == '') {
 			throw new FileNotFoundException($filename);
 		}
 		if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' && $shareItem->getDownloadType() != 'BASIC') {
