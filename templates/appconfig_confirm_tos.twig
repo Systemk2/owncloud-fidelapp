@@ -1,0 +1,11 @@
+<form action="{{ url('fidelapp_appconfig_display_captcha') }}" method="post">
+	{{ trans('An account on fidelbox.de will be created with the purpose to enable dynamic IP address forwarding to your OwnCloud server and to provide a free download manager applet for encrypted downloading of files.<br><br>By creating an account, you agree to comply with and be bound by the following terms of use:<br><br>The services located on fidelbox.de, owned or controlled by System k2 GmbH, are offered to you without charge.<br><br>You agree to only and exclusively use these services for
+	purposes that do not violate any applicable law or rights of third parties.<br><br>System k2 GmbH will store and use your data exclusively to provide for the functionality of this service. To this purpose only your OwnCloud server\'s public IP address, along with the configured Internet-Port and a distinct and definite user ID for each OwnCloud server instance will be transmitted regularily to fidelbox.de by a scheduled OwnCloud background job. This service does not collect any private data and
+	information like e-mail address, user name or password. Transmission of data via the download applet is executed directly between the downloader and the OwnCloud server (peer-to-peer transmission), without offering System k2 GmbH any possibility to intercept, filter or alter the transferred content.<br><br>System k2 GmbH is entitled to discontinue any provided special services, be they instrumental or crucial for the functionality of this application or not, at any time and without prealable
+	notice, thus rendering the use of this service impossible.')|raw }}
+	<br>
+	<br>
+	<div>
+		<input id="fidelapp_wizard_confirm_tos" class="primary" type="submit" value="{{ trans('I agree with the terms of service and I want to create an account on fidelbox.de') }}">
+	</div>
+</form>

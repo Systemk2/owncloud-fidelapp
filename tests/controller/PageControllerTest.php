@@ -102,7 +102,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->mockApi->expects($this->once())->method('getAppValue')->with('access_type')->will($this->returnValue(true));
 		$this->mockPageControllerMethods(array (
 				'shares',
-				'wizard'
+				'appconfig'
 		));
 		$this->cutPageController->expects($this->once())->method('shares');
 
@@ -123,10 +123,10 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 		$this->mockPageControllerMethods(array (
 				'shares',
-				'wizard'
+				'appconfig'
 		));
 
-		$this->cutPageController->expects($this->once())->method('wizard');
+		$this->cutPageController->expects($this->once())->method('appconfig');
 
 		// Run the test
 		$this->cutPageController->fidelApp();
@@ -143,11 +143,11 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 		$this->mockPageControllerMethods(array (
 				'shares',
-				'wizard'
+				'appconfig'
 		));
 
 		$this->cutPageController->expects($this->never())->method('shares');
-		$this->cutPageController->expects($this->never())->method('wizard');
+		$this->cutPageController->expects($this->never())->method('appconfig');
 
 		// Run the test
 		$result = $this->cutPageController->fidelApp();
@@ -215,7 +215,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 	public function testShares() {
 		$items = $this->setUp2MockContacts();
 		$this->mockApi->expects($this->once())->method('getAppValue')->with('access_type')->will(
-				$this->returnValue('FIDELBOX_ACCOUNT'));
+				$this->returnValue('FIDELBOX_REDIRECT'));
 		$valueMap = array (
 				array (
 						$items [0]->getShareItem()->getFileId(),
@@ -239,8 +239,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
 				'shares' => $items,
-				'view' => 'activeshares',
-				'isFidelbox' => true
+				'view' => 'activeshares'
 		);
 		$this->assertInstanceof('\OCA\AppFramework\Http\TemplateResponse', $result);
 		$this->assertAttributeEquals('fidelapp', 'templateName', $result);
@@ -270,23 +269,23 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testWizard1() {
 		$this->mockPageControllerMethods(array (
-				'wizardDomainName',
-				'wizardFidelbox',
-				'wizardFixedIp'
+				'appconfigDomainName',
+				'appconfigFidelbox',
+				'appconfigFixedIp'
 		));
 
 		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnNoAccessType')));
 
-		$this->cutPageController->expects($this->never())->method('wizardDomainName');
-		$this->cutPageController->expects($this->never())->method('wizardFidelbox');
-		$this->cutPageController->expects($this->never())->method('wizardFixedIp');
+		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
+		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
+		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
 
 		// Run the test
-		$result = $this->cutPageController->wizard();
+		$result = $this->cutPageController->appconfig();
 
 		$expectedResult = array (
-				'menu' => 'wizard',
-				'actionTemplate' => 'wizard',
+				'menu' => 'appconfig',
+				'actionTemplate' => 'appconfig',
 				'useSSL' => true,
 				'port' => 12345
 		);
@@ -309,25 +308,25 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testWizard2() {
 		$this->mockPageControllerMethods(array (
-				'wizardDomainName',
-				'wizardFidelbox',
-				'wizardFixedIp'
+				'appconfigDomainName',
+				'appconfigFidelbox',
+				'appconfigFixedIp'
 		));
 
 		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeFidelbox')));
 
-		$this->cutPageController->expects($this->never())->method('wizardDomainName');
-		$this->cutPageController->expects($this->once())->method('wizardFidelbox');
-		$this->cutPageController->expects($this->never())->method('wizardFixedIp');
+		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
+		$this->cutPageController->expects($this->once())->method('appconfigFidelbox');
+		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
 
 		// Run the test
-		$this->cutPageController->wizard();
+		$this->cutPageController->appconfig();
 	}
 
 	public function returnAccessTypeFidelBox($argument) {
 		switch ($argument) {
 			case 'access_type' :
-				return 'FIDELBOX_ACCOUNT';
+				return 'FIDELBOX_REDIRECT';
 			case 'use_ssl' :
 				return true;
 			case 'port' :
@@ -338,19 +337,19 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testWizard3() {
 		$this->mockPageControllerMethods(array (
-				'wizardDomainName',
-				'wizardFidelbox',
-				'wizardFixedIp'
+				'appconfigDomainName',
+				'appconfigFidelbox',
+				'appconfigFixedIp'
 		));
 
 		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeFixedIp')));
 
-		$this->cutPageController->expects($this->never())->method('wizardDomainName');
-		$this->cutPageController->expects($this->never())->method('wizardFidelbox');
-		$this->cutPageController->expects($this->once())->method('wizardFixedIp');
+		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
+		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
+		$this->cutPageController->expects($this->once())->method('appconfigFixedIp');
 
 		// Run the test
-		$this->cutPageController->wizard();
+		$this->cutPageController->appconfig();
 	}
 
 	public function returnAccessTypeFixedIp($argument) {
@@ -367,19 +366,19 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testWizard4() {
 		$this->mockPageControllerMethods(array (
-				'wizardDomainName',
-				'wizardFidelbox',
-				'wizardFixedIp'
+				'appconfigDomainName',
+				'appconfigFidelbox',
+				'appconfigFixedIp'
 		));
 
 		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeDomainName')));
 
-		$this->cutPageController->expects($this->once())->method('wizardDomainName');
-		$this->cutPageController->expects($this->never())->method('wizardFidelbox');
-		$this->cutPageController->expects($this->never())->method('wizardFixedIp');
+		$this->cutPageController->expects($this->once())->method('appconfigDomainName');
+		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
+		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
 
 		// Run the test
-		$this->cutPageController->wizard();
+		$this->cutPageController->appconfig();
 	}
 
 	public function returnAccessTypeDomainName($argument) {

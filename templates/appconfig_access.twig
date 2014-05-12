@@ -1,4 +1,4 @@
-{{ script('wizard') }}
+{{ script('fidelbox_access') }}
 
 <!-- Prevent Firefox from putting radiobuttons in previous state after page refresh -->
 <form autocomplete="off">
@@ -12,7 +12,7 @@
 					<label for="accessTypeDirect">{{ trans('My server has a fixed IP address or a domain name (e.g. myserver.mydomain.com)') }}</label>
 				</p>
 				<p>
-					<input id="accessTypeFidelbox"   {{ accessType == 'FIDELBOX_ACCOUNT' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
+					<input id="accessTypeFidelbox"   {{ accessType == 'FIDELBOX_REDIRECT' ? 'checked="true"' : '' }} type="radio" name="fidelapp_accessType" value="accessTypeFidelbox" />
 					<label for="accessTypeFidelbox">{{ trans('I want to use the free forwarding service to my dynamic IP address, provided by fidelbox.de') }}</label>
 				</p>
 				<p>
@@ -22,13 +22,13 @@
 				<p>
 					<label for="fidelapp_port">{{ trans('Internet port number') }}:</label>
 					<input id="fidelapp_port" type="text" maxlength="5" placeholder="{{ useSSL == 'true' ? '443' : '80' }}" value="{{ port }}" />
-					(&nbsp;<input type="checkbox" id="fidelapp_non_standard_port_check" {{  port ? 'checked' : 'disabled' }} />
-					<label for="fidelapp_non_standard_port_check">{{ trans('Use non-standard port') }}</label>&nbsp;)
+					(&nbsp;<input type="checkbox" id="fidelapp_non_standard_port_check" {{  port != '' ? 'checked' : 'disabled' }} />
+					<label for="fidelapp_non_standard_port_check">{{ trans('Use this port') }}</label>&nbsp;)
 				</p>
 			</div>
 		</fieldset>
-		{% if wizard_step2 %}
-		<div id="fidelapp_wizard_step2">{% include "#{wizard_step2}.twig" %}</div>
+		{% if  accessType == 'FIXED_IP' or accessType == 'DOMAIN_NAME' %}
+		<div id="fidelapp_appconfig_step2">{% include "appconfig_fixedipordomain.twig" %}</div>
 		{% endif %}
 	</div>
 

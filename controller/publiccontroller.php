@@ -171,7 +171,7 @@ class PublicController extends Controller {
 				$filename = $this->api->getPath($shareItem->getFileId());
 				if (\OC\Files\Filesystem::file_exists($filename) && $filename != '') {
 					$shareItem->fileName = trim($filename, DIRECTORY_SEPARATOR);
-					if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' && $shareItem->getDownloadType() != 'BASIC') {
+					if ($shareItem->getDownloadType() == 'SECURE') {
 						$shareItem->fileName .= ' (' . $l->t('Can only be downloaded with Download Manager') . ')';
 						$shareItem->downloadable = false;
 					} else {
@@ -216,7 +216,7 @@ class PublicController extends Controller {
 		if ($filename == '') {
 			throw new FileNotFoundException($filename);
 		}
-		if ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT' && $shareItem->getDownloadType() != 'BASIC') {
+		if ($shareItem->getDownloadType() != 'BASIC') {
 			throw new WrongDownloadTypeException($filename);
 		}
 

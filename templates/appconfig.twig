@@ -1,0 +1,17 @@
+{#
+ # This is the main configuration template
+ # The first part concerns fidelbox subscription
+ # fidelboxConfig can be either one of:
+ #  * appconfig_confirm_tos (Displays the TERMS OF SERVICE)
+ #  * appconfig_fidelbox_createaccount (Displays the captcha)
+ #  * appconfig_fidelbox (Displays the status)
+ #
+ # The second (optional) part selects / displays the access type
+ #         (fixed IP or domain, or dynamic redirect)
+ #
+ #}
+{% include "#{fidelboxConfig}.twig" %}
+
+{% if(showAccessTypeTemplate) %}
+	{% include "appconfig_access.twig" %}
+{% endif %}

@@ -85,18 +85,18 @@
 	background-image: url("%appswebroot%/fidelapp/img/checkmark-green.png");
 }
 
-#fidelapp_wizard_step2 label[for="fidelapp_fixedIp"],#fidelapp_wizard_step2 label[for="fidelapp_domainName"]
+#fidelapp_appconfig_step2 label[for="fidelapp_fixedIp"],#fidelapp_appconfig_step2 label[for="fidelapp_domainName"]
 	{
 	display: inline-block;
 	width: 10em;
 }
 
-#fidelapp_wizard_step2 label {
+#fidelapp_appconfig_step2 label {
 	margin-bottom: 1em;
 	padding-left: 2em;
 }
 
-#fidelapp_wizard_step2 input[type="text"] {
+#fidelapp_appconfig_step2 input[type="text"] {
 	width: 15em;
 }
 

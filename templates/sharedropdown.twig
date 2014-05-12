@@ -26,7 +26,6 @@
 							<input id="fidelapp_password_{{ id }}" type="text" placeholder="{{ trans('Enter password') }}" value="{{ contactShareItem.contactItem.password }}" />
 							<a id="fidelapp_passwordSubmitLink_{{ id }}" class="action checked disabled">&nbsp;&nbsp;</a>
 						</div>
-						{% if(fidelboxDownload) %}
 						<div id="fidelapp_download_type_div">
 							<div>
 								<input id="fidelapp_direct_download_{{ id }}" type="radio" name="fidelapp_download_type_{{ id }}" value="BASIC" {{ contactShareItem.shareItem.downloadType == 'BASIC' ? 'checked="true"' : ''}}/>
@@ -37,7 +36,6 @@
 								<label for="fidelapp_managed_download_{{ id }}" class="fidelapp_tooltip" title="{{ trans('The recipient needs to have a Java(TM)-Plugin for the browser') }}">{{ trans('Download manager (secure)') }}</label>
 							</div>
 						</div>
-						{% endif %}
 						<div>
 							{% set disabled = 'readonly="true" class="fidelapp_tooltip" title="' ~ trans('Please choose a password first') ~ '"' %}
 							<input id="fidelapp_showlink_{{ id }}" type="checkbox" name="fidelapp_showlink" value="{{ id }}" {{ contactShareItem.contactItem.password ? '' : disabled|raw }}/>

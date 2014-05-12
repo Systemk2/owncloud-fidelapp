@@ -68,10 +68,10 @@ class PageController extends Controller {
 	public function fidelApp() {
 		$checkResult = $this->app->checkPrerequisites($this->api);
 		if (count($checkResult ['warnings']) == 0 && count($checkResult ['errors']) == 0) {
-			if ($this->api->getAppValue('access_type')) {
+			if ($this->api->getAppValue('fidelbox_account') && $this->api->getAppValue('access_type')) {
 				return $this->shares();
 			} else {
-				return $this->wizard();
+				return $this->appConfig();
 			}
 		}
 		return $this->render('fidelapp',
@@ -125,8 +125,7 @@ class PageController extends Controller {
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
 				'shares' => $shares,
-				'view' => 'activeshares',
-				'isFidelbox' => ($this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT')
+				'view' => 'activeshares'
 		);
 		return $this->render('fidelapp', $params);
 	}
@@ -147,49 +146,52 @@ class PageController extends Controller {
 		return $this->render('fidelapp', $params);
 	}
 
-	/**
-	 * @CSRFExemption
-	 *
-	 * @throws \Exception
-	 * @return \OCA\AppFramework\Http\TemplateResponse
+	/*
+	 * @CSRFExemption @throws \Exception @return \OCA\AppFramework\Http\TemplateResponse public function appConfigAccess() { switch ($this->api->getAppValue('access_type')) { case 'FIDELBOX_REDIRECT' : return $this->appConfigRedirect(); case 'DOMAIN_NAME' : return $this->appConfigDomainName(); case 'FIXED_IP' : return $this->appConfigFixedIp(); } $params = array ( 'menu' => 'appconfig', 'actionTemplate' => 'appconfig_access', 'useSSL' => $this->api->getAppValue('use_ssl'), 'port' => $this->api->getAppValue('port') ); // Render page with header and footer return $this->render('fidelapp', $params); }
 	 */
-	public function wizard() {
-		switch ($this->api->getAppValue('access_type')) {
-			case 'FIDELBOX_ACCOUNT' :
-				return $this->wizardFidelbox();
-			case 'DOMAIN_NAME' :
-				return $this->wizardDomainName();
-			case 'FIXED_IP' :
-				return $this->wizardFixedIp();
-		}
-		$params = array (
-				'menu' => 'wizard',
-				'actionTemplate' => 'wizard',
-				'useSSL' => $this->api->getAppValue('use_ssl'),
-				'port' => $this->api->getAppValue('port')
-		);
-
-		// Render page with header and footer
-		return $this->render('fidelapp', $params);
-	}
 
 	/**
-	 * Handle generic function (Exception handling etc.) for all wizard
+	 * Handle generic function (Exception handling etc.) for all appconfig
 	 * requests
 	 *
-	 * @param function $callbackFunction
+	 * @param function $callbackFunction, may be <code>null</code>
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	private function doWizardAction($callbackFunction) {
+	private function doAppConfigAction($callbackFunction) {
 		try {
 			$params = array (
-					'menu' => 'wizard',
-					'actionTemplate' => 'wizard',
+					'menu' => 'appconfig',
+					'actionTemplate' => 'appconfig',
 					'useSSL' => $this->api->getAppValue('use_ssl'),
-					'port' => $this->api->getAppValue('port')
+					'port' => $this->api->getAppValue('port'),
+					'domain' => $this->api->getAppValue('domain_name'),
+					'fixedIp' => $this->api->getAppValue('fixed_ip'),
+					'accessType' => $this->api->getAppValue('access_type'),
+					'fidelboxConfig' => 'appconfig_fidelbox'
 			);
-			$callbackFunction($params, $this, $this->api);
+			if($callbackFunction) {
+				$callbackFunction($params, $this, $this->api);
+			}
+			$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
+
+			if ($fidelboxAccount) {
+				$params ['fidelboxAccount'] = $fidelboxAccount;
+				$params ['validFidelboxAccount'] = $this->fidelboxConfig->validateAccount($fidelboxAccount);
+				if ($params ['validFidelboxAccount']) {
+					$isReachable = false;
+					try {
+						$isReachable = $this->fidelboxConfig->pingBack();
+					} catch(\Exception $e) {
+						$params ['reachableFailedMsg'] = $e->getMessage();
+					}
+					$params ['isReachable'] = $isReachable;
+					$params ['showAccessTypeTemplate'] = true;
+				} else {
+					$params ['isReachable'] = false;
+					$params ['reachableFailedMsg'] = $api->getTrans()->t('Invalid fidelbox account');
+				}
+			}
 		} catch(\Exception $e) {
 			$params ['errors'] = array (
 					$e->getMessage()
@@ -205,16 +207,16 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * Display or set the "Fixed IP" configuration
+	 * Set the "Fixed IP" configuration
 	 * @Ajax
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardFixedIp() {
-		return $this->doWizardAction(
+	public function appConfigFixedIp() {
+		return $this->doAppConfigAction(
 				function (&$params, PageController $context, API $api) {
 
-					$params ['wizard_step2'] = 'wizard_fixedipordomain';
+					$params ['showAccessTypeTemplate'] = true;
 					$params ['accessType'] = 'FIXED_IP';
 					if ($api->getAppValue('access_type') != 'FIXED_IP') {
 						$api->setAppValue('access_type', 'FIXED_IP');
@@ -225,6 +227,7 @@ class PageController extends Controller {
 						$params ['fixedIp'] = $context->params('fixedIp');
 						if ($context->params('fixedIp') != $currentIp) {
 							$api->setAppValue('fixed_ip', $context->params('fixedIp'));
+							$context->fidelboxConfig->updateIp();
 						}
 					} else {
 						$params ['fixedIp'] = $currentIp;
@@ -234,16 +237,16 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * Display or set the "Domain Name" configuration
+	 * Set the "Domain Name" configuration
 	 * @Ajax
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardDomainName() {
-		return $this->doWizardAction(
+	public function appConfigDomainName() {
+		return $this->doAppConfigAction(
 				function (&$params, PageController $context, API $api) {
 
-					$params ['wizard_step2'] = 'wizard_fixedipordomain';
+					$params ['showAccessTypeTemplate'] = true;
 					$params ['accessType'] = 'DOMAIN_NAME';
 					if ($api->getAppValue('access_type') != 'DOMAIN_NAME') {
 						$api->setAppValue('access_type', 'DOMAIN_NAME');
@@ -254,6 +257,7 @@ class PageController extends Controller {
 						$params ['domain'] = $context->params('domain');
 						if ($context->params('domain') != $currentDomain) {
 							$api->setAppValue('domain_name', $context->params('domain'));
+							$context->fidelboxConfig->updateIp();
 						}
 					} else {
 						$params ['domain'] = $currentDomain;
@@ -263,74 +267,71 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * Display or set the "Fidelbox" configuration
-	 * Check if the Terms of Service (ToS) have been confirmed
-	 * If this is the case, show fidelbox wizard, otherwise show ToS confirmation page
+	 * Set the "Fidelbox redirect" configuration
 	 * @Ajax
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardFidelbox() {
-		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
-			$this->api->setAppValue('access_type', 'FIDELBOX_ACCOUNT');
-		}
-		if (! $this->api->getAppValue('fidelbox_account') && ! $this->hasParam('captcha')) {
-			return $this->doWizardAction(
-					function (&$params, PageController $context, API $api) {
-						$params ['wizard_step2'] = 'fidelbox_confirm_tos';
-						$params ['accessType'] = 'FIDELBOX_ACCOUNT';
-					});
-		}
-		return $this->wizardFidelboxTosConfirmed();
-	}
-
-	private function wizardFidelboxTosConfirmed() {
-
-		return $this->doWizardAction(
+	public function appConfigRedirect() {
+		return $this->doAppConfigAction(
 				function (&$params, PageController $context, API $api) {
-					$params ['wizard_step2'] = 'wizard_fidelbox_createaccount';
-					$params ['accessType'] = 'FIDELBOX_ACCOUNT';
-					$params ['fidelboxTempUser'] = uniqid('', true);
-					$params ['urlFidelboxCaptcha'] = $context->fidelboxConfig->createCaptchaURL($params ['fidelboxTempUser']);
-
-					if ($context->hasParam('captcha')) {
-						$tempUser = $context->params('fidelboxTempUser');
-						$captcha = $context->params('captcha');
-						$fidelboxAccount = $context->fidelboxConfig->createAccount($tempUser, $captcha);
-						$api->setAppValue('fidelbox_account', $fidelboxAccount);
-					} else {
-						$fidelboxAccount = $api->getAppValue('fidelbox_account');
-					}
-
-					if ($fidelboxAccount) {
-						$params ['wizard_step2'] = 'wizard_fidelbox';
-						$params ['fidelboxAccount'] = $fidelboxAccount;
-						$params ['validFidelboxAccount'] = $context->fidelboxConfig->validateAccount($fidelboxAccount);
-						if($params ['validFidelboxAccount']) {
-							$context->fidelboxConfig->startRegularIpUpdate();
-							$isReachable = false;
-							try {
-								$isReachable = $context->fidelboxConfig->pingBack();
-							} catch(\Exception $e) {
-								$params ['reachableFailedMsg'] = $e->getMessage();
-							}
-							$params ['isReachable'] = $isReachable;
-						} else {
-							$params ['isReachable'] = false;
-							$params ['reachableFailedMsg'] = $this->api->getTrans()->t('Invalid fidelbox account');
-						}
+					$params ['showAccessTypeTemplate'] = true;
+					$params ['accessType'] = 'FIDELBOX_REDIRECT';
+					if ($api->getAppValue('access_type') != 'FIDELBOX_REDIRECT') {
+						$api->setAppValue('access_type', 'FIDELBOX_REDIRECT');
+						$context->fidelboxConfig->startRegularIpUpdate();
 					}
 				});
 	}
 
 	/**
-	 * Set the Terms Of Service as accepted
-	 * @Ajax
+	 * Check if the Terms of Service (ToS) need to be confirmed (no fidelbox account present)
+	 * If this is the case, show ToS confirmation page, otherwise go to fidelbox appconfig
+	 * @CSRFExemption
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardFidelboxConfirmToS() {
-		return $this->wizardFidelboxTosConfirmed();
+	public function appConfig() {
+		if (! $this->api->getAppValue('fidelbox_account')) {
+			return $this->doAppConfigAction(
+					function (&$params, PageController $context, API $api) {
+						$params ['fidelboxConfig'] = 'appconfig_confirm_tos';
+					});
+		}
+		return  $this->doAppConfigAction(null);
+	}
+
+	/**
+	 * Generate and display the "fidelbox" account creation page withits capcha
+	 * @CSRFExemption
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function appConfigDisplayCaptcha() {
+		return $this->doAppConfigAction(
+				function (&$params, PageController $context, API $api) {
+					$params ['fidelboxConfig'] = 'appconfig_fidelbox_createaccount';
+					$params ['fidelboxTempUser'] = uniqid('', true);
+					$params ['urlFidelboxCaptcha'] = $context->fidelboxConfig->createCaptchaURL($params ['fidelboxTempUser']);
+				});
+	}
+
+	/**
+	 * Display or create a "fidelbox" account
+	 * @CSRFExemption
+	 *
+	 * @return \OCA\AppFramework\Http\TemplateResponse
+	 */
+	public function appConfigCreateFidelboxAccount() {
+		return $this->doAppConfigAction(
+				function (&$params, PageController $context, API $api) {
+					$tempUser = $context->params('fidelboxTempUser');
+					$captcha = $context->params('fidelboxCaptcha');
+					$fidelboxAccount = $context->fidelboxConfig->createAccount($tempUser, $captcha);
+					$params ['validFidelboxAccount'] = $this->fidelboxConfig->validateAccount($fidelboxAccount);
+					$params ['fidelboxAccount'] = $fidelboxAccount;
+					$api->setAppValue('fidelbox_account', $fidelboxAccount);
+				});
 	}
 
 	/**
@@ -339,11 +340,15 @@ class PageController extends Controller {
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardSsl() {
-		if ($this->params('useSSL') != $this->api->getAppValue('use_ssl')) {
-			$this->api->setAppValue('use_ssl', $this->params('useSSL'));
-		}
-		return $this->wizard();
+	public function appConfigSsl() {
+		return $this->doAppConfigAction(
+				function (&$params, PageController $context, API $api) {
+					if ($params ['useSSL'] !=  $context->params('useSSL')) {
+						$api->setAppValue('use_ssl',  $context->params('useSSL'));
+						$params ['useSSL'] = $context->params('useSSL');
+						$context->fidelboxConfig->updateIp();
+					}
+				});
 	}
 
 	/**
@@ -352,16 +357,19 @@ class PageController extends Controller {
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardPort() {
-		$currentPort = $this->api->getAppValue('port');
-		$newPort = $this->params('port');
-		if ($newPort == 'STANDARD_PORT') {
-			$newPort = null;
-		}
-		if ($newPort != $currentPort) {
-			$this->api->setAppValue('port', $newPort);
-		}
-		return $this->wizard();
+	public function appConfigPort() {
+		return $this->doAppConfigAction(
+				function (&$params, PageController $context, API $api) {
+					$newPort = $context->params('port');
+					if ($newPort == 'STANDARD_PORT') {
+						$newPort = null;
+					}
+					if ($newPort != $params['port']) {
+						$api->setAppValue('port', $newPort);
+						$params['port'] = $newPort;
+						$context->fidelboxConfig->updateIp();
+					}
+				});
 	}
 
 	/**
@@ -370,7 +378,7 @@ class PageController extends Controller {
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
-	public function wizardDeleteFidelboxAccount() {
+	public function appConfigDeleteFidelboxAccount() {
 		try {
 			$this->fidelboxConfig->deleteAccount($this->api->getAppValue('fidelbox_account'));
 		} catch(\Exception $e) {
@@ -379,7 +387,7 @@ class PageController extends Controller {
 		$this->api->setAppValue('fidelbox_account', null);
 		$this->api->setAppValue('access_type', null);
 		$this->fidelboxConfig->stopRegularIpUpdate();
-		return $this->wizardFidelbox();
+		return $this->appConfig();
 	}
 
 	/**
@@ -413,7 +421,7 @@ class PageController extends Controller {
 			$shareItems = $this->contactShareItemMapper->findByUserFile($this->api->getUserId(), $itemSource);
 
 			foreach ( $shareItems as &$contactShareItem ) {
-				if($contactShareItem->getContactItem()->getPassword()) {
+				if ($contactShareItem->getContactItem()->getPassword()) {
 					$contactShareItem->downloadUrl = $this->generateUrl($contactShareItem);
 					$contactShareItem->mailToLink = $this->generateMailToLink($contactShareItem);
 				} else {
@@ -425,8 +433,7 @@ class PageController extends Controller {
 					array (
 							'itemSource' => $itemSource,
 							'itemType' => $itemType,
-							'shareItems' => $shareItems,
-							'fidelboxDownload' => $this->api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT'
+							'shareItems' => $shareItems
 					), '');
 			return $response;
 		} catch(\Exception $e) {
@@ -448,25 +455,37 @@ class PageController extends Controller {
 		if ($port) {
 			$localPathManual = ":$port$localPathManual";
 		}
-		switch ($this->api->getAppValue('access_type')) {
-			case 'FIXED_IP' :
-				$url .= $this->api->getAppValue('fixed_ip') . $localPathManual;
-				break;
-			case 'DOMAIN_NAME' :
-				$url .= $this->api->getAppValue('domain_name') . $localPathManual;
-				break;
-			case 'FIDELBOX_ACCOUNT' :
-				if ($contactShare->getShareItem()->getDownloadType() == 'SECURE') {
-					$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
-							 md5($this->api->getAppValue('fidelbox_account')) . "&clientId=$clientId";
-				} else {
+		$accessType = $this->api->getAppValue('access_type');
+		if ($contactShare->getShareItem()->getDownloadType() == 'SECURE') {
+			$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
+			if (! $fidelboxAccount) {
+				$l = $this->api->getTrans();
+				throw new InvalidConfigException($l->t('Please create a fidelbox.de account first'));
+			}
+			$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
+					 md5($fidelboxAccount) . "&clientId=$clientId";
+			// TODO: Implement
+			if ($accessType == 'FIXED_IP') {
+				$url .= "&ip=1.2.3.4.5&port=TODO";
+			} else if ($accessType == 'DOMAIN_NAME') {
+				$url .= "&domain=bla.com&port=TODO";
+			}
+		} else {
+			switch ($accessType) {
+				case 'FIXED_IP' :
+					$url .= $this->api->getAppValue('fixed_ip') . $localPathManual;
+					break;
+				case 'DOMAIN_NAME' :
+					$url .= $this->api->getAppValue('domain_name') . $localPathManual;
+					break;
+				case 'FIDELBOX_REDIRECT' :
 					$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/redirect.php?path=' . urlencode($localPathManual) . '&accountHash=' .
 							 md5($this->api->getAppValue('fidelbox_account'));
-				}
-				break;
-			default :
-				$l = $this->api->getTrans();
-				throw new InvalidConfigException($l->t('Please configure access type in fidelapp first'));
+					break;
+				default :
+					$l = $this->api->getTrans();
+					throw new InvalidConfigException($l->t('Please configure the fidelapp first'));
+			}
 		}
 		return $url;
 	}

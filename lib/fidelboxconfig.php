@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,11 +20,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
-
-
 
 /**
  * Error codes from fidelbox.de
@@ -199,17 +196,13 @@ class FidelboxConfig {
 	/**
 	 * Get the configured fidelbox account ID or throw an Exception
 	 *
-	 * @throws InvalidConfigException if either the access type is not "FIDELBOX_ACCOUNT" or no account ID is configured
+	 * @throws InvalidConfigException if no account ID is configured
 	 *
 	 * @return string the fidelbox account ID
 	 */
 	public function getFidelboxAccountId() {
 		$l = $this->api->getTrans();
 
-		if ($this->api->getAppValue('access_type') != 'FIDELBOX_ACCOUNT') {
-			throw new InvalidConfigException(
-					$l->t('Cannot get fidelbox account id, because access type is') . ' ' . $this->api->getAppValue('access_type'));
-		}
 		$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
 		if (! $fidelboxAccount) {
 			throw new InvalidConfigException($l->t('Cannot update IP address, because no fidelbox account has been created'));
@@ -223,10 +216,10 @@ class FidelboxConfig {
 	 * @return string the IP address that has been updated
 	 */
 	public function updateIp() {
-		$return = $this->get(
-				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
-						 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false') .
-						 ($this->api->getAppValue('port') ? '&port=' . $this->api->getAppValue('port') : ''));
+		$url = '/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
+				 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false') .
+				 '&port=' . ($this->api->getAppValue('port') ? $this->api->getAppValue('port') : 'STANDARD_PORT');
+		$return = $this->get($url);
 		if ($return ['status'] != 'success') {
 			$this->raiseError($return);
 		}
@@ -235,17 +228,26 @@ class FidelboxConfig {
 
 	/**
 	 * Check if the server can be reached from Internet
-	 * This method is only available if the access type 'FIDELBOX_ACCOUNT'
 	 *
 	 * @return boolean <code>true</code> if this Owncloud server is reacheable via Internet, throw an Exception otherwise
 	 * @throws ServerNotReachableException when the ping back failed
 	 * @throws \RuntimeException when the call to the fidelserver failed
-	 * @throws InvalidConfigException if either the access type is not "FIDELBOX_ACCOUNT" or no account ID is configured
+	 * @throws InvalidConfigException if no account ID is configured
 	 */
 	public function pingBack() {
-		$return = $this->get(
-				'/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) .
-						 '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback')));
+		$url = '/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) .
+				 '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback'));
+		$accessType = $this->api->getAppValue('access_type');
+		if ($accessType != 'FIDELBOX_REDIRECT') {
+			if ($accessType == 'DOMAIN_NAME') {
+				$url .= '&ipAddress=' . $this->api->getAppValue('domain_name');
+			} else {
+				$url .= '&ipAddress=' . $this->api->getAppValue('fixed_ip');
+			}
+			$url .= '&port=' . $this->api->getAppValue('port');
+			$url .= '&useSsl=' . $this->api->getAppValue('use_ssl');
+		}
+		$return = $this->get($url);
 		if ($return ['status'] != 'success') {
 			if (! isset($return ['message'])) {
 				$l = $this->api->getTrans();

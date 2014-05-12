@@ -1,0 +1,14 @@
+<form action="{{ url('fidelapp_appconfig_create_fidelbox_account', {fidelboxTempUser: fidelboxTempUser} ) }}" method="post">
+	<div>
+		<fieldset class="personalblock">
+			<p>
+				<img alt="fidelbox captcha" src="{{ urlFidelboxCaptcha }}">
+			</p>
+			<p>
+				<label for="fidelapp_captcha">{{ trans('Enter characters shown above') }}:</label>
+				<input id="fidelapp_captcha" name="fidelboxCaptcha" type="text" placeholder="" maxlength="6" />
+			</p>
+			<input id="fidelapp_fidelbox" type="submit" value="{{ trans('Create new fidelbox account') }}" />
+		</fieldset>
+	</div>
+</form>

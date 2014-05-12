@@ -35,46 +35,56 @@ $this->create('fidelapp_index', '/')->action(
 		function ($params) {
 			AppFrameworkApp::main('PageController', 'fidelApp', $params, new DIContainer());
 		});
-
-$this->create('fidelapp_wizard', '/wizard')->action(
+/*
+$this->create('fidelapp_appconfig_access', '/appConfigAccess')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizard', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigAccess', $params, new DIContainer());
+		});
+*/
+
+$this->create('fidelapp_appconfig_fixed_ip', '/appConfigFixedIp')->action(
+		function ($params) {
+			AppFrameworkApp::main('PageController', 'appConfigFixedIp', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_fixed_ip', '/wizardFixedIp')->action(
+$this->create('fidelapp_appconfig_domain_name', '/appConfigDomainName')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardFixedIp', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigDomainName', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_domain_name', '/wizardDomainName')->action(
+$this->create('fidelapp_appconfig', '/appConfig')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardDomainName', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfig', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_fidelbox', '/wizardFidelbox')->action(
+$this->create('fidelapp_appconfig_display_captcha', '/appConfigDisplayCaptcha')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardFidelbox', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigDisplayCaptcha', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_confirm_tos', '/wizardFidelboxConfirmToS')->action(
+$this->create('fidelapp_appconfig_create_fidelbox_account', '/appConfigCreateFidelboxAccount')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardFidelboxConfirmToS', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigCreateFidelboxAccount', $params, new DIContainer());
 		});
 
-
-$this->create('fidelapp_wizard_ssl', '/wizardSsl')->action(
+$this->create('fidelapp_appconfig_redirect', '/appConfigRedirect')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardSsl', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigRedirect', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_port', '/wizardPort')->action(
+$this->create('fidelapp_appconfig_ssl', '/appConfigSsl')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardPort', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigSsl', $params, new DIContainer());
 		});
 
-$this->create('fidelapp_wizard_delete_fidelbox_account', '/wizardDeleteFidelboxAccount')->action(
+$this->create('fidelapp_appconfig_port', '/appConfigPort')->action(
 		function ($params) {
-			AppFrameworkApp::main('PageController', 'wizardDeleteFidelboxAccount', $params, new DIContainer());
+			AppFrameworkApp::main('PageController', 'appConfigPort', $params, new DIContainer());
+		});
+
+$this->create('fidelapp_appconfig_delete_fidelbox_account', '/appConfigDeleteFidelboxAccount')->action(
+		function ($params) {
+			AppFrameworkApp::main('PageController', 'appConfigDeleteFidelboxAccount', $params, new DIContainer());
 		});
 
 $this->create('fidelapp_shares', '/shares')->action(

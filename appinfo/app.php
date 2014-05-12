@@ -75,7 +75,7 @@ class App {
 			$api = new API();
 		}
 
-		if ($api && $api->getAppValue('access_type') == 'FIDELBOX_ACCOUNT') {
+		if ($api && $api->getAppValue('access_type') == 'FIDELBOX_REDIRECT') {
 			$lastIpUpdateString = $api->getAppValue('last_ip_update');
 			$lastIpUpdateOk = false;
 			if ($lastIpUpdateString) {
