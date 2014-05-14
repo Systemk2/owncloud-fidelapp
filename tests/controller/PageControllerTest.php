@@ -36,6 +36,13 @@ require_once (__DIR__ . "/../classloader.php");
 
 require_once 'PHPUnit/Autoload.php';
 
+class MockOC_L10N {
+
+	public function t($string) {
+		return $string;
+	}
+}
+
 class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	// Fixture
@@ -45,6 +52,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 	protected $mockContactShareItemMapper;
 	protected $mockContactManager;
 	protected $mockReceiptItemMapper;
+	protected $mockFidelboxConfig;
 
 	// Class under Test
 	protected $cutPageController;
@@ -55,12 +63,14 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		));
 		$this->mockApi = $this->getMock('OCA\FidelApp\API', get_class_methods('OCA\FidelApp\API'));
 		$this->mockApi->expects($this->any())->method('registerFidelappException')->will($this->returnValue(null));
+		$this->mockApi->expects($this->any())->method('getTrans')->will($this->returnValue(new \OCA\FidelApp\MockOC_L10N()));
 
-		$this->mockContactShareItemMapper = $this->getMock('OCA\FidelApp\Db\ContactShareItemMapper', array (
-				'findByUser'
-		), array (
-				$this->mockApi
-		));
+		$this->mockContactShareItemMapper = $this->getMock('OCA\FidelApp\Db\ContactShareItemMapper',
+				array (
+						'findByUser'
+				), array (
+						$this->mockApi
+				));
 		$this->mockContactManager = $this->getMock('OCA\FidelApp\ContactManager', array (
 				'makeContactName'
 		), array (
@@ -71,6 +81,10 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		), array (
 				$this->mockApi
 		));
+		$this->mockFidelboxConfig = $this->getMock('OCA\FidelApp\FidelboxConfig',
+				get_class_methods('OCA\FidelApp\FidelboxConfig'), array (
+						$this->mockApi
+				));
 
 		$this->mockContainer = new DIContainer();
 		$this->mockContainer ['App'] = $this->mockApp;
@@ -78,6 +92,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->mockContainer ['ContactShareItemMapper'] = $this->mockContactShareItemMapper;
 		$this->mockContainer ['ContactManager'] = $this->mockContactManager;
 		$this->mockContainer ['ReceiptItemMapper'] = $this->mockReceiptItemMapper;
+		$this->mockContainer ['FidelboxConfig'] = $this->mockFidelboxConfig;
 
 		$this->cutPageController = new PageController($this->mockContainer, new Request());
 	}
@@ -99,7 +114,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 				)));
 
 		// Simulate that the app has already been configured
-		$this->mockApi->expects($this->once())->method('getAppValue')->with('access_type')->will($this->returnValue(true));
+		$this->mockApi->expects($this->exactly(2))->method('getAppValue')->will($this->returnValue(true));
 		$this->mockPageControllerMethods(array (
 				'shares',
 				'appconfig'
@@ -119,14 +134,14 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 				)));
 
 		// Simulate that the app has not yet been configured
-		$this->mockApi->expects($this->once())->method('getAppValue')->with('access_type')->will($this->returnValue(null));
+		$this->mockApi->expects($this->once())->method('getAppValue')->with('fidelbox_account')->will($this->returnValue(null));
 
 		$this->mockPageControllerMethods(array (
 				'shares',
 				'appconfig'
 		));
 
-		$this->cutPageController->expects($this->once())->method('appconfig');
+		$this->cutPageController->expects($this->once())->method('appConfig');
 
 		// Run the test
 		$this->cutPageController->fidelApp();
@@ -143,17 +158,19 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 		$this->mockPageControllerMethods(array (
 				'shares',
-				'appconfig'
+				'appConfig'
 		));
 
 		$this->cutPageController->expects($this->never())->method('shares');
-		$this->cutPageController->expects($this->never())->method('appconfig');
+		$this->cutPageController->expects($this->never())->method('appConfig');
 
 		// Run the test
 		$result = $this->cutPageController->fidelApp();
 		$this->assertInstanceof('\OCA\AppFramework\Http\TemplateResponse', $result);
 		$this->assertAttributeEquals('fidelapp', 'templateName', $result);
-		$this->assertAttributeEquals($returnValue, 'params', $result);
+		$expected = array_merge($returnValue);
+		$expected ['errors'] = array ();
+		$this->assertAttributeEquals($expected, 'params', $result);
 	}
 
 	private function setUp2MockContacts() {
@@ -214,8 +231,7 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testShares() {
 		$items = $this->setUp2MockContacts();
-		$this->mockApi->expects($this->once())->method('getAppValue')->with('access_type')->will(
-				$this->returnValue('FIDELBOX_REDIRECT'));
+
 		$valueMap = array (
 				array (
 						$items [0]->getShareItem()->getFileId(),
@@ -267,64 +283,42 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		$this->assertAttributeEquals($expectedResult, 'params', $result);
 	}
 
-	public function testWizard1() {
-		$this->mockPageControllerMethods(array (
-				'appconfigDomainName',
-				'appconfigFidelbox',
-				'appconfigFixedIp'
-		));
+	public function testAppConfig1() {
+		$this->mockApi->expects($this->any())->method('getAppValue')->will(
+				$this->returnCallback(array (
+						'\OCA\FidelApp\PageControllerTest',
+						'returnFidelboxDefined'
+				)));
 
-		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnNoAccessType')));
-
-		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
-		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
-		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
+		$this->mockFidelboxConfig->expects($this->once())->method('validateAccount')->will($this->returnValue(true));
+		$this->mockFidelboxConfig->expects($this->once())->method('pingBack')->will($this->returnValue(true));
 
 		// Run the test
-		$result = $this->cutPageController->appconfig();
+		$result = $this->cutPageController->appConfig();
 
 		$expectedResult = array (
 				'menu' => 'appconfig',
 				'actionTemplate' => 'appconfig',
 				'useSSL' => true,
-				'port' => 12345
+				'port' => '12345',
+				'domain' => 'UNKNOWN',
+				'fixedIp' => 'UNKNOWN',
+				'accessType' => 'FIDELBOX_REDIRECT',
+				'fidelboxConfig' => 'appconfig_fidelbox',
+				'fidelboxAccount' => 'ABC123',
+				'validFidelboxAccount' => true,
+				'isReachable' => true,
+				'showAccessTypeTemplate' => true
 		);
 		$this->assertInstanceof('\OCA\AppFramework\Http\TemplateResponse', $result);
 		$this->assertAttributeEquals('fidelapp', 'templateName', $result);
 		$this->assertAttributeEquals($expectedResult, 'params', $result);
 	}
 
-	public function returnNoAccessType($argument) {
+	public function returnFidelboxDefined($argument) {
 		switch ($argument) {
-			case 'access_type' :
-				return null;
-			case 'use_ssl' :
-				return true;
-			case 'port' :
-				return '12345';
-		}
-		return 'UNKNOWN';
-	}
-
-	public function testWizard2() {
-		$this->mockPageControllerMethods(array (
-				'appconfigDomainName',
-				'appconfigFidelbox',
-				'appconfigFixedIp'
-		));
-
-		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeFidelbox')));
-
-		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
-		$this->cutPageController->expects($this->once())->method('appconfigFidelbox');
-		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
-
-		// Run the test
-		$this->cutPageController->appconfig();
-	}
-
-	public function returnAccessTypeFidelBox($argument) {
-		switch ($argument) {
+			case 'fidelbox_account' :
+				return 'ABC123';
 			case 'access_type' :
 				return 'FIDELBOX_REDIRECT';
 			case 'use_ssl' :
@@ -335,62 +329,59 @@ class PageControllerTest extends \PHPUnit_Framework_TestCase {
 		return 'UNKNOWN';
 	}
 
-	public function testWizard3() {
-		$this->mockPageControllerMethods(array (
-				'appconfigDomainName',
-				'appconfigFidelbox',
-				'appconfigFixedIp'
-		));
+	public function testAppConfig2() {
+		$this->mockApi->expects($this->any())->method('getAppValue')->will(
+				$this->returnCallback(array (
+						'\OCA\FidelApp\PageControllerTest',
+						'returnFidelboxNotDefined'
+				)));
 
-		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeFixedIp')));
-
-		$this->cutPageController->expects($this->never())->method('appconfigDomainName');
-		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
-		$this->cutPageController->expects($this->once())->method('appconfigFixedIp');
-
+		$expectedResult = array (
+				'menu' => 'appconfig',
+				'actionTemplate' => 'appconfig',
+				'useSSL' => 'UNKNOWN',
+				'port' => 'UNKNOWN',
+				'domain' => 'UNKNOWN',
+				'fixedIp' => 'UNKNOWN',
+				'accessType' => 'UNKNOWN',
+				'fidelboxConfig' => 'appconfig_confirm_tos',
+		);
 		// Run the test
-		$this->cutPageController->appconfig();
+		$result = $this->cutPageController->appConfig();
+
+		$this->assertAttributeEquals($expectedResult, 'params', $result);
 	}
 
-	public function returnAccessTypeFixedIp($argument) {
+	public function returnFidelboxNotDefined($argument) {
 		switch ($argument) {
-			case 'access_type' :
-				return 'FIXED_IP';
-			case 'use_ssl' :
-				return true;
-			case 'port' :
-				return '12345';
+			case 'fidelbox_account' :
+				return null;
 		}
 		return 'UNKNOWN';
 	}
 
-	public function testWizard4() {
-		$this->mockPageControllerMethods(array (
-				'appconfigDomainName',
-				'appconfigFidelbox',
-				'appconfigFixedIp'
-		));
-
-		$this->mockApi->expects($this->any())->method('getAppValue')->will($this->returnCallback(array('\OCA\FidelApp\PageControllerTest', 'returnAccessTypeDomainName')));
-
-		$this->cutPageController->expects($this->once())->method('appconfigDomainName');
-		$this->cutPageController->expects($this->never())->method('appconfigFidelbox');
-		$this->cutPageController->expects($this->never())->method('appconfigFixedIp');
+	public function testAppConfig3() {
+		$this->mockApi->expects($this->any())->method('getAppValue')->will(
+				$this->returnCallback(array (
+						'\OCA\FidelApp\PageControllerTest',
+						'returnFidelboxDefined'
+				)));
 
 		// Run the test
-		$this->cutPageController->appconfig();
+		$result = $this->cutPageController->appConfigDisplayCaptcha();
+		$this->assertAttributeContains('appconfig_fidelbox_createaccount', 'params', $result);
 	}
 
-	public function returnAccessTypeDomainName($argument) {
-		switch ($argument) {
-			case 'access_type' :
-				return 'DOMAIN_NAME';
-			case 'use_ssl' :
-				return true;
-			case 'port' :
-				return '12345';
-		}
-		return 'UNKNOWN';
+	public function testAppConfig4() {
+		$this->mockApi->expects($this->any())->method('getAppValue')->will(
+				$this->returnCallback(array (
+						'\OCA\FidelApp\PageControllerTest',
+						'returnFidelboxDefined'
+				)));
+		$this->mockFidelboxConfig->expects($this->once())->method('createAccount')->will($this->returnValue('XYZ'));
+		// Run the test
+		$result = $this->cutPageController->appConfigCreateFidelboxAccount();
+		$this->assertAttributeContains('XYZ', 'params', $result);
 	}
 
 	static function main() {

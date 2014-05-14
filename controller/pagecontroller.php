@@ -76,8 +76,8 @@ class PageController extends Controller {
 		}
 		return $this->render('fidelapp',
 				array (
-						'warnings' => $checkResult ['warnings'],
-						'errors' => $checkResult ['errors']
+						'warnings' => isset($checkResult ['warnings']) ? $checkResult ['warnings'] : array (),
+						'errors' => isset($checkResult ['errors']) ? $checkResult ['errors'] : array ()
 				));
 	}
 
@@ -154,7 +154,8 @@ class PageController extends Controller {
 	 * Handle generic function (Exception handling etc.) for all appconfig
 	 * requests
 	 *
-	 * @param function $callbackFunction, may be <code>null</code>
+	 * @param function $callbackFunction,
+	 *        	may be <code>null</code>
 	 *
 	 * @return \OCA\AppFramework\Http\TemplateResponse
 	 */
@@ -170,7 +171,7 @@ class PageController extends Controller {
 					'accessType' => $this->api->getAppValue('access_type'),
 					'fidelboxConfig' => 'appconfig_fidelbox'
 			);
-			if($callbackFunction) {
+			if ($callbackFunction) {
 				$callbackFunction($params, $this, $this->api);
 			}
 			$fidelboxAccount = $this->api->getAppValue('fidelbox_account');
@@ -189,7 +190,7 @@ class PageController extends Controller {
 					$params ['showAccessTypeTemplate'] = true;
 				} else {
 					$params ['isReachable'] = false;
-					$params ['reachableFailedMsg'] = $api->getTrans()->t('Invalid fidelbox account');
+					$params ['reachableFailedMsg'] = $this->api->getTrans()->t('Invalid fidelbox account');
 				}
 			}
 		} catch(\Exception $e) {
@@ -298,7 +299,7 @@ class PageController extends Controller {
 						$params ['fidelboxConfig'] = 'appconfig_confirm_tos';
 					});
 		}
-		return  $this->doAppConfigAction(null);
+		return $this->doAppConfigAction(null);
 	}
 
 	/**
@@ -328,7 +329,7 @@ class PageController extends Controller {
 					$tempUser = $context->params('fidelboxTempUser');
 					$captcha = $context->params('fidelboxCaptcha');
 					$fidelboxAccount = $context->fidelboxConfig->createAccount($tempUser, $captcha);
-					$params ['validFidelboxAccount'] = $this->fidelboxConfig->validateAccount($fidelboxAccount);
+					$params ['validFidelboxAccount'] = $context->fidelboxConfig->validateAccount($fidelboxAccount);
 					$params ['fidelboxAccount'] = $fidelboxAccount;
 					$api->setAppValue('fidelbox_account', $fidelboxAccount);
 				});
@@ -343,8 +344,8 @@ class PageController extends Controller {
 	public function appConfigSsl() {
 		return $this->doAppConfigAction(
 				function (&$params, PageController $context, API $api) {
-					if ($params ['useSSL'] !=  $context->params('useSSL')) {
-						$api->setAppValue('use_ssl',  $context->params('useSSL'));
+					if ($params ['useSSL'] != $context->params('useSSL')) {
+						$api->setAppValue('use_ssl', $context->params('useSSL'));
 						$params ['useSSL'] = $context->params('useSSL');
 						$context->fidelboxConfig->updateIp();
 					}
@@ -364,9 +365,9 @@ class PageController extends Controller {
 					if ($newPort == 'STANDARD_PORT') {
 						$newPort = null;
 					}
-					if ($newPort != $params['port']) {
+					if ($newPort != $params ['port']) {
 						$api->setAppValue('port', $newPort);
-						$params['port'] = $newPort;
+						$params ['port'] = $newPort;
 						$context->fidelboxConfig->updateIp();
 					}
 				});
