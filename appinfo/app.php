@@ -69,10 +69,15 @@ class App {
 							 'Otherwise the App might not be able to calculate checksums on large files for secure file delivery');
 		}
 
-		if (! $api && class_exists('OCA\AppFramework\Core\API', true)) {
-			// API was not given as a parameter, but the appframework is there,
+		if (! $api) {
+			// API was not given as a parameter, now check if the appframework is there,
 			// so we can instantiate a new API here
-			$api = new API();
+			if (class_exists('OCA\AppFramework\Core\API', true)) {
+				$api = new API();
+			} else {
+				$return ['errors'] [] = $l->t(
+						'Class OCA\AppFramework\Core\API does not exist, please install and activate the Appframework App');
+			}
 		}
 
 		if ($api && ! $api->getAppValue('fidelbox_account')) {
