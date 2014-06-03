@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Controller;
 
 \OC::$CLASSPATH ['OCA\FidelApp\FileNotFoundException'] = FIDELAPP_APPNAME . '/lib/exception.php';
@@ -67,8 +66,8 @@ class AppletAccessController extends Controller {
 			$decryptedContactId = $encryptionHelper->processContactId($this->params('client-id'));
 			$mapper = new ContactShareItemMapper($this->api);
 			$contactShareItems = $mapper->findByContact($decryptedContactId);
-			if(count($contactShareItems) > 0) {
-				$userId = $contactShareItems[0]->getContactItem()->getUserId();
+			if (count($contactShareItems) > 0) {
+				$userId = $contactShareItems [0]->getContactItem()->getUserId();
 				$this->api->setupFS($userId);
 			}
 			\OC_Util::obEnd();
@@ -77,7 +76,7 @@ class AppletAccessController extends Controller {
 				$shareItem = $item->getShareItem();
 				$fileId = $shareItem->getFileId();
 				$fileName = $this->api->getPath($fileId);
-				if($fileName != "" && \OC\Files\Filesystem::file_exists($fileName)) {
+				if (! $shareItem->getIsDir() && $fileName != '' && $this->api->fileExists($fileName)) {
 					echo $shareItem->getId() . "\n";
 				}
 			}
@@ -168,7 +167,7 @@ class AppletAccessController extends Controller {
 				$fileItemMapper = new FileItemMapper($this->api);
 				$fileItem = $fileItemMapper->findByFileId($fileId);
 				$checksum = $fileItem->getChecksum();
-			} catch (DoesNotExistException $e ) {
+			} catch(DoesNotExistException $e) {
 				$checksum = null;
 			}
 			$this->createHeader('filePlainDigest', $checksum);

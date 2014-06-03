@@ -31,6 +31,7 @@ define('ERROR_INVALID_PASSWORD_SET', 6003);
 define('ERROR_NO_SALT_SET', 6004);
 define('FILE_NOT_FOUND', 6005);
 define('WRONG_DOWNLOAD_TYPE', 6006);
+define('ALREADY_SHARED', 6007);
 
 /**
  * The entered captcha did not match the image
@@ -83,5 +84,14 @@ class ServerNotReachableException extends \Exception {
 class WrongDownloadTypeException extends \Exception {
 	public function __construct($fileName) {
 		parent::__construct("Wrong download type: $fileName", WRONG_DOWNLOAD_TYPE);
+	}
+}
+
+/**
+ * Somebody tries to share a file with a contact, but it was already shared with this contact
+ */
+class AlreadySharedException extends \Exception {
+	public function __construct() {
+		parent::__construct('Item was already shared with the same contact', ALREADY_SHARED);
 	}
 }

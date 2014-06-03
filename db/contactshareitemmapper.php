@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Mapper;
@@ -87,8 +86,7 @@ class ContactShareItemMapper extends Mapper {
 
 	public function findByContact($contactId) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
-				 '` S, `' . $this->contactItemMapper->getTableName() .
-				 '` C WHERE C.`id` = S.`contact_id` AND S.`contact_id` = ?';
+				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND S.`contact_id` = ?';
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$contactId
@@ -101,11 +99,16 @@ class ContactShareItemMapper extends Mapper {
 	 * Get all contact share items for the given user id
 	 *
 	 * @param string $userId
+	 * @param boolean $findOnlyDirectoryShares
+	 *        	[optional] if set to <code>true</code>, only directory shares will be returned
 	 * @return array of OCA\FidelApp\Db\ContactShareItem
 	 */
-	public function findByUser($userId) {
+	public function findByUser($userId, $findOnlyDirectoryShares = false) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
+		if($findOnlyDirectoryShares) {
+			$sql .= ' AND S.`is_dir` = 1';
+		}
 
 		$contactShareItems = $this->findEntities($sql, array (
 				$userId
@@ -133,14 +136,12 @@ class ContactShareItemMapper extends Mapper {
 		return $contactShareItem;
 	}
 
-
 	/**
 	 * Remove all contacts, shares, receipts, checksums and chunks for the given user id
 	 * This is called when a user is deleted from ownCloud
 	 *
 	 * @param string $userId
-	 *
-	 * TODO: Test it!
+	 *        	TODO: Test it!
 	 */
 	public function deleteAllForUser($userId) {
 		// Delete chunks
@@ -210,7 +211,11 @@ class ContactShareItemMapper extends Mapper {
 		}
 
 		$shareItem->setContactId($contactItem->getId());
-		$this->shareItemMapper->save($shareItem);
+		$shareItem = $this->shareItemMapper->save($shareItem);
+		// Update IDs from Database
+		$item->getContactItem()->setId($contactItem->getId());
+		$item->getShareItem()->setId($shareItem->getId());
+		return $item;
 	}
 
 	protected function mapRowToEntity($row) {

@@ -56,4 +56,12 @@ class ShareItemMapper extends SingleEntityMapper {
 				$contactId
 		));
 	}
+
+	public function findByParentId($shareId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `parent_share_id` = ?';
+
+		return $this->findEntities($sql, array (
+				$shareId
+		));
+	}
 }

@@ -29,7 +29,7 @@ use OCA\FidelApp\Db\ContactItem;
  * Links a contact entity to a share entity
  *
  * @author Sebastian Kanzow
- *        
+ *
  */
 class ContactShareItem {
 	private $contactItem;
@@ -42,10 +42,16 @@ class ContactShareItem {
 		$this->id = $contactItem->getId() . '_' . $shareItem->getId();
 	}
 
+	/**
+	 * @return ContactItem
+	 */
 	public function getContactItem() {
 		return $this->contactItem;
 	}
 
+	/**
+	 * @return ShareItem
+	 */
 	public function getShareItem() {
 		return $this->shareItem;
 	}

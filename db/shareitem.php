@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Entity;
@@ -64,9 +63,22 @@ class ShareItem extends Entity {
 	 */
 	public $nbChunks;
 
+	/**
+	 * share id if this file was shared indirectly by sharing a directory
+	 */
+	public $parentShareId;
+
+	/**
+	 * boolean true if this a directory
+	 */
+	public $isDir;
+
 	public function __construct() {
 		$this->addType('contactId', 'integer');
 		$this->addType('fileId', 'integer');
+		$this->addType('shareNotification', 'boolean');
 		$this->addType('nbChunks', 'integer');
+		$this->addType('parentShareId', 'integer');
+		$this->addType('isDir', 'boolean');
 	}
 }

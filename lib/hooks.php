@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 use OCA\AppFramework\Db\DoesNotExistException;
@@ -28,6 +27,8 @@ use OCA\FidelApp\Db\ContactItemMapper;
 use OCA\FidelApp\Db\ContactShareItemMapper;
 use OCA\FidelApp\Db\FileItemMapper;
 use OCA\FidelApp\Db\ShareItemMapper;
+use OC\Files\Filesystem;
+use OCA\FidelApp\Db\ContactShareItem;
 
 class Hooks {
 
@@ -49,8 +50,8 @@ class Hooks {
 	/**
 	 * Deletes all shares shares for a deleted contactapp contact
 	 *
-	 * @param
-	 *        	$parameters array containing an id from \OCA\Contacts::pre_deleteContact - Hook
+	 * @param $parameters array
+	 *        	containing an id from \OCA\Contacts::pre_deleteContact - Hook
 	 * @return <code>true</code>
 	 */
 	/*
@@ -67,7 +68,7 @@ class Hooks {
 			return true;
 		}
 		$contactManager = new ContactManager($api);
-		$contactManager->removeContact($contacts[0]->getId());
+		$contactManager->removeContact($contacts [0]->getId());
 		return true;
 	}
 
@@ -78,14 +79,11 @@ class Hooks {
 	 *        	containing a 'contactid' from \OCA\Contacts::post_updateContact - Hook
 	 * @return <code>true</code>
 	 */
-	/* \OC_Hook::emit('\OCA\Contacts', 'post_updateContact', 'backend' => $this->name,
-					'addressBookId' => $addressbookid,
-					'contactId' => $id,
-					'contact' => $contact,
-					'carddav' => $isCardDAV);
-	*/
+	/*
+	 * \OC_Hook::emit('\OCA\Contacts', 'post_updateContact', 'backend' => $this->name, 'addressBookId' => $addressbookid, 'contactId' => $id, 'contact' => $contact, 'carddav' => $isCardDAV);
+	 */
 	public static function updateEmail($parameters) {
-		$contactsappId = $parameters['contactId'];
+		$contactsappId = $parameters ['contactId'];
 		$api = new API();
 		$contactMapper = new ContactItemMapper($api);
 		$contacts = $contactMapper->findByContactsappId($contactsappId);
@@ -114,43 +112,117 @@ class Hooks {
 	/**
 	 * Remove active shares when a file is moved to the thrash bin
 	 *
-	 * @param array $params contains the file name with key 'filePath'
+	 * @param array $params
+	 *        	contains the file name with key 'filePath'
 	 */
 	public static function moveFileToTrash(array $params) {
-		$path = $params['filePath'];
+		$path = $params ['filePath'];
 		Hooks::removeSharesForDeletedFiles($path);
 	}
 
 	/**
 	 * Remove active shares when a file is deleted
 	 *
-	 * @param array $params contains the file name with key 'path'
+	 * @param array $params
+	 *        	contains the file name with key 'path'
 	 */
 	public static function deleteFile(array $params) {
-		$path = $params['path'];
+		$path = $params [Filesystem::signal_param_path];
 		Hooks::removeSharesForDeletedFiles($path);
+	}
+
+	/**
+	 * Check if a file is moved/copied inside or outside a shared folder
+	 * <ul>
+	 * <li>
+	 * If the file was implicitly shared through a folder before,
+	 * but isn't anymore, the share has to be removed
+	 * </li>
+	 * <li>
+	 * If the file is moved into a shared folder
+	 * and it wasn't shared before, a share has to be created
+	 * </li>
+	 * <li>
+	 * If the file is moved from one shared folder into another shared folder,
+	 * the old share has to be deleted and a new one is created
+	 * </li>
+	 * <li>
+	 * If the file is explicitly shared, nothing has to be done
+	 * </li>
+	 * </ul>
+	 *
+	 * @param array $params
+	 *        	contains the file name with key 'path'
+	 */
+	public static function verifyDirectorySharesAfterRename(array $params) {
+		$oldPath = $params [Filesystem::signal_param_oldpath];
+		$newPath = $params [Filesystem::signal_param_newpath];
+
+		$api = new API();
+		if ($api->isDir($newPath)) {
+			// Ignore moved directories
+			return;
+		}
+
+		$fileId = $api->getFileId($newPath);
+		$shareHelper = new ShareHelper($api);
+		$shareItemMapper = new ShareItemMapper($api);
+		$contactShareItemMapper = new ContactShareItemMapper($api);
+		$contactShareItems = $contactShareItemMapper->findByUserFile($api->getUserId(), $fileId);
+		foreach ( $contactShareItems as $item ) {
+			$parentId = $item->getShareItem()->getParentShareId();
+			if (! $parentId) {
+				// Explicitly shared -> Nothing to do
+				return;
+			}
+			$parent = $shareItemMapper->findById($parentId);
+			$parentFileId = $parent->getFileId();
+			$path = $api->getPath($parentFileId);
+			if ($shareHelper->isParentDir($parent, $child)) {
+				// The parent is still the same -> nothing to do
+				return;
+			}
+			// The parent has changed, delete old implicit share
+			$shareHelper->deleteShare($item->getShareItem()->getShareId());
+		}
+		$shareHelper->createImplicitShares($fileId);
+	}
+
+	/**
+	 * Check if a newly created or copied file is inside a shared folder
+	 *
+	 * @param array $params
+	 *        	contains the file name with key 'path'
+	 */
+	public static function verifyDirectorySharesAfterCreation(array $params) {
+		if (isset($params [Filesystem::signal_param_newpath])) {
+			$path = $params [Filesystem::signal_param_newpath];
+		} else {
+			$path = $params [Filesystem::signal_param_path];
+		}
+		$api = new API();
+		if ($api->isDir($path)) {
+			// Ignore newly created or copied directories
+			return;
+		}
+
+		$shareHelper = new ShareHelper($api);
+		$fileId = $api->getFileId($path);
+		$shareHelper->createImplicitShares($fileId);
 	}
 
 	private static function removeSharesForDeletedFiles($path) {
 		$api = new API();
 		$contactShareItemMapper = new ContactShareItemMapper($api);
-		$fileItemMapper = new FileItemMapper($api);
-		$shareItemMapper = new ShareItemMapper($api);
 		$contactShareItems = $contactShareItemMapper->findByUser($api->getUserId());
+		$shareHelper = new ShareHelper($api);
 
-		foreach($contactShareItems as $contactShareItem) {
+		foreach ( $contactShareItems as $contactShareItem ) {
 			$fileId = $contactShareItem->getShareItem()->getFileId();
 			$fileName = $api->getPath($fileId);
-			if (! \OC\Files\Filesystem::file_exists($fileName) || $fileName == $path) { // TODO: Move to api
-				try {
-					$fileItem = $fileItemMapper->findByFileId($fileId);
-					$fileItemMapper->delete($fileItem);
-				} catch ( DoesNotExistException $e) {
-					// Ignore non-existent files
-				}
-				$shareItemMapper->delete($contactShareItem->getShareItem());
+			if (! $api->fileExists($fileName) || $fileName == $path) {
+				$shareHelper->deleteShare($contactShareItem->getShareItem()->getId(), true);
 			}
 		}
-
 	}
 }

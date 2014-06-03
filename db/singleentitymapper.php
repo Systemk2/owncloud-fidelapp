@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Mapper;
@@ -61,7 +60,9 @@ class SingleEntityMapper extends Mapper {
 		if ($id === null) {
 			$entity = $this->insert($entity);
 		} else {
-			$this->update($entity);
+			if (count($entity->getUpdatedFields())) {
+				$this->update($entity);
+			}
 		}
 		return $entity;
 	}

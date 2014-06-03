@@ -161,7 +161,7 @@ class PublicController extends Controller {
 			if ($this->params('shareId')) {
 				$shareItem = $shareMapper->findById($this->params('shareId'));
 				$filename = $this->api->getPath($shareItem->getFileId());
-				if (\OC\Files\Filesystem::file_exists($filename)) {
+				if ($this->api->fileExists($filename)) {
 					return ($this->serveFile($shareItem, $contact));
 				}
 			}
@@ -169,7 +169,7 @@ class PublicController extends Controller {
 
 			foreach ( $shareItems as &$shareItem ) {
 				$filename = $this->api->getPath($shareItem->getFileId());
-				if (\OC\Files\Filesystem::file_exists($filename) && $filename != '') {
+				if (!$shareItem->getIsDir() && $filename != '' && $this->api->fileExists($filename)) {
 					$shareItem->fileName = trim($filename, DIRECTORY_SEPARATOR);
 					if ($shareItem->getDownloadType() == 'SECURE') {
 						$shareItem->fileName .= ' (' . $l->t('Can only be downloaded with Download Manager') . ')';

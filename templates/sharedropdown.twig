@@ -12,7 +12,11 @@
 						<span class="fidelapp_icon fidelapp_key-{{ contactShareItem.contactItem.password ? 'green' : 'red' }}">&nbsp;</span>
 						<span class="fidelapp_contact_email">{{ contactShareItem.contactItem.email }}</span>
 						<span class="fidelapp_icon fidelapp_triangle">&nbsp;</span>
-						<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
+						{% if(contactShareItem.shareItem.parentShareId) %}
+							<span class="fidelapp_icon fidelapp_folder fidelapp_tooltip" title="{{ trans('Shared through enclosing directory')  }}">&nbsp;</span>
+						{% else %}
+							<span class="fidelapp_icon fidelapp_delete">&nbsp;</span>
+						{% endif %}
 						{% if(contactShareItem.contactItem.password) %}
 							<a href="{{ contactShareItem.mailToLink|raw }}"
 								class="fidelapp_icon fidelapp_mailto"> &nbsp; </a>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 use OCA\FidelApp\Db\ShareItemMapper;
@@ -35,22 +34,8 @@ try {
 	$api = new API();
 
 	$shareId = $_POST ['shareId'];
-
-	$mapper = new ShareItemMapper($api);
-	$shareItem = $mapper->findById($shareId);
-	$fileId = $shareItem->getFileId();
-	$mapper->delete($shareItem);
-
-	if (count($mapper->findByFileId($fileId)) == 0) {
-		// File is not shared anymore, clean up checksum table too
-		$fileMapper = new FileItemMapper($api);
-		try {
-			$fileItem = $fileMapper->findByFileId($fileId);
-			$fileMapper->delete($fileItem);
-		} catch(DoesNotExistException $e) {
-			// The checksum information has already been deleted? Ignore....
-		}
-	}
+	$shareHelper = new ShareHelper($api);
+	$shareHelper->deleteShare($shareId);
 	\OC_JSON::success();
 } catch(\Exception $e) {
 	\OC_JSON::error($e->getMessage());

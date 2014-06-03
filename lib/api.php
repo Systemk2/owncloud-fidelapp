@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,13 +20,12 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 use OCP\BackgroundJob;
 use OCA\Contacts\VCard;
 use Sabre\VObject\Reader;
+use OC\Files\Filesystem;
 
 /**
  * Enhanced API, based on the AppFramework's API wrapper
@@ -114,14 +114,14 @@ class API extends \OCA\AppFramework\Core\API {
 	 * Get an OwnCloud contact by its ID
 	 *
 	 * @param int $contactsappId
-	 * @return \OCA\Contacts\Contact|NULL
+	 * @return \OCA\Contacts\Contact NULL
 	 */
 	public function findContactById($contactsappId) {
 		$contactsApp = new \OCA\Contacts\App();
 		$addressBooks = $contactsApp->getAddressBooksForUser();
-		foreach ($addressBooks as $addressBook) {
+		foreach ( $addressBooks as $addressBook ) {
 			$contact = $addressBook->getChild($contactsappId);
-			if($contact) {
+			if ($contact) {
 				return $contact;
 			}
 		}
@@ -130,7 +130,7 @@ class API extends \OCA\AppFramework\Core\API {
 
 	public function findContactNameById($contactsappId) {
 		$contact = $this->findContactById($contactsappId);
-		if($contact) {
+		if ($contact) {
 			return $contact->getDisplayName();
 		}
 		return null;
@@ -138,20 +138,20 @@ class API extends \OCA\AppFramework\Core\API {
 
 	public function findEMailAddressesByContactsappId($contactsappId) {
 		$contact = $this->findContactById($contactsappId);
-		if(!$contact) {
-			return array();
+		if (! $contact) {
+			return array ();
 		}
-		$emails = array();
-		foreach($contact->__get('EMAIL') as $emailProperty) {
-			$emails[] = $emailProperty->value;
+		$emails = array ();
+		foreach ( $contact->__get('EMAIL') as $emailProperty ) {
+			$emails [] = $emailProperty->value;
 		}
-// 		foreach ($vCard->children() as $property) {
-// 			if(is_a($property, '\Sabre\VObject\Property')) {
-// 				if($property->name == 'EMAIL') {
-// 					$emails[] = $property->value;
-// 				}
-// 			}
-// 		}
+		// foreach ($vCard->children() as $property) {
+		// if(is_a($property, '\Sabre\VObject\Property')) {
+		// if($property->name == 'EMAIL') {
+		// $emails[] = $property->value;
+		// }
+		// }
+		// }
 		return $emails;
 	}
 
@@ -165,7 +165,60 @@ class API extends \OCA\AppFramework\Core\API {
 	 * @return string
 	 */
 	public function getPath($id) {
-		return \OC\Files\Filesystem::getPath($id);
+		return Filesystem::getPath($id);
+	}
+
+	/**
+	 * Get the file id by a path
+	 *
+	 * @param string $path
+	 * @return int fileId or <code>null</code>
+	 */
+	public function getFileId($path) {
+		$data = Filesystem::getFileInfo($path);
+		if ($data && isset($data['fileid'])) {
+			return $data['fileid'];
+		}
+		return null;
+	}
+
+	/**
+	 *
+	 * @param string $path
+	 * @return boolean <code>true</code> if the given path exists and is a directory
+	 */
+	public function isDir($path) {
+		return Filesystem::is_dir($path);
+	}
+
+	/**
+	 *
+	 * @param string $path
+	 * @return array of string containing file or subdirectory paths or <code>false</code>
+	 */
+	public function readDir($path) {
+		// ==> Broken Owncloud API, Filesystem::readdir cannot be used
+		// FIXME: As soon as OC is fixed, switch to Filesystem::readdir($path);
+		$handle = Filesystem::opendir($path);
+		$returnValue = array ();
+		if ($handle) {
+			while ( $entry = readdir($handle) ) {
+				if(trim($entry, '.') != '') { // Exclude . and ..
+					$returnValue [] = $entry;
+				}
+			}
+			closedir($handle);
+		}
+		return $returnValue;
+	}
+
+	/**
+	 *
+	 * @param string $path
+	 * @return boolean <code>true</code> if the given path exists
+	 */
+	public function fileExists($path) {
+		return Filesystem::file_exists($path);
 	}
 
 	/**
@@ -206,6 +259,7 @@ class API extends \OCA\AppFramework\Core\API {
 
 	/**
 	 * Register an exception class in lib/exception with OC's classloader
+	 *
 	 * @param string $exceptionClassName
 	 */
 	public function registerFidelappException($exceptionClassName) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,8 +20,6 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp;
 
 use OCA\FidelApp\Db\ContactShareItem;
@@ -32,7 +31,6 @@ use OCA\FidelApp\Db\ShareItem;
 \OC_App::loadApps();
 
 
-
 try {
 	$api = new API();
 
@@ -41,31 +39,17 @@ try {
 	$fileId = $_POST ['itemSource'];
 	$file = $_POST ['file'];
 
-	$mapper = new Db\ContactShareItemMapper($api);
 
-	$sharedItems = $mapper->findByUserFileEmail($userId, $fileId, $email);
-
-	if (count($sharedItems) === 0) {
-		$contactItem = new ContactItem();
-		$shareItem = new ShareItem();
-
-		$contactItem->setUserId($userId);
-		$contactItem->setEmail($email);
-		$contactsappId = $api->findContactsappIdByEmail($email);
-		if($contactsappId) {
-			$contactItem->setContactsappId($contactsappId);
-		}
-		$shareItem->setDownloadType('SECURE');
-		$shareItem->setFileId($fileId);
-		// Set share time to "now"
-		$shareItem->setShareTime(date('Y-m-d H:i:s'));
-		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
-
-		$mapper->save($contactShareItem);
-
-		$fidelConfig = new FidelboxConfig($api);
-		$fidelConfig->calculateHashAsync($shareItem);
+	$contactItem = new ContactItem();
+	$contactItem->setUserId($userId);
+	$contactItem->setEmail($email);
+	$contactsappId = $api->findContactsappIdByEmail($email);
+	if ($contactsappId) {
+		$contactItem->setContactsappId($contactsappId);
 	}
+
+	$shareHelper = new ShareHelper($api);
+	$shareHelper->share($fileId, $contactItem);
 
 	\OC_JSON::success();
 } catch(\Exception $e) {

@@ -121,6 +121,10 @@
 	opacity: 0.5;
 }
 
+#shareWithFidelAppList .fidelapp_folder {
+	background-image: url("%webroot%/core/img/places/folder.svg");
+}
+
 .fidelapp_contact_email {
 	color: #505050;
 	font-weight: bold;

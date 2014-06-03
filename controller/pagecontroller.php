@@ -117,14 +117,26 @@ class PageController extends Controller {
 	 */
 	public function shares() {
 		$shares = $this->contactShareItemMapper->findByUser($this->api->getUserId());
-		foreach ( $shares as &$item ) {
-			$item->contactName = $this->contactManager->makeContactName($item->getContactItem());
-			$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
+		$contactShareItems = array ();
+		foreach ( $shares as $item ) {
+			// Ignore files that are implicitly shared through folders
+			if (! $item->getShareItem()->getParentShareId()) {
+				$item->contactName = $this->contactManager->makeContactName($item->getContactItem());
+				$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
+				if ($item->getShareItem()->getIsDir()) {
+					$numberOfFilesInDir = count($this->api->readDir($item->fileName));
+					$item->fileName .= ' ' . $this->api->getTrans()->t('(Directory, %s files shared)',
+							array (
+									$numberOfFilesInDir
+							));
+				}
+				$contactShareItems [] = $item;
+			}
 		}
 		$params = array (
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
-				'shares' => $shares,
+				'shares' => $contactShareItems,
 				'view' => 'activeshares'
 		);
 		return $this->render('fidelapp', $params);

@@ -64,17 +64,21 @@ class App {
 		}
 		if (\OC_BackgroundJob::getExecutionType() != 'cron') {
 			$return ['warnings'] [] = $l->t(
-					'When using SECURE file delivery mode, it is strongly recommended to use CRON for background job control ' .
+					'It is strongly recommended to use CRON for background job control ' .
 							 '(see http://doc.owncloud.org/server/6.0/admin_manual/configuration/background_jobs.html) ' .
 							 'Otherwise the App might not be able to calculate checksums on large files for secure file delivery');
 		}
 
-		if(!$api && class_exists('OCA\AppFramework\Core\API', true)) {
+		if (! $api && class_exists('OCA\AppFramework\Core\API', true)) {
 			// API was not given as a parameter, but the appframework is there,
 			// so we can instantiate a new API here
 			$api = new API();
 		}
 
+		if ($api && ! $api->getAppValue('fidelbox_account')) {
+			$return ['warnings'] [] = $l->t(
+					'The fidelapp has not been configured yet, please configure it by clicking on "Configuration"');
+		}
 		if ($api && $api->getAppValue('access_type') == 'FIDELBOX_REDIRECT') {
 			$lastIpUpdateString = $api->getAppValue('last_ip_update');
 			$lastIpUpdateOk = false;
@@ -112,12 +116,18 @@ if (class_exists('OC', false)) {
 	if (count($checkResult ['errors']) == 0) {
 		$hasWarnings = count($checkResult ['warnings']) > 0;
 		\OC::$CLASSPATH ['OCA\FidelApp\API'] = FIDELAPP_APPNAME . '/lib/api.php';
-		\OCP\Util::connectHook('OC_User', 'post_deleteUser', 'OCA\FidelApp\FidelappHooks', 'deleteUser');
+		\OCP\Util::connectHook('OC_User', 'post_deleteUser', 'OCA\FidelApp\Hooks', 'deleteUser');
 		\OCP\Util::connectHook('OCA\Contacts', 'pre_deleteContact', 'OCA\FidelApp\Hooks', 'deleteContact');
 		\OCP\Util::connectHook('OCA\Contacts', 'post_updateContact', 'OCA\FidelApp\Hooks', 'updateEmail');
 		\OCP\Util::connectHook('\OCA\Files_Trashbin\Trashbin', 'post_moveToTrash', 'OCA\FidelApp\Hooks', 'moveFileToTrash');
 		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_delete, 'OCA\FidelApp\Hooks',
 				'deleteFile');
+		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_create, 'OCA\FidelApp\Hooks',
+				'verifyDirectorySharesAfterCreation');
+		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_rename, 'OCA\FidelApp\Hooks',
+				'verifyDirectorySharesAfterRename');
+		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_copy, 'OCA\FidelApp\Hooks',
+				'verifyDirectorySharesAfterCreation');
 
 		// Load extension of OCA\AppFramework\Core\API
 		$api = new API();
