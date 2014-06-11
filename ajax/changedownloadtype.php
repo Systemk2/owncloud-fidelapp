@@ -35,10 +35,8 @@ try {
 	$shareId = $_POST ['shareId'];
 	$downloadType = $_POST ['downloadType'];
 
-	$mapper = new ShareItemMapper($api);
-	$shareItem = $mapper->findById($shareId);
-	$shareItem->setDownloadType($downloadType);
-	$mapper->save($shareItem);
+	$shareHelper = new ShareHelper($api);
+	$shareHelper->changeDownloadType($downloadType, $shareId);
 	\OC_JSON::success();
 } catch(\Exception $e) {
 	\OC_JSON::error(array('message' => $e->getMessage()));

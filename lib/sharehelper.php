@@ -58,7 +58,7 @@ class ShareHelper {
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
 		$contactShareItem = $this->contactShareMapper->save($contactShareItem);
 		if ($isDir) {
-			$this->shareDirectoryRecursively($path, $contactShareItem->getShareItem()->getId());
+			$this->shareDirectoryRecursively($path, $contactShareItem->getShareItem()->getId(), $contactItem);
 		}
 	}
 
@@ -190,5 +190,25 @@ class ShareHelper {
 			$parent .= DIRECTORY_SEPARATOR;
 		}
 		return stripos($child, $parent) === 0;
+	}
+
+	public function changeDownloadType($downloadType, $shareId) {
+		if($downloadType != 'SECURE' && $downloadType != 'BASIC') {
+			throw new WrongParameterException('downloadType', $downloadType);
+		}
+
+		$shareItem = $this->shareMapper->findById($shareId);
+		if($shareItem->getIsDir()) {
+			// Share is a directory, so change all associated file shares
+			$itemsToBeChanged = $this->shareMapper->findByParentId($shareItem->getId());
+			foreach($itemsToBeChanged as $item) {
+				$item->setDownloadType($downloadType);
+				$this->shareMapper->save($item);
+			}
+		}
+		$shareItem->setDownloadType($downloadType);
+		$this->shareMapper->save($shareItem);
+
+
 	}
 }
