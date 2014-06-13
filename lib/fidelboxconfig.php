@@ -169,7 +169,9 @@ class FidelboxConfig {
 	 *        	the item that designates the file for MD5 calculation
 	 */
 	public function calculateHashAsync(ShareItem $shareItem) {
-		$this->api->addQueuedTask('OCA\FidelApp\CalculateMD5BackgroundJob', 'run', $shareItem->getId());
+		$job = new CalculateMD5BackgroundJob();
+		BackgroundJob::registerJob($job, $shareItem->getId());
+		//$this->api->addQueuedTask('OCA\FidelApp\CalculateMD5BackgroundJob', 'run', $shareItem->getId());
 		// \OCA\FidelApp\CalculateMD5BackgroundJob::run($shareItem->getId());
 	}
 

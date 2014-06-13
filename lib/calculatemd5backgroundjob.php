@@ -28,10 +28,16 @@ use OCA\FidelApp\Db\ContactShareItemMapper;
 use OCA\FidelApp\Db\FileItemMapper;
 use OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\Db\FileItem;
+use OC\BackgroundJob\QueuedJob;
 
-class CalculateMD5BackgroundJob {
+class CalculateMD5BackgroundJob extends QueuedJob {
 
-	public static function run($shareId) {
+	/**
+	 * Calculate md5 sum for a given share as a background job
+	 *
+	 * @see \OC\BackgroundJob\Job::run()
+	 */
+	public function run($shareId) {
 		try {
 			$api = new API(FIDELAPP_APPNAME);
 			$contactShareItemMapper = new ContactShareItemMapper($api);

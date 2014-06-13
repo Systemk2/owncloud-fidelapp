@@ -57,12 +57,13 @@ class ShareHelper {
 		$shareItem->setIsDir($isDir);
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
 		$contactShareItem = $this->contactShareMapper->save($contactShareItem);
+		$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());
 		if ($isDir) {
 			$this->shareDirectoryRecursively($path, $contactShareItem->getShareItem()->getId(), $contactItem);
 		}
 	}
 
-	public function createShare($fileId, ContactItem $contactItem) {
+	private function createShare($fileId, ContactItem $contactItem) {
 		$sharedItems = $this->contactShareMapper->findByUserFileEmail($contactItem->getUserId(), $fileId,
 				$contactItem->getEmail());
 		if (count($sharedItems) > 0) {
@@ -74,7 +75,6 @@ class ShareHelper {
 		$shareItem->setFileId($fileId);
 		// Set share time to "now"
 		$shareItem->setShareTime(date('Y-m-d H:i:s'));
-		$this->fidelboxConfig->calculateHashAsync($shareItem);
 		return ($shareItem);
 	}
 
@@ -105,7 +105,8 @@ class ShareHelper {
 				if ($shareItem) {
 					$shareItem->setParentShareId($parentShareId);
 					$contactShareItem = new ContactShareItem($contactItem, $shareItem);
-					$this->contactShareMapper->save($contactShareItem);
+					$contactShareItem = $this->contactShareMapper->save($contactShareItem);
+					$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());
 				}
 			}
 		}
@@ -167,7 +168,8 @@ class ShareHelper {
 				$shareItem->setParentShareId($contactShare->getShareItem()->getId());
 				if ($shareItem) {
 					$contactShare = new ContactShareItem($contactShare->getContactItem(), $shareItem);
-					$this->contactShareMapper->save($contactShare);
+					$contactShareItem = $this->contactShareMapper->save($contactShare);
+					$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());
 				}
 			}
 		}

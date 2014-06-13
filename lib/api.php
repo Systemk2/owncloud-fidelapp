@@ -233,31 +233,6 @@ class API extends \OCA\AppFramework\Core\API {
 	}
 
 	/**
-	 * Queues a task
-	 *
-	 * @param $class string
-	 *        	class name
-	 * @param $method string
-	 *        	[default = 'run'] method name
-	 * @param $parameters string
-	 *        	[default = ''] all useful data as text
-	 * @return id of task
-	 */
-	public function addQueuedTask($class, $method = 'run', $parameters = '') {
-		return BackgroundJob::addQueuedTask($this->getAppName(), $class, $method, $parameters);
-	}
-
-	/**
-	 * Deletes a queued task
-	 *
-	 * @param $id int
-	 * @return true
-	 */
-	public function deleteQueuedTask($id) {
-		return BackgroundJob::deleteQueuedTask($id);
-	}
-
-	/**
 	 * Register an exception class in lib/exception with OC's classloader
 	 *
 	 * @param string $exceptionClassName
