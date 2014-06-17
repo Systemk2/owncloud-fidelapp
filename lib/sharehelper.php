@@ -54,12 +54,23 @@ class ShareHelper {
 			throw new AlreadySharedException();
 		}
 		$isDir = $this->api->isDir($path);
+		if($isDir) {
+			$sharedDirs = $this->contactShareMapper->findByUser($contactItem->getUserId(), true);
+			foreach($sharedDirs as $sharedDir) {
+				$sharedDirPath = $this->api->getPath($sharedDir->getShareItem()->getFileId());
+				if ($this->isParentDir($sharedDirPath, $path)) {
+					// Directory was already shared through a parent directory
+					throw new AlreadySharedException();
+				}
+			}
+		}
 		$shareItem->setIsDir($isDir);
 		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
 		$contactShareItem = $this->contactShareMapper->save($contactShareItem);
-		$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());
 		if ($isDir) {
 			$this->shareDirectoryRecursively($path, $contactShareItem->getShareItem()->getId(), $contactItem);
+		} else {
+			$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());
 		}
 	}
 
@@ -92,11 +103,11 @@ class ShareHelper {
 				if (count($sharedItems) > 0) {
 					// Directory was already shared, remove this share and all implicitly shared files
 					foreach ( $sharedItems as $sharedItem ) {
-						$childItems = $this->shareMapper->findByParentId($sharedItem->getId());
+						$childItems = $this->shareMapper->findByParentId($sharedItem->getShareItem()->getId());
 						foreach ( $childItems as $childItem ) {
 							$this->deleteShare($childItem->getId());
 						}
-						$this->deleteShare($sharedItem->getId());
+						$this->deleteShare($sharedItem->getShareItem()->getId());
 					}
 				}
 				$this->shareDirectoryRecursively($entryPath, $parentShareId, $contactItem);

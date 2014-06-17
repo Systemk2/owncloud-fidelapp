@@ -218,9 +218,8 @@ class FidelboxConfig {
 	 * @return string the IP address that has been updated
 	 */
 	public function updateIp() {
-		$url = '/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip&useSSL=' .
-				 ($this->api->getAppValue('use_ssl') == 'true' ? 'true' : 'false') .
-				 '&port=' . ($this->api->getAppValue('port') ? $this->api->getAppValue('port') : 'STANDARD_PORT');
+		$url = '/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) . '&action=updateip';
+		$url = $this->addAdditionalInfo($url);
 		$return = $this->get($url);
 		if ($return ['status'] != 'success') {
 			$this->raiseError($return);
@@ -228,6 +227,19 @@ class FidelboxConfig {
 		return ($return ['ip']);
 	}
 
+	private function addAdditionalInfo($url) {
+		$accessType = $this->api->getAppValue('access_type');
+		if ($accessType != 'FIDELBOX_REDIRECT') {
+			if ($accessType == 'DOMAIN_NAME') {
+				$url .= '&ipAddress=' . $this->api->getAppValue('domain_name');
+			} else {
+				$url .= '&ipAddress=' . $this->api->getAppValue('fixed_ip');
+			}
+			$url .= '&port=' . $this->api->getAppValue('port');
+			$url .= '&useSsl=' . $this->api->getAppValue('use_ssl');
+		}
+		return $url;
+	}
 	/**
 	 * Check if the server can be reached from Internet
 	 *
@@ -239,16 +251,7 @@ class FidelboxConfig {
 	public function pingBack() {
 		$url = '/fidelapp/manageaccount.php?accountId=' . urlencode($this->getFidelboxAccountId()) .
 				 '&action=pingback&pingbackPath=' . urlencode($this->api->linkToRoute('pingback'));
-		$accessType = $this->api->getAppValue('access_type');
-		if ($accessType != 'FIDELBOX_REDIRECT') {
-			if ($accessType == 'DOMAIN_NAME') {
-				$url .= '&ipAddress=' . $this->api->getAppValue('domain_name');
-			} else {
-				$url .= '&ipAddress=' . $this->api->getAppValue('fixed_ip');
-			}
-			$url .= '&port=' . $this->api->getAppValue('port');
-			$url .= '&useSsl=' . $this->api->getAppValue('use_ssl');
-		}
+		$url = $this->addAdditionalInfo($url);
 		$return = $this->get($url);
 		if ($return ['status'] != 'success') {
 			if (! isset($return ['message'])) {

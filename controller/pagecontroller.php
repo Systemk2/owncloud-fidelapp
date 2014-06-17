@@ -479,9 +479,13 @@ class PageController extends Controller {
 					 md5($fidelboxAccount) . "&clientId=$clientId";
 			// TODO: Implement
 			if ($accessType == 'FIXED_IP') {
-				$url .= "&ip=1.2.3.4.5&port=TODO";
+				$ip = $this->api->getAppValue('fixed_ip');
+				$port = $this->api->getAppValue('port');
+				$url .= "&ip=$ip&port=$port";
 			} else if ($accessType == 'DOMAIN_NAME') {
-				$url .= "&domain=bla.com&port=TODO";
+				$domain = $this->api->getAppValue('domain_name');
+				$port = $this->api->getAppValue('port');
+				$url .= "&domain=$domain&port=$port";
 			}
 		} else {
 			switch ($accessType) {
