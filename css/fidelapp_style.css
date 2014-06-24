@@ -145,7 +145,7 @@
 	padding-left: 20px;
 }
 
-#fidelapp_password_table .fidelapp_spinner,  .fidelapp_spinner {
+#fidelapp_password_table .fidelapp_spinner,.fidelapp_spinner {
 	background-image: url("%webroot%/core/img/loading.gif");
 	background-color: #FFFFFF;
 	background-position: center center;
@@ -163,13 +163,12 @@ input.active[type="button"] {
 	padding: 1em;
 }
 
-
 #fidelapp_errors  h1 {
 	font-size: 1.5em;
 	margin-top: 1em;
 }
 
-.fidelapp_error_messages, .fidelapp_warning_messages {
+.fidelapp_error_messages,.fidelapp_warning_messages {
 	margin-top: 1em;
 	padding: 0.5em 1.5em;
 }
@@ -180,4 +179,22 @@ input.active[type="button"] {
 
 .fidelapp_warning_messages LI {
 	background-color: YELLOW;
+}
+
+#fidelbox_tos {
+	background-color: #EEEEEE;
+}
+
+#fidelbox_tos {
+	background-color: #EEEEEE;
+	margin: 20px 0 20px -20px;
+	padding: 20px;
+}
+
+#fidelbox_tos OL {
+	padding-left: 20px;
+}
+
+#fidelbox_tos LI {
+	cursor: default;
 }

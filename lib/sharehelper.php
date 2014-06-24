@@ -176,8 +176,8 @@ class ShareHelper {
 			$sharedDir = $this->api->getPath($contactShare->getShareItem()->getFileId());
 			if ($this->isParentDir($sharedDir, $path)) {
 				$shareItem = $this->createShare($fileId, $contactShare->getContactItem());
-				$shareItem->setParentShareId($contactShare->getShareItem()->getId());
 				if ($shareItem) {
+					$shareItem->setParentShareId($contactShare->getShareItem()->getId());
 					$contactShare = new ContactShareItem($contactShare->getContactItem(), $shareItem);
 					$contactShareItem = $this->contactShareMapper->save($contactShare);
 					$this->fidelboxConfig->calculateHashAsync($contactShareItem->getShareItem());

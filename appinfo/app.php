@@ -107,6 +107,14 @@ class App {
 								FIDELAPP_FIDELBOX_URL
 						));
 			}
+			$trustedDomains = \OC_Config::getValue('trusted_domains', array ());
+			if (! empty($trustedDomains)) {
+				$return ['warnings'] [] = $l->t(
+						'In your config php file, the "trusted_domains" parameter has been set. This means that this server ' .
+								 ' expects to be reached at one of the provided domains. If you have a variable IP address, ' .
+								 'or an external IP address that is not mentioned in "trusted_domains", the access will be blocked. ' .
+								 ' Please remove the "trusted_domains" parameter from your config file to allow variable domain names');
+			}
 		}
 		return $return;
 	}
