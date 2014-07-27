@@ -238,6 +238,9 @@ class FidelboxConfig {
 			$url .= '&port=' . $this->api->getAppValue('port');
 			$url .= '&useSsl=' . $this->api->getAppValue('use_ssl');
 		}
+		$appInfo = $this->api->getAppInfo();
+		$version = $appInfo['version'];
+		$url .= "&version=$version";
 		return $url;
 	}
 	/**

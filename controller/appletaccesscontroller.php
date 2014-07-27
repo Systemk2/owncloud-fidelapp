@@ -41,6 +41,8 @@ use OCA\AppFramework\Db\DoesNotExistException;
 use OCA\FidelApp\Db\ReceiptItemMapper;
 use OCA\FidelApp\Db\ReceiptItem;
 use OCA\FidelApp\ContactManager;
+use OCA\FidelApp\Db\ContactShareItem;
+use OCA\FidelApp\ShareHelper;
 
 class AppletAccessController extends Controller {
 
@@ -98,10 +100,14 @@ class AppletAccessController extends Controller {
 	 */
 	public function getChunk() {
 		try {
-			$chunkId = $this->params('chunk-id', 1);
+			$chunkId = $this->params('chunk-id', 0);
 			$submissionId = $this->params('submission-id');
 			$contactShareItem = $this->getCurrentContactShareItem($submissionId);
-
+			if($chunkId == 1) {
+				// Upon download of first chunk, create a receipt item
+				$shareHelper = new ShareHelper($this->api);
+				$shareHelper->createAndSaveReceiptItemIfNotPresent($contactShareItem);
+			}
 			$userId = $contactShareItem->getContactItem()->getUserId();
 			$this->api->setupFS($userId);
 			$shareItem = $contactShareItem->getShareItem();
@@ -122,10 +128,10 @@ class AppletAccessController extends Controller {
 
 			$key = $this->createKey($pass, $salt);
 
-			if ($fileName == "" || ! \OC\Files\Filesystem::file_exists($fileName)) { // TODO: Move to api
+			if ($fileName == "" || ! \OC\Files\Filesystem::file_exists($fileName)) { // TODO: Move to API
 				throw new FileNotFoundException($fileName);
 			}
-			$fileLength = \OC\Files\Filesystem::filesize($fileName);
+			$fileLength = \OC\Files\Filesystem::filesize($fileName); // TODO: Move to API
 			$absolutePath = Filesystem::getLocalFile($fileName);
 			if (! file_exists($absolutePath)) {
 				throw new FileNotFoundException($absolutePath);
@@ -139,14 +145,18 @@ class AppletAccessController extends Controller {
 				$chunkCount = $fileLength / CHUNK_SIZE;
 				$lastChunkEncryptedLength = $chunkEncryptedLength;
 			}
+			if($chunkId > $chunkCount) {
+				throw new \Exception("ChunkId $chunkId is bigger than chunkCount $chunkCount");
+			}
 			if ($shareItem->getNbChunks() != $chunkCount) {
 				$shareItem->setNbChunks($chunkCount);
 				$shareItemMapper = new ShareItemMapper($this->api);
 				$shareItemMapper->save($shareItem);
 			}
-			$fileEncryptedLength = max($chunkCount - 1, 0) * $chunkEncryptedLength + $lastChunkEncryptedLength;
-			$plainPos = ($chunkId - 1) * CHUNK_SIZE;
-			$encryptedPos = ($chunkId - 1) * $chunkEncryptedLength;
+			$position = max($chunkCount - 1, 0);
+			$fileEncryptedLength = $position * $chunkEncryptedLength + $lastChunkEncryptedLength;
+			$plainPos = $position * CHUNK_SIZE;
+			$encryptedPos = $position * $chunkEncryptedLength;
 			// The download client does not handle Initialization Vectors
 			$iv = pack('H*', '00000000000000000000000000000000');
 			$aesEncryption = new AESEncryption($key, $iv, CHUNK_SIZE);
@@ -191,7 +201,10 @@ class AppletAccessController extends Controller {
 				$this->createHeader("chunk.$chunkId.blockLength", $chunkEncryptedLength);
 			}
 			// $this->createHeader("chunk.$chunkId.encryptedMessageDigest", $encryptedMessageDigest);
-
+			if($chunkId <= 0) {
+				// Client requested header information only, not actually a chunk
+				exit(0);
+			}
 			$chunkMapper = new ChunkItemMapper($this->api);
 			try {
 				$chunk = $chunkMapper->findByShareAndChunkId($shareItem->getId(), $chunkId);
@@ -292,24 +305,10 @@ class AppletAccessController extends Controller {
 			$expectedHash = $fileItem->getChecksum();
 			if (strtolower($this->params('plain-file-hash')) == $expectedHash) {
 				\OC_Log::write($this->api->getAppName(), 'Finalized download of ' . $share->getFileId(), \OC_Log::INFO);
-				$now = date('Y-m-d H:i:s');
-				$share->setDownloadTime($now);
-				$shareItemMapper = new ShareItemMapper($this->api);
-				$shareItemMapper->save($share);
 				$chunkItemMapper = new ChunkItemMapper($this->api);
 				$chunkItemMapper->deleteByShareId($share->getId());
-				$contactManager = new ContactManager($this->api);
-				$receipt = new ReceiptItem();
-				$receipt->setContactName($contactShareItem->getContactItem()->getEmail());
-				$receipt->setDownloadTime($now);
-				$userId = $contactShareItem->getContactItem()->getUserId();
-				$this->api->setupFS($userId);
-				$fileName = trim($this->api->getPath($fileId), DIRECTORY_SEPARATOR);
-				$receipt->setFileName($fileName);
-				$receipt->setUserId($userId);
-				$receipt->setDownloadType($share->getDownloadType());
-				$receiptItemMapper = new ReceiptItemMapper($this->api);
-				$receiptItemMapper->save($receipt);
+				$shareHelper = new ShareHelper($this->api);
+				$shareHelper->updateReceiptDownloadTime($share);
 				\OC_Log::write($this->api->getAppName(), 'Wrote receipt', \OC_Log::DEBUG);
 			} else {
 				\OC_Log::write($this->api->getAppName(),

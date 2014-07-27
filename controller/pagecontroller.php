@@ -124,7 +124,7 @@ class PageController extends Controller {
 				$item->contactName = $this->contactManager->makeContactName($item->getContactItem());
 				$item->fileName = trim($this->api->getPath($item->getShareItem()->getFileId()), DIRECTORY_SEPARATOR);
 				if ($item->getShareItem()->getIsDir()) {
-					$numberOfFilesInDir = count($this->api->readDir($item->fileName));
+					$numberOfFilesInDir = $this->countRecursively($item->fileName);
 					$item->fileName .= ' ' . $this->api->getTrans()->t('(Directory, %s files shared)',
 							array (
 									$numberOfFilesInDir
@@ -142,6 +142,19 @@ class PageController extends Controller {
 		return $this->render('fidelapp', $params);
 	}
 
+	private function countRecursively($directory) {
+		$numberOfFiles = 1;
+		$entries = $this->api->readDir($directory);
+		foreach($entries as $entry) {
+			if($this->api->isDir($entry)) {
+				$numberOfFiles += $this->countRecursively($entry);
+			} else {
+				$numberOfFiles++;
+			}
+		}
+		return $numberOfFiles;
+	}
+
 	/**
 	 * @CSRFExemption
 	 * @IsAdminExemption
@@ -149,6 +162,15 @@ class PageController extends Controller {
 	 */
 	public function receipts() {
 		$receipts = $this->receiptItemMapper->findByUser($this->api->getUserId());
+		foreach($receipts as $receipt) {
+			if($receipt->getDownloadTime()) {
+				$receipt->downloadStatus = 'CONFIRMED';
+			} elseif ($receipt->getDownloadType() == 'SECURE') {
+				$receipt->downloadStatus = 'ONGOING';
+			} else {
+				$receipt->downloadStatus = 'UNKNOWN';
+			}
+		}
 		$params = array (
 				'menu' => 'shares',
 				'actionTemplate' => 'shares',
@@ -477,16 +499,6 @@ class PageController extends Controller {
 			}
 			$url = FIDELAPP_FIDELBOX_URL . '/fidelapp/download.php?contextRoot=' . urlencode($localPathBase) . '&accountHash=' .
 					 md5($fidelboxAccount) . "&clientId=$clientId";
-			// TODO: Implement
-			if ($accessType == 'FIXED_IP') {
-				$ip = $this->api->getAppValue('fixed_ip');
-				$port = $this->api->getAppValue('port');
-				$url .= "&ip=$ip&port=$port";
-			} else if ($accessType == 'DOMAIN_NAME') {
-				$domain = $this->api->getAppValue('domain_name');
-				$port = $this->api->getAppValue('port');
-				$url .= "&domain=$domain&port=$port";
-			}
 		} else {
 			switch ($accessType) {
 				case 'FIXED_IP' :

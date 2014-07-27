@@ -133,6 +133,7 @@ if (class_exists('OC', false)) {
 		\OCP\Util::connectHook('OCA\Contacts', 'pre_deleteContact', 'OCA\FidelApp\Hooks', 'deleteContact');
 		\OCP\Util::connectHook('OCA\Contacts', 'post_updateContact', 'OCA\FidelApp\Hooks', 'updateEmail');
 		\OCP\Util::connectHook('\OCA\Files_Trashbin\Trashbin', 'post_moveToTrash', 'OCA\FidelApp\Hooks', 'moveFileToTrash');
+		\OCP\Util::connectHook('\OCA\Files_Trashbin\Trashbin', 'post_restore', 'OCA\FidelApp\Hooks', 'restoreFileFromTrash');
 		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_delete, 'OCA\FidelApp\Hooks',
 				'deleteFile');
 		\OCP\Util::connectHook(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_create, 'OCA\FidelApp\Hooks',

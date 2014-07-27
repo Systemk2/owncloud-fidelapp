@@ -45,4 +45,18 @@ class ReceiptItemMapper extends SingleEntityMapper {
 		));
 	}
 
+	/**
+	 * Get receipt items for the given share id
+	 *
+	 * @param $shareId int the shareitem Id
+	 * @return array \OCA\FidelApp\Db\ReceiptItem
+	 */
+	public function findByShareId($shareId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `share_id` = ? ORDER BY download_time DESC';
+
+		return $this->findEntities($sql, array (
+				$shareId
+		));
+	}
+
 }

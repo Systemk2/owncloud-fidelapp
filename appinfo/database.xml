@@ -100,13 +100,6 @@
 				<comments>When has the file been shared</comments>
 			</field>
 			<field>
-				<name>download_time</name>
-				<type>timestamp</type>
-				<notnull>false</notnull>
-				<default></default>
-				<comments>When has the file been downloaded</comments>
-			</field>
-			<field>
 				<name>share_notification</name>
 				<type>integer</type>
 				<notnull>true</notnull>
@@ -164,7 +157,7 @@
 				<default>0</default>
 				<comments>boolean true if this a directory</comments>
 			</field>
-			
+
 			<index>
 				<name>primary_key_fidelapp_shares</name>
 				<primary>true</primary>
@@ -224,9 +217,24 @@
 				<comments>The name of the file</comments>
 			</field>
 			<field>
-				<name>download_time</name>
+				<name>share_id</name>
+				<type>integer</type>
+				<notnull>false</notnull>
+				<length>4</length>
+				<comments>The reference the share which was used to create this
+					receipt (not a FK reference, because the share might be deleted)
+				</comments>
+			</field>
+			<field>
+				<name>download_started</name>
 				<type>timestamp</type>
 				<notnull>true</notnull>
+				<comments>When has the file download been started</comments>
+			</field>
+			<field>
+				<name>download_time</name>
+				<type>timestamp</type>
+				<notnull>false</notnull>
 				<comments>When has the file been downloaded</comments>
 			</field>
 			<field>

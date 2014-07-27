@@ -121,6 +121,19 @@ class Hooks {
 	}
 
 	/**
+	 * Add folder shares when a file is restored from the thrash bin
+	 *
+	 * @param array $params
+	 *        	contains the file name with key 'filePath'
+	 */
+	public static function restoreFileFromTrash(array $params) {
+		$path = $params ['filePath'];
+		$fileId = $api->getFileId($path);
+		$shareHelper = new ShareHelper($api);
+		$shareHelper->createImplicitShares($fileId);
+	}
+
+	/**
 	 * Remove active shares when a file is deleted
 	 *
 	 * @param array $params
@@ -155,36 +168,13 @@ class Hooks {
 	 *        	contains the file name with key 'path'
 	 */
 	public static function verifyDirectorySharesAfterRename(array $params) {
-		$oldPath = $params [Filesystem::signal_param_oldpath];
+		//$oldPath = $params [Filesystem::signal_param_oldpath];
 		$newPath = $params [Filesystem::signal_param_newpath];
-
 		$api = new API();
-		if ($api->isDir($newPath)) {
-			// Ignore moved directories
-			return;
-		}
 
 		$fileId = $api->getFileId($newPath);
 		$shareHelper = new ShareHelper($api);
-		$shareItemMapper = new ShareItemMapper($api);
-		$contactShareItemMapper = new ContactShareItemMapper($api);
-		$contactShareItems = $contactShareItemMapper->findByUserFile($api->getUserId(), $fileId);
-		foreach ( $contactShareItems as $item ) {
-			$parentId = $item->getShareItem()->getParentShareId();
-			if (! $parentId) {
-				// Explicitly shared -> Nothing to do
-				return;
-			}
-			$parent = $shareItemMapper->findById($parentId);
-			$parentFileId = $parent->getFileId();
-			$path = $api->getPath($parentFileId);
-			if ($shareHelper->isParentDir($parent, $child)) {
-				// The parent is still the same -> nothing to do
-				return;
-			}
-			// The parent has changed, delete old implicit share
-			$shareHelper->deleteShare($item->getShareItem()->getShareId());
-		}
+		$shareHelper->removeObsoleteImplicitShares($fileId);
 		$shareHelper->createImplicitShares($fileId);
 	}
 
@@ -201,10 +191,9 @@ class Hooks {
 			$path = $params [Filesystem::signal_param_path];
 		}
 		$api = new API();
-		if ($api->isDir($path)) {
-			// Ignore newly created or copied directories
-			return;
-		}
+		/*
+		 * if ($api->isDir($path)) { // Ignore newly created or copied directories return; }
+		 */
 
 		$shareHelper = new ShareHelper($api);
 		$fileId = $api->getFileId($path);

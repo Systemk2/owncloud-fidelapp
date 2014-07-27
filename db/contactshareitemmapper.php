@@ -99,14 +99,36 @@ class ContactShareItemMapper extends Mapper {
 	 * Get all contact share items for the given user id
 	 *
 	 * @param string $userId
-	 * @param boolean $findOnlyDirectoryShares
-	 *        	[optional] if set to <code>true</code>, only directory shares will be returned
 	 * @return array of OCA\FidelApp\Db\ContactShareItem
 	 */
-	public function findByUser($userId, $findOnlyDirectoryShares = false) {
+	public function findByUser($userId) {
+		return $this->_findByUser($userId, false);
+	}
+
+	/**
+	 * Get all contact share items that represent directories for the given user id
+	 *
+	 * @param string $userId
+	 * @return array of OCA\FidelApp\Db\ContactShareItem
+	 */
+	public function findDirectoriesByUser($userId) {
+		return $this->_findByUser($userId, true);
+	}
+
+	/**
+	 * Get all contact share items for the given user id (private function,
+	 * use {@link ContactShareItemMapper::findByUser($userId)} or
+	 * {@link ContactShareItemMapper::findDirectoriesByUser($userId)} instead)
+	 *
+	 * @param string $userId
+	 * @param boolean $findOnlyDirectoryShares
+	 *        	if set to <code>true</code>, only directory shares will be returned
+	 * @return array of OCA\FidelApp\Db\ContactShareItem
+	 */
+	private function _findByUser($userId, $findOnlyDirectoryShares) {
 		$sql = 'SELECT S.*, C.user_id, C.email, C.password, C.contactsapp_id FROM `' . $this->shareItemMapper->getTableName() .
 				 '` S, `' . $this->contactItemMapper->getTableName() . '` C WHERE C.`id` = S.`contact_id` AND C.`user_id` = ?';
-		if($findOnlyDirectoryShares) {
+		if ($findOnlyDirectoryShares) {
 			$sql .= ' AND S.`is_dir` = 1';
 		}
 

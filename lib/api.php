@@ -176,8 +176,8 @@ class API extends \OCA\AppFramework\Core\API {
 	 */
 	public function getFileId($path) {
 		$data = Filesystem::getFileInfo($path);
-		if ($data && isset($data['fileid'])) {
-			return $data['fileid'];
+		if ($data && isset($data ['fileid'])) {
+			return $data ['fileid'];
 		}
 		return null;
 	}
@@ -203,7 +203,7 @@ class API extends \OCA\AppFramework\Core\API {
 		$returnValue = array ();
 		if ($handle) {
 			while ( $entry = readdir($handle) ) {
-				if(trim($entry, '.') != '') { // Exclude . and ..
+				if (trim($entry, '.') != '') { // Exclude . and ..
 					$returnValue [] = $entry;
 				}
 			}
@@ -239,5 +239,15 @@ class API extends \OCA\AppFramework\Core\API {
 	 */
 	public function registerFidelappException($exceptionClassName) {
 		\OC::$CLASSPATH ["OCA\\FidelApp\\$exceptionClassName"] = FIDELAPP_APPNAME . '/lib/exception.php';
+	}
+
+	/**
+	 * Read all app metadata from the info.xml file
+	 * Note: all data is read from info.xml, not just pre-defined fields
+	 *
+	 * @return array or <code>NULL</code>
+	 */
+	public function getAppInfo() {
+		return \OC_App::getAppInfo($this->getAppName());
 	}
 }

@@ -27,13 +27,13 @@ use \OCA\FidelApp\API;
 use \OCA\FidelApp\Db\ContactItemMapper;
 use \OCA\FidelApp\Db\ShareItemMapper;
 use OCA\FidelApp\EncryptionHelper;
-use OCA\FidelApp\Db\ReceiptItemMapper;
-use OCA\FidelApp\Db\ReceiptItem;
 use OCA\FidelApp\Db\ShareItem;
 use OCA\FidelApp\Db\ContactItem;
 use OCA\FidelApp\WrongDownloadTypeException;
 use OCA\FidelApp\Db\SessionItemMapper;
 use OCA\FidelApp\Db\SessionItem;
+use OCA\FidelApp\ShareHelper;
+use OCA\FidelApp\Db\ContactShareItem;
 
 \OC::$CLASSPATH ['OCA\FidelApp\WrongDownloadTypeException'] = FIDELAPP_APPNAME . '/lib/exception.php';
 \OC::$CLASSPATH ['OCA\FidelApp\FileNotFoundException'] = FIDELAPP_APPNAME . '/lib/exception.php';
@@ -220,14 +220,9 @@ class PublicController extends Controller {
 			throw new WrongDownloadTypeException($filename);
 		}
 
-		$receiptItem = new ReceiptItem();
-		$receiptItem->setContactName($contactItem->getEmail());
-		$receiptItem->setDownloadTime(date('Y-m-d H:i:s'));
-		$receiptItem->setDownloadType('BASIC');
-		$receiptItem->setFileName(filename);
-		$receiptItem->setUserId($contactItem->getUserId());
-		$receiptItemMapper = new ReceiptItemMapper($this->api);
-		$receiptItemMapper->save($receiptItem);
+		$shareHelper = new ShareHelper($this->api);
+		$contactShareItem = new ContactShareItem($contactItem, $shareItem);
+		$shareHelper->createAndSaveReceiptItemIfNotPresent($contactShareItem);
 
 		$ftype = \OC\Files\Filesystem::getMimeType($filename);
 

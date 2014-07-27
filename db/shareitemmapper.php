@@ -64,4 +64,12 @@ class ShareItemMapper extends SingleEntityMapper {
 				$shareId
 		));
 	}
+
+	public function findByFileId($fileId) {
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `file_id` = ?';
+
+		return $this->findEntities($sql, array (
+				$fileId
+		));
+	}
 }

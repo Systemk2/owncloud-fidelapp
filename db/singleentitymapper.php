@@ -47,20 +47,16 @@ class SingleEntityMapper extends Mapper {
 		));
 	}
 
-	public function findByFileId($fileId) {
-		$sql = 'SELECT * FROM `' . $this->getTableName() . '` ' . 'WHERE `file_id` = ?';
-
-		return $this->findEntities($sql, array (
-				$fileId
-		));
-	}
-
 	public function save(Entity $entity) {
 		$id = $entity->getId();
 		if ($id === null) {
 			$entity = $this->insert($entity);
 		} else {
-			if (count($entity->getUpdatedFields())) {
+			$updatedFields = $entity->getUpdatedFields();
+			// dont update the id field
+			unset($updatedFields['id']);
+
+			if (count($updatedFields)) {
 				$this->update($entity);
 			}
 		}

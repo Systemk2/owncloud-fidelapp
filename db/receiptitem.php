@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ownCloud - FidelApp (File Delivery App)
  *
@@ -19,15 +20,12 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 namespace OCA\FidelApp\Db;
 
 use \OCA\AppFramework\Db\Entity;
 
 class ReceiptItem extends Entity {
 	// field id is set automatically by the parent class
-
 
 	/**
 	 * The Owncloud user
@@ -41,6 +39,15 @@ class ReceiptItem extends Entity {
 	 * The name of the file
 	 */
 	public $fileName;
+	/**
+	 * The reference the share which was used to create this receipt
+	 * (not a FK reference, because the share might be deleted)
+	 */
+	public $shareId;
+	/**
+	 * When has the download has been started
+	 */
+	public $downloadStarted;
 	/**
 	 * When has the file been downloaded
 	 */

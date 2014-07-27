@@ -39,10 +39,6 @@ class ShareItem extends Entity {
 	 */
 	public $shareTime;
 	/**
-	 * When has the file been downloaded
-	 */
-	public $downloadTime;
-	/**
 	 * Boolean indicating if the receiver has been notified that files are there to be downloaded
 	 */
 	public $shareNotification;

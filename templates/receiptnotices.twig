@@ -1,15 +1,19 @@
 <table>
 	<th>{{ trans('E-Mail') }}</th>
 	<th>{{ trans('File') }}</th>
-	<th>{{ trans('Downloaded') }}</th>
+	<th>{{ trans('Download started') }}</th>
+	<th>{{ trans('Download finished') }}</th>
 	<th>{{ trans('Downloadtype') }}</th>
+	<th>{{ trans('Download status') }}</th>
 	<th>{{ trans('Delete') }} {% for item in receipts %}
 
 	<tr>
 		<td>{{ item.contactName }}</td>
 		<td>{{ item.fileName }}</td>
+		<td>{{ item.downloadStarted }}</td>
 		<td>{{ item.downloadTime }}</td>
 		<td>{{ item.downloadType }}</td>
+		<td>{{ item.downloadStatus }}</td>
 		<td align="center"><span id="fidelapp_delete_receipt_{{ item.id }}" class="fidelapp_icon fidelapp_delete">&nbsp;</span></td>
 	</tr>
 	{% endfor %}
